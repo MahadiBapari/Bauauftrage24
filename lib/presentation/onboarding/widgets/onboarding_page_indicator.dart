@@ -10,6 +10,8 @@ class OnboardingPageIndicator extends StatelessWidget {
     required this.pageCount,
   });
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Row(
