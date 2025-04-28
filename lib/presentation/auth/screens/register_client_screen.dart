@@ -33,7 +33,7 @@ class RegisterClientPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Log in',
+              'register client',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

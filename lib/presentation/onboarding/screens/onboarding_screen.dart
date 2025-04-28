@@ -3,6 +3,9 @@ import '../models/onboarding_page_models.dart';
 import '../widgets/onboarding_button.dart';
 import '../widgets/onboarding_page_indicator.dart';
 import '../widgets/onboarding_skip_button.dart';
+import '../../auth/screens/login_page.dart'; // Import LoginPage
+import '../../auth/screens/register_client_screen.dart'; // Import Client Register Screen
+import '../../auth/screens/register_contractor_screen.dart'; // Import Contractor Register Screen
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -13,6 +16,7 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentIndex = 0;
+  String? _userType; // To store if the user chose 'client' or 'contractor'
 
   final List<OnboardingPageModel> onboardingPages = [
     OnboardingPageModel(
@@ -45,17 +49,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_currentIndex < onboardingPages.length - 1) {
       setState(() {
-        _currentIndex++;
+        if (_currentIndex == 1) {
+          // Navigate based on user type
+          if (_userType == 'client') {
+            _currentIndex = 3; // Skip Contractor page
+          } else if (_userType == 'contractor') {
+            _currentIndex = 2; // Skip Client page
+          } else {
+            _currentIndex++;
+          }
+        } else {
+          _currentIndex++;
+        }
       });
     } else {
-      Navigator.pushNamed(context, '/login'); // or whatever route you setup
+      Navigator.pushNamed(context, '/login'); // Or your login route
     }
   }
 
   void _previousPage() {
     if (_currentIndex > 0) {
       setState(() {
-        _currentIndex--;
+        if (_currentIndex == 4) {
+          // Go back to the appropriate info page
+          _currentIndex = _userType == 'client' ? 3 : 2;
+        } else if (_currentIndex == 2 || _currentIndex == 3) {
+          _currentIndex = 1; // Go back to role selection
+        } else {
+          _currentIndex--;
+        }
       });
     }
   }
@@ -64,6 +86,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     setState(() {
       _currentIndex = onboardingPages.length - 1;
     });
+  }
+
+  void _handleRoleSelection(String role) {
+    setState(() {
+      _userType = role;
+    });
+    _nextPage(); // Move to the next relevant page
+  }
+
+  void _navigateToRegister() {
+    if (_userType == 'client') {
+      Navigator.pushNamed(context, '/register_client');
+    } else if (_userType == 'contractor') {
+      Navigator.pushNamed(context, '/register_contractor');
+    }
   }
 
   @override
@@ -122,115 +159,103 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }),
               ),
             ),
-
             OnboardingPageIndicator(
               currentIndex: _currentIndex,
-              pageCount: onboardingPages.length,
+              pageCount: _userType == null ? onboardingPages.length : onboardingPages.length - 1,
             ),
-
             const SizedBox(height: 20),
-
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                if (_currentIndex == 1) ...[
-                  SizedBox(
-                    width: 150,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        print("Button 1 on screen 2 pressed");
-                        _nextPage();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade800,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  if (_currentIndex == 1) ...[
+                    SizedBox(
+                      width: 150,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _handleRoleSelection('client'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
+                        child: const Text('Client', style: TextStyle(color: Colors.white)),
                       ),
-                      child: const Text('Client', style: TextStyle(color: Colors.white)),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: 150,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        print("Button 2 on screen 2 pressed");
-                        _nextPage();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade800,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: 150,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _handleRoleSelection('contractor'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
+                        child: const Text('Contractor', style: TextStyle(color: Colors.white)),
                       ),
-                      child: const Text('Contractor', style: TextStyle(color: Colors.white)),
                     ),
-                  ),
-                ] else if (_currentIndex == 4) ...[
-                  SizedBox(
-                    width: 150,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        print("Button 1 on screen 5 pressed");
-                        _nextPage();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade800,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  ] else if (_currentIndex == 4) ...[
+                    SizedBox(
+                      width: 150,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
+                        child: const Text('Login', style: TextStyle(color: Colors.white)),
                       ),
-                      child: const Text('Login', style: TextStyle(color: Colors.white)),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: 150,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        print("Button 2 on screen 5 pressed");
-                        _nextPage();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade800,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: 150,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _navigateToRegister,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
+                        child: const Text('Register', style: TextStyle(color: Colors.white)),
                       ),
-                      child: const Text('Register', style: TextStyle(color: Colors.white)),
                     ),
-                  ),
-                ] else if (_currentIndex != onboardingPages.length - 1) ...[
-                  OnboardingButton(
-                    text: 'Next',
-                    onPressed: _nextPage,
-                  ),
-                  OnboardingSkipButton(onPressed: _skip),
-                ] else ...[
-                  SizedBox(
-                    width: 200,
-                    height: 50,
-                    child: ElevatedButton(
+                  ] else if (_currentIndex != onboardingPages.length - 1) ...[
+                    OnboardingButton(
+                      text: 'Next',
                       onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    ),
+                    OnboardingSkipButton(onPressed: _skip),
+                  ] else ...[
+                    SizedBox(
+                      width: 200,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _nextPage,
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.red.shade800,
                         ),
-                        backgroundColor: Colors.red.shade800,
-                      ),
-                      child: const Text(
-                        'Get Started',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        child: const Text(
+                          'Get Started',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
             const SizedBox(height: 40),
           ],

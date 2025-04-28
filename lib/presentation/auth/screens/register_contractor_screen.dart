@@ -33,7 +33,7 @@ class RegisterContractorPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Log in',
+              'Register contractor',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
