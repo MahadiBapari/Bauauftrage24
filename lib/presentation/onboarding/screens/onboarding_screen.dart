@@ -20,52 +20,57 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPageModel> onboardingPages = [
     OnboardingPageModel(
-      title: "Welcome to Bauaufträge24!",
+      title: "Welcome to Bauaufträge24! page 1",
       description: "Find and manage construction projects easily — anytime, anywhere.",
       imageAsset: "assets/images/welcome.png",
     ),
     OnboardingPageModel(
-      title: "Find Projects & Professionals",
+      title: "Find Projects & Professionals page 2",
       description: "From finding the perfect contractor to discovering new job opportunities, we've got you covered.",
       imageAsset: "assets/images/client_contractor.png",
     ),
     OnboardingPageModel(
-      title: "Get New Contracts Faster",
-      description: "Browse job offers, submit quotes, and grow your business with less hassle.",
-      imageAsset: "assets/images/contractor.png",
-    ),
-    OnboardingPageModel(
-      title: "Find Trusted Professionals",
+      title: "Find Trusted Professionals page 3",
       description: "Post your building project and get offers from verified contractors in just a few clicks.",
       imageAsset: "assets/images/client.png",
     ),
     OnboardingPageModel(
-      title: "Let's Get Started",
+      title: "Get New Contracts Faster page 4",
+      description: "Browse job offers, submit quotes, and grow your business with less hassle.",
+      imageAsset: "assets/images/contractor.png",
+    ),
+    OnboardingPageModel(
+      title: "Let's Get Started page 5",
       description: "Let's get into it together!",
       imageAsset: "assets/images/get_started.png",
     ),
   ];
 
-  void _nextPage() {
-    if (_currentIndex < onboardingPages.length - 1) {
-      setState(() {
-        if (_currentIndex == 1) {
-          // Navigate based on user type
-          if (_userType == 'client') {
-            _currentIndex = 3; // Skip Contractor page
-          } else if (_userType == 'contractor') {
-            _currentIndex = 2; // Skip Client page
-          } else {
-            _currentIndex++;
-          }
-        } else {
-          _currentIndex++;
-        }
-      });
-    } else {
-      Navigator.pushNamed(context, '/login'); // Or your login route
+ void _nextPage() {
+  setState(() {
+    if (_currentIndex == 0) {
+      // Welcome -> ChoosingPage
+      _currentIndex = 1;
+    } 
+    else if (_currentIndex == 1) {
+      // ChoosingPage -> Route based on user type
+      if (_userType == 'client') {
+        _currentIndex = 2; // Go to ClientPage
+      } else if (_userType == 'contractor') {
+        _currentIndex = 3; // Go to ContractorPage
+      }
+    } 
+    else if ((_currentIndex == 2 && _userType == 'client') ||
+             (_currentIndex == 3 && _userType == 'contractor')) {
+      // From either ClientPage or ContractorPage -> GetStarted
+      _currentIndex = 4;
+    } 
+    else if (_currentIndex == 4) {
+      // From GetStarted -> Navigate to login or register
+      Navigator.pushNamed(context, '/login'); // Or your route logic
     }
-  }
+  });
+}
 
   void _previousPage() {
     if (_currentIndex > 0) {
@@ -95,11 +100,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _nextPage(); // Move to the next relevant page
   }
 
+  //indicator login
+  int getVisualIndex(int index) {
+    if (index == 0) return 0; // Welcome
+    if (index == 1) return 1; // ChoosingPage
+    if (index == 2 || index == 3) return 2; // ClientPage OR ContractorPage
+    if (index == 4) return 3; // GetStarted
+    return 0;
+  }
+
+
+  //register navigation
   void _navigateToRegister() {
     if (_userType == 'client') {
       Navigator.pushNamed(context, '/register_client');
     } else if (_userType == 'contractor') {
       Navigator.pushNamed(context, '/register_contractor');
+    } else {
+      Navigator.pushNamed(context, '/register_client');
     }
   }
 
@@ -160,9 +178,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             OnboardingPageIndicator(
-              currentIndex: _currentIndex,
-              pageCount: _userType == null ? onboardingPages.length : onboardingPages.length - 1,
+              currentIndex: getVisualIndex(_currentIndex),  // use visual index here
+              pageCount: 4,
             ),
+
+
+            //role selection
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),

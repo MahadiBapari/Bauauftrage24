@@ -17,7 +17,7 @@ class RegisterClientPage extends StatelessWidget {
           },
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -27,13 +27,13 @@ class RegisterClientPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 143, 23, 15), // Match the color in the image
+                color: Color.fromARGB(255, 143, 23, 15),
               ),
               textAlign: TextAlign.left,
             ),
             const SizedBox(height: 8),
             const Text(
-              'register client',
+              'Registriere dein Konto',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -42,42 +42,103 @@ class RegisterClientPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             TextFormField(
-              decoration: InputDecoration(
-                labelText: 'E-mail',
-                prefixIcon: const Icon(Icons.email_outlined),
+              decoration: const InputDecoration(
+                labelText: 'Gewünschter Benutzername*',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'E-Mail-Adresse*',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 ),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             TextFormField(
-              obscureText: true, // Hide the password
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: const Icon(Icons.visibility_outlined), // Eye icon
+              decoration: const InputDecoration(
+                labelText: 'Vorname',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Nachname',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Telefonnummer*',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                ),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Passwort*',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Passwort bestätigen*',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 ),
               ),
             ),
             const SizedBox(height: 24),
+            Row(
+              children: [
+                Checkbox(
+                  value: false, // You'll likely want to manage this with a stateful widget
+                  onChanged: (bool? value) {
+                    // Handle checkbox state
+                  },
+                ),
+                const Expanded(
+                  child: Text(
+                    'Ich stimme zu Allgemeine Geschäftsbedingungen',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                // Implement your login logic here
-                print('Log in button pressed');
+                // Implement your registration logic here
+                print('Registrieren button pressed');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade800, // Match the button color
+                backgroundColor: Colors.red.shade800,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
               child: const Text(
-                'Log in',
+                'Registrieren',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -88,28 +149,13 @@ class RegisterClientPage extends StatelessWidget {
             const SizedBox(height: 16),
             TextButton(
               onPressed: () {
-                // Implement forgot password logic
-                print('Forgot Password? pressed');
+                // Navigate to the login page
+                print("Login pressed");
+                Navigator.pop(context); // Or Navigator.pushNamed(context, '/login'); if you have that route here
               },
               child: const Text(
-                'Forgot Password?',
+                'Sie haben bereits ein Konto? Login',
                 style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 32),
-        
-            const SizedBox(height: 32),
-            // You can add social login buttons here if needed
-            const Spacer(), // Pushes the register text to the bottom
-            TextButton(
-              onPressed: () {
-                // Navigate to the registration page
-                print("Register pressed");
-                Navigator.pushNamed(context, '/register'); // Assuming you have a '/register' route
-              },
-              child: const Text(
-                "Haven't an account? Register",
-                style: TextStyle(color: Color.fromARGB(255, 143, 23, 15)),
               ),
             ),
           ],
