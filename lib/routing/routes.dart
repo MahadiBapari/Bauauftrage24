@@ -4,6 +4,7 @@ import '../presentation/auth/screens/login_page.dart';
 import '../presentation/auth/screens/register_client_screen.dart';
 import '../presentation/auth/screens/register_contractor_screen.dart';
 import '../presentation/splash/screens/splash_screen.dart';
+import '../presentation/home_page/home_page_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -11,6 +12,8 @@ class AppRoutes {
   static const String login = '/login';
   static const String registerClient = '/register_client';
   static const String registerContractor = '/register_contractor';
+  static const String homePage = '/home';
+
 }
 
 final Map<String, WidgetBuilder> appRoutes = {
@@ -19,4 +22,5 @@ final Map<String, WidgetBuilder> appRoutes = {
   AppRoutes.login: (context) => const LoginPage(),
   AppRoutes.registerClient: (context) => const RegisterClientPage(), 
   AppRoutes.registerContractor: (context) => const RegisterContractorPage(),
+  AppRoutes.homePage: (context) => const HomePageScreen(),
 };

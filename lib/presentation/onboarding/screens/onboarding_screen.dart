@@ -20,27 +20,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPageModel> onboardingPages = [
     OnboardingPageModel(
-      title: "Welcome to Bauaufträge24! page 1",
+      title: "Welcome to Bauaufträge24!",
       description: "Find and manage construction projects easily — anytime, anywhere.",
       imageAsset: "assets/images/welcome.png",
     ),
     OnboardingPageModel(
-      title: "Find Projects & Professionals page 2",
+      title: "Find Projects & Professionals",
       description: "From finding the perfect contractor to discovering new job opportunities, we've got you covered.",
       imageAsset: "assets/images/client_contractor.png",
     ),
     OnboardingPageModel(
-      title: "Find Trusted Professionals page 3",
+      title: "Find Trusted Professionals",
       description: "Post your building project and get offers from verified contractors in just a few clicks.",
       imageAsset: "assets/images/client.png",
     ),
     OnboardingPageModel(
-      title: "Get New Contracts Faster page 4",
+      title: "Get New Contracts Faster",
       description: "Browse job offers, submit quotes, and grow your business with less hassle.",
       imageAsset: "assets/images/contractor.png",
     ),
     OnboardingPageModel(
-      title: "Let's Get Started page 5",
+      title: "Let's Get Started",
       description: "Let's get into it together!",
       imageAsset: "assets/images/get_started.png",
     ),
@@ -67,7 +67,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } 
     else if (_currentIndex == 4) {
       // From GetStarted -> Navigate to login or register
-      Navigator.pushNamed(context, '/login'); // Or your route logic
+      Navigator.pushNamed(context, '/login'); // route logic
     }
   });
 }
