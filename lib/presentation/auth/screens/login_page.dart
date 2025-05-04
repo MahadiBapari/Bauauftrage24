@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         // Handle error.  Important to provide user feedback.
         print('Login failed: ${response.body}'); // Log the error
-        _showErrorSnackBar('Login failed: ${response.body}');
+        _showErrorSnackBar('Login failed: Please complete your registration with email verification');
       }
     } catch (e) {
       // Catch any exceptions, such as network errors.
@@ -170,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        //  Add navigation
+                        Navigator.pushNamed(context, '/register_client');
                       },
                       child: const Text(
                         'Register',
