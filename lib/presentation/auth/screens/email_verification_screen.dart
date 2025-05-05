@@ -25,7 +25,7 @@ class EmailVerificationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'We have sent you an email. Please click on the verification link.',
+                'We have sent you an email. Please click on the verification button.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
