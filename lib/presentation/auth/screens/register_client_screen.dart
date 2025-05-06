@@ -46,7 +46,7 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
           'email': _emailController.text.trim(),
           'first_name': _firstNameController.text.trim(),
           'last_name': _lastNameController.text.trim(),
-          'phone': _phoneController.text.trim(),
+          'user_phone_': _phoneController.text.trim(),
           'password': _passwordController.text,
           'role': 'um_client', // client registration role
         }),
