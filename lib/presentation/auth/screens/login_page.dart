@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
           await prefs.setString('user_email', email);
           await prefs.setString('displayName', displayName); //store display name
 
-          print('Login successful!'); //  Good practice to log
+          print('Login successful!'); 
         Navigator.pushReplacementNamed(context, '/home');
         } else {
           _showError('Invalid response data. User ID is null.');

@@ -119,7 +119,7 @@ class _ProfilePageState extends State<ProfilePageScreen> {
                       _buildProfileOption(
                           context, 'Notifications', Icons.notifications),
                       _buildProfileOption(
-                          context, 'Help & Support', Icons.question_mark), //Changed to question_mark
+                          context, 'Help & Support', Icons.question_mark), 
                       _buildProfileOption(context, 'Logout', Icons.logout),
                     ],
                   ),
@@ -148,7 +148,7 @@ class _ProfilePageState extends State<ProfilePageScreen> {
             ),
             const Spacer(),
             const Icon(Icons.arrow_forward_ios,
-                color: Colors.grey), // Changed to the correct arrow.
+                color: Colors.grey), 
           ],
         ),
       ),
@@ -170,7 +170,7 @@ class _ProfilePageState extends State<ProfilePageScreen> {
             ),
             TextButton(
               onPressed: () async {
-                // Implement your logout logic here
+                // Implement logout logic here
                 // Clear shared preferences, navigate to login, etc.
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.clear(); // Clear all data
