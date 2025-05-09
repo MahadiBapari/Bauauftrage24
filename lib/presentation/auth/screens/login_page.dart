@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:bauauftrage/presentation/home/home_page/home_page_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,18 +14,18 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _passwordVisible = false; 
+  bool _passwordVisible = false;
 
   Future<void> login() async {
     const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/login/';
-    const apiKey = '1234567890abcdef'; 
+    const apiKey = '1234567890abcdef';
 
     try {
       final response = await http.post(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'X-API-KEY': apiKey,
+          'X-API-Key': apiKey,
         },
         body: json.encode({
           'username': _emailController.text,
@@ -32,33 +34,54 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        // Handle success
-        print('Login successful!'); //  Good practice to log
-        Navigator.pushReplacementNamed(context, '/home'); // Go to homepage
+        final responseData = json.decode(response.body);
+
+        // Extract data from the response
+        final userId = responseData['user_id']?.toString();
+        final username = responseData['username'] ??
+            'Unknown User'; // Provide a default
+        final email = responseData['email'] ?? ''; // Provide a default.
+        final displayName = responseData['display_name'] ??
+            ''; // Provide a default
+
+        if (userId != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_id', userId);
+          await prefs.setString('username', username);
+          await prefs.setString('user_email', email);
+          await prefs.setString('displayName', displayName); //store display name
+
+          print('Login successful!'); //  Good practice to log
+        Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          _showError('Invalid response data. User ID is null.');
+        }
       } else {
-        // Handle error.  Important to provide user feedback.
-        print('Login failed: ${response.body}'); // Log the error
-        _showErrorSnackBar('Login failed: Please complete your registration with email verification');
+        _showError('Login failed: ${response.body}');
       }
     } catch (e) {
-      // Catch any exceptions, such as network errors.
-      print('Error during login: $e');
-      _showErrorSnackBar('Error: $e'); // Show error to user
+      _showError('Error: $e');
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Error'),
         content: Text(message),
-        backgroundColor: Colors.red, //  make error more obvious
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
 
   @override
   void dispose() {
-    //  Clean up controllers when the widget is disposed
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -67,19 +90,18 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Match the background
+      backgroundColor: Colors.white,
       body: Padding(
-        padding: const EdgeInsets.all(20.0), // Slightly reduced padding
+        padding: const EdgeInsets.all(20.0),
         child: Center(
-          child: SingleChildScrollView( // Make the whole screen scrollable
+          child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                // Logo (replace with your actual logo asset)
                 Image.asset(
-                  'assets/images/logo.png', //  Placeholder
-                  height: 80, // Adjust as needed
+                  'assets/images/logo.png',
+                  height: 80,
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -87,38 +109,39 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black, // Consistent text color
+                    color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
-                // Email Text Field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'E-mail',
                     hintText: 'Enter your email',
-                    prefixIcon: const Icon(Icons.email_outlined), // Use the outlined version
+                    prefixIcon: const Icon(Icons.email_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   ),
-                  style: const TextStyle(color: Colors.black), // Ensure text color is black
+                  style: const TextStyle(color: Colors.black),
                 ),
                 const SizedBox(height: 16),
-                // Password Text Field
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: !_passwordVisible, // Use the boolean
+                  obscureText: !_passwordVisible,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: 'Enter your password',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton( // Added for password visibility
+                    suffixIcon: IconButton(
                       icon: Icon(
-                        _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                        _passwordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -129,16 +152,16 @@ class _LoginPageState extends State<LoginPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   ),
                   style: const TextStyle(color: Colors.black),
                 ),
                 const SizedBox(height: 24),
-                // Login Button
                 ElevatedButton(
-                  onPressed: login,
+                  onPressed: () => login(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade800, // Match the button color
+                    backgroundColor: Colors.red.shade800,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -149,18 +172,16 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text('Log In'),
                 ),
                 const SizedBox(height: 16),
-                // Forgot Password?
                 TextButton(
                   onPressed: () {
-                    //  Add navigation
+                    // Add forgot password logic
                   },
                   child: const Text(
                     'Forgot Password?',
-                    style: TextStyle(color: Colors.grey), //  color
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Don't have an account? Register
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -175,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: const Text(
                         'Register',
                         style: TextStyle(
-                          color: Color.fromARGB(255, 180, 43, 41), // Match the "Register" color
+                          color: Color.fromARGB(255, 180, 43, 41),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
