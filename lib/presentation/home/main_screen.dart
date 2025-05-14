@@ -111,7 +111,7 @@ class _MainScreenState extends State<MainScreen> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: _bottomNavItems.isNotEmpty
           ? BottomNavigationBar(
-              backgroundColor: const Color.fromARGB(255, 255, 218, 208),
+              backgroundColor: const Color.fromARGB(255, 255, 246, 246),
               items: _bottomNavItems,
               currentIndex: _selectedIndex,
               unselectedItemColor: const Color.fromARGB(255, 126, 30, 23),
