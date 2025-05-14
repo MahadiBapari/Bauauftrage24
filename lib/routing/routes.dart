@@ -5,6 +5,9 @@ import '../presentation/auth/screens/register_client_screen.dart';
 import '../presentation/auth/screens/register_contractor_screen.dart';
 import '../presentation/splash/screens/splash_screen.dart';
 import '../presentation/home/main_screen.dart';
+import '../presentation/home/support_and_help_page/support_and_help_page_screen.dart';
+import '../presentation/home/my_favourite_page/my_favourite_page_screen.dart';
+import '../presentation/home/my_membership_page/my_membership_page_screen.dart'; // Add import
 
 class AppRoutes {
   static const String splash = '/';
@@ -13,14 +16,27 @@ class AppRoutes {
   static const String registerClient = '/register_client';
   static const String registerContractor = '/register_contractor';
   static const String home = '/home';
-
+  static const String supportAndHelp = '/support_and_help';
+  static const String myContractor = '/my_contractor';
+  static const String myMembership = '/my_membership'; // Add route
 }
 
 final Map<String, WidgetBuilder> appRoutes = {
   AppRoutes.splash: (context) => const SplashScreen(),
   AppRoutes.onboarding: (context) => const OnboardingScreen(),
   AppRoutes.login: (context) => const LoginPage(),
-  AppRoutes.registerClient: (context) => const RegisterClientPage(), 
+  AppRoutes.registerClient: (context) => const RegisterClientPage(),
   AppRoutes.registerContractor: (context) => const RegisterContractorPage(),
-  AppRoutes.home: (context) => const MainScreen(),
+  AppRoutes.home: (context) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map<
+        String,
+        dynamic>?;
+    final role = args?['role'] ??
+        'um_contractor';
+    return MainScreen(role: role);
+  },
+  AppRoutes.supportAndHelp: (context) => const SupportAndHelpPageScreen(),
+  AppRoutes.myContractor: (context) => const MyFavouritePageScreen(),
+  AppRoutes.myMembership: (context) => const MyMembershipPageScreen(), // Map route
 };
+

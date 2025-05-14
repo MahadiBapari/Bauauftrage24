@@ -41,18 +41,23 @@ class _LoginPageState extends State<LoginPage> {
         final username = responseData['username'] ??
             'Unknown User'; // Provide a default
         final email = responseData['email'] ?? ''; // Provide a default.
-        final displayName = responseData['display_name'] ??
-            ''; // Provide a default
+        final displayName = responseData['display_name'] ??'';
+        final role = responseData['role'];
 
         if (userId != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_id', userId);
           await prefs.setString('username', username);
           await prefs.setString('user_email', email);
-          await prefs.setString('displayName', displayName); //store display name
+          await prefs.setString('displayName', displayName);
+          await prefs.setString('user_role', role);
 
           print('Login successful!'); 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/home', arguments: {
+          'role': role,
+        });
+        } else if (responseData['error'] != null) {
+          _showError('Login failed: ${responseData['error']}');
         } else {
           _showError('Invalid response data. User ID is null.');
         }
