@@ -6,14 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfilePageScreen extends StatefulWidget {
-  const ProfilePageScreen({super.key});
+class ProfilePageScreenClient extends StatefulWidget {
+  const ProfilePageScreenClient({super.key});
 
   @override
-  State<ProfilePageScreen> createState() => _ProfilePageState();
+  State<ProfilePageScreenClient> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePageScreen> {
+class _ProfilePageState extends State<ProfilePageScreenClient> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
   final String apiKey = '1234567890abcdef';
@@ -239,27 +239,6 @@ Widget build(BuildContext context) {
                         _userData!['meta_data']?['user_phone']?[0] ??
                             'No phone number',
                         Icons.phone,
-                      ),
-                      _buildInfoRow(
-                        context,
-                        'Firm Name',
-                        _userData!['meta_data']?['firmenname']?[0] ??
-                            'No firm name',
-                        Icons.business,
-                      ),
-                      _buildInfoRow(
-                        context,
-                        'UID Number',
-                        _userData!['meta_data']?['uid_nummer']?[0] ??
-                            'No UID number',
-                        Icons.badge,
-                      ),
-                      _buildInfoRow(
-                        context,
-                        'Available Time',
-                        _userData!['meta_data']?['available_time']?[0] ??
-                            'No Available time',
-                        Icons.access_time,
                       ),
 
                       const SizedBox(height: 30),

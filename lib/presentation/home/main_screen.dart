@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page/home_page_screen.dart';
-import '../home/profile_page/profile_page_screen.dart';
+import '../home/profile_page/profile_page_screen_contractor.dart';
+import '../home/profile_page/profile_page_screen_client.dart';
 import '../home/my_favourite_page/my_favourite_page_screen.dart';
 import '../home/all_orders_page/all_orders_page_screen.dart';
 import '../home/add_new_order_page/add_new_order_page_screen.dart';
@@ -30,7 +31,7 @@ class _MainScreenState extends State<MainScreen> {
     if (widget.role == 'um_client') {
       _screens = [
         const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreen(key: ValueKey('profile_page')),
+        const ProfilePageScreenClient(key: ValueKey('profile_page')),
         const AddNewOrderPageScreen(key: ValueKey('add_new_order_page')),
         const MyOrderPageScreen(key: ValueKey('my_order_page')),
       ];
@@ -44,7 +45,7 @@ class _MainScreenState extends State<MainScreen> {
     } else if (widget.role == 'um_contractor') {
       _screens = [
         const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreen(key: ValueKey('profile_page')),
+        const ProfilePageScreenContractor(key: ValueKey('profile_page')),
         const MyFavouritePageScreen(key: ValueKey('my_favourite_page')),
         const AllOrdersPageScreen(key: ValueKey('all_orders_page')),
       ];
@@ -58,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
     } else {
       _screens = [
         const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreen(key: ValueKey('profile_page')),
+        const ProfilePageScreenClient(key: ValueKey('profile_page')),
       ];
       _bottomNavItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -114,7 +115,7 @@ class _MainScreenState extends State<MainScreen> {
               backgroundColor: const Color.fromARGB(255, 255, 246, 246),
               items: _bottomNavItems,
               currentIndex: _selectedIndex,
-              unselectedItemColor: const Color.fromARGB(255, 126, 30, 23),
+              unselectedItemColor: const Color.fromARGB(255, 88, 4, 1),
               selectedItemColor: const Color.fromARGB(255, 61, 14, 10),
               onTap: _onItemTapped,
             )
