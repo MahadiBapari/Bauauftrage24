@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/edit_profile_form_client.dart';
 
 class ProfilePageScreenClient extends StatefulWidget {
   const ProfilePageScreenClient({super.key});
@@ -16,7 +17,7 @@ class ProfilePageScreenClient extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePageScreenClient> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-  final String apiKey = '1234567890abcdef';
+  final String apiKey = '1234567890abcdef'; // Replace with your actual API key.
   File? _pickedImage;
   final ImagePicker _picker = ImagePicker();
 
@@ -46,7 +47,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
     }
 
     final url =
-        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId';
+        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId'; // Use your actual user data endpoint
 
     try {
       final response = await http.get(
@@ -103,7 +104,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
     }
 
     final url =
-        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$userId';
+        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$userId'; // Use your actual update endpoint
 
     final request = http.MultipartRequest('POST', Uri.parse(url))
       ..headers['X-API-Key'] = apiKey
@@ -142,191 +143,186 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
       ),
     );
   }
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : _userData == null
-            ? const Center(child: Text('No user data available'))
-            : SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: Stack(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 6,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: CircleAvatar(
-                                radius: 55,
-                                backgroundColor: Colors.white,
-                                backgroundImage: _pickedImage != null
-                                    ? FileImage(_pickedImage!)
-                                    : (_userData?['meta_data']
-                                                    ?['profile-picture'] !=
-                                                null &&
-                                            (_userData!['meta_data']
-                                                    ['profile-picture']
-                                                as List)
-                                                .isNotEmpty)
-                                        ? NetworkImage(
-                                            _userData!['meta_data']
-                                                ['profile-picture'][0])
-                                        : null,
-                                child: _pickedImage == null &&
-                                        (_userData?['meta_data']
-                                                    ?['profile-picture'] ==
-                                                null ||
-                                            (_userData!['meta_data']
-                                                    ['profile-picture']
-                                                as List)
-                                                .isEmpty)
-                                    ? const Icon(Icons.person, size: 50)
-                                    : null,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 4,
-                              right: 4,
-                              child: GestureDetector(
-                                onTap: _pickImageFromGallery,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                  child: const Icon(Icons.camera_alt,
-                                      size: 18, color: Colors.white),
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _userData == null
+              ? const Center(child: Text('No user data available'))
+              : SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    const BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 55,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: _pickedImage != null
+                                      ? FileImage(_pickedImage!)
+                                      : (_userData?['meta_data']
+                                                  ?['profile-picture'] !=
+                                              null &&
+                                          (_userData!['meta_data']
+                                                  ['profile-picture']
+                                              as List)
+                                              .isNotEmpty)
+                                          ? NetworkImage(
+                                              _userData!['meta_data']
+                                                  ['profile-picture'][0])
+                                          : null,
+                                  child: _pickedImage == null &&
+                                          (_userData?['meta_data']
+                                                  ?['profile-picture'] ==
+                                              null ||
+                                              (_userData!['meta_data']
+                                                      ['profile-picture']
+                                                  as List)
+                                                  .isEmpty)
+                                      ? const Icon(Icons.person, size: 50)
+                                      : null,
                                 ),
                               ),
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: _pickImageFromGallery,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    child: const Icon(Icons.camera_alt,
+                                        size: 18, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _userData!['display_name'] ?? 'No name',
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 30),
+                        const SizedBox(height: 12),
+                        Text(
+                          '${_userData!['meta_data']?['first_name']?[0] ?? ''} ${_userData!['meta_data']?['last_name']?[0] ?? ''}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
 
-                      // SECTION: Personal Information
-                      _buildSectionTitle('Personal Information'),
-                      _buildInfoRow(
-                        context,
-                        'Email',
-                        _userData!['user_email'] ?? 'No email',
-                        Icons.email,
-                      ),
-                      _buildInfoRow(
-                        context,
-                        'Phone',
-                        _userData!['meta_data']?['user_phone']?[0] ??
-                            'No phone number',
-                        Icons.phone,
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // SECTION: Utilities
-                      _buildSectionTitle('Utilities'),
-                      _buildProfileOption(
-                        context,
-                        'Help & Support',
-                        Icons.question_mark,
-                      ),
-                      _buildProfileOption(
-                        context,
-                        'Logout',
-                        Icons.logout,
-                      ),
-                    ],
+                        const SizedBox(height: 30),
+                        _buildSectionTitle(
+                          'Personal Information',
+                          onEditTap: () {
+                            // Show the Edit Profile Form in a dialog.
+                            showDialog(
+                              context: context,
+                              builder: (context) => EditProfileFormClient(
+                                userData: _userData!,
+                                onProfileUpdated:
+                                    _loadUserData, // Pass the callback
+                              ),
+                            );
+                          },
+                        ),
+                        _buildInfoRow(
+                          context,
+                          'Email',
+                          _userData!['user_email'] ?? 'No email',
+                          Icons.email,
+                        ),
+                        _buildInfoRow(
+                          context,
+                          'Phone',
+                          _userData!['meta_data']?['user_phone']?[0] ??
+                              'No phone number',
+                          Icons.phone,
+                        ),
+                        const SizedBox(height: 30),
+                        _buildSectionTitle('Utilities'),
+                        _buildProfileOption(
+                          context,
+                          'Help & Support',
+                          Icons.question_mark,
+                        ),
+                        _buildProfileOption(
+                          context,
+                          'Logout',
+                          Icons.logout,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+    );
+  }
+
+  // Refactored _buildSectionTitle to accept an onEditTap callback.
+  Widget _buildSectionTitle(String title, {VoidCallback? onEditTap}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
               ),
-  );
-}
-
-Widget _buildSectionTitle(String title) {
-  return Align(
-    alignment: Alignment.centerLeft,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade700,
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _buildInfoRow(
-  BuildContext context,
-  String title,
-  String value,
-  IconData icon,
-) {
-  return Card(
-    elevation: 1.5,
-    margin: const EdgeInsets.symmetric(vertical: 6),
-    color: const Color(0xFFF8F8F8),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: Row(
-        children: [
-          Icon(icon, color: Color.fromARGB(255, 88, 4, 1)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500)),
-                Text(value,
-                    style: TextStyle(
-                        fontSize: 15, color: const Color.fromARGB(255, 121, 105, 105))),
-              ],
             ),
           ),
-        ],
-      ),
-    ),
-  );
-}
+        ),
+        if (onEditTap != null) // Conditionally show the edit button
+          InkWell(
+            onTap: onEditTap,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.edit,
+                      size: 18, color: Colors.grey), // Added edit icon
+                  const SizedBox(width: 4),
+                  Text(
+                    'Edit',
+                    style: TextStyle(color: Theme.of(context).primaryColor),
+                  ), // Added "Edit" text
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 
-Widget _buildProfileOption(
-  BuildContext context,
-  String title,
-  IconData icon,
-) {
-  return GestureDetector(
-    onTap: () {
-      if (title == 'Logout') {
-        _handleLogout(context);
-      }
-    },
-    child: Card(
+  Widget _buildInfoRow(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
+    return Card(
       elevation: 1.5,
       margin: const EdgeInsets.symmetric(vertical: 6),
       color: const Color(0xFFF8F8F8),
@@ -335,18 +331,60 @@ Widget _buildProfileOption(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
           children: [
-            Icon(icon, color: Color.fromARGB(255, 88, 4, 1)),
+            Icon(icon, color: const Color.fromARGB(255, 88, 4, 1)),
             const SizedBox(width: 16),
-            Text(title, style: const TextStyle(fontSize: 16)),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Color.fromARGB(255, 243, 239, 239)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: const Color.fromARGB(255, 121, 105, 105))),
+                ],
+              ),
+            ),
           ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
+  Widget _buildProfileOption(
+    BuildContext context,
+    String title,
+    IconData icon,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        if (title == 'Logout') {
+          _handleLogout(context);
+        }
+      },
+      child: Card(
+        elevation: 1.5,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        color: const Color(0xFFF8F8F8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Row(
+            children: [
+              Icon(icon, color: const Color.fromARGB(255, 88, 4, 1)),
+              const SizedBox(width: 16),
+              Text(title, style: const TextStyle(fontSize: 16)),
+              const Spacer(),
+              const Icon(Icons.arrow_forward_ios,
+                  size: 16, color: Color.fromARGB(255, 243, 239, 239)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   void _handleLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
