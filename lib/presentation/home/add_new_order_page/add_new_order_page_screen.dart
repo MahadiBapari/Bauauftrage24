@@ -93,6 +93,28 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
     }
   }
 
+    Future<int?> uploadImage(File imageFile) async {
+      final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media');
+      final request = http.MultipartRequest('POST', url)
+      ..headers.addAll({
+      'Authorization': 'Bearer $_authToken',
+      'X-API-Key': _apiKey,
+      'Content-Disposition': 'attachment; filename="${path.basename(imageFile.path)}"',
+      })
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 201) {
+      final data = jsonDecode(responseBody);
+      return data['id']; 
+      } else {
+      print('Image upload failed: $responseBody');
+      return null;
+      }
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
@@ -107,6 +129,16 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
 
   setState(() => _isSubmitting = true);
 
+      int? imageId;
+      if (_selectedImage != null) {
+        imageId = await uploadImage(_selectedImage!);
+          if (imageId == null) {
+          _showError("Image upload failed.");
+          setState(() => _isSubmitting = false);
+          return;
+          }
+      }
+
   final Map<String, dynamic> postData = {
     "title": _titleController.text,
     "content": _descriptionController.text,
@@ -115,6 +147,7 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
       "address_1": _streetController.text,
       "address_2": _postalCodeController.text,
       "address_3": _cityController.text,
+      if (imageId != null) "order_gallery": [imageId],
     },
     "order-categories": _selectedCategories,
   };
@@ -140,17 +173,17 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
         }
     }
 
-    if (_selectedImage != null) {
-      var stream = http.ByteStream(DelegatingStream.typed(_selectedImage!.openRead()));
-      var length = await _selectedImage!.length();
-      var multipartFile = http.MultipartFile(
-        'order_gallery_',
-        stream,
-        length,
-        filename: path.basename(_selectedImage!.path),
-      );
-      request.files.add(multipartFile);
-    }
+    // if (_selectedImage != null) {
+    //   var stream = http.ByteStream(DelegatingStream.typed(_selectedImage!.openRead()));
+    //   var length = await _selectedImage!.length();
+    //   var multipartFile = http.MultipartFile(
+    //     'order_gallery_',
+    //     stream,
+    //     length,
+    //     filename: path.basename(_selectedImage!.path),
+    //   );
+    //   request.files.add(multipartFile);
+    // }
 
     print("Request Headers: ${request.headers}");
     print("Request Fields: ${request.fields}");
