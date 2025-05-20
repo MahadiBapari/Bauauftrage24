@@ -1,24 +1,34 @@
 import 'dart:convert';
-import 'package:bauauftrage/presentation/home/home_page/home_page_screen.dart';
+import 'dart:io';
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordVisible = false;
+  bool _isLoading = false; 
 
   Future<void> login() async {
     const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/login/';
     const apiKey = '1234567890abcdef';
+
+    if (_isLoading) return;  // Prevent multiple login attempts
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final response = await http.post(
@@ -36,40 +46,47 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
 
-        // Extract data from the response
         final userId = responseData['user_id']?.toString();
-        final username = responseData['username'] ??
-            'Unknown User'; // Provide a default
-        final email = responseData['email'] ?? ''; // Provide a default.
-        final displayName = responseData['display_name'] ??'';
+        final username = responseData['username'] ?? 'Unknown User';
+        final email = responseData['email'] ?? '';
+        final displayName = responseData['display_name'] ?? '';
         final role = responseData['role'];
+        final token = responseData['token'];
 
-        if (userId != null) {
+        if (userId != null && token != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_id', userId);
           await prefs.setString('username', username);
           await prefs.setString('user_email', email);
           await prefs.setString('displayName', displayName);
           await prefs.setString('user_role', role);
+          await prefs.setString('auth_token', token);
 
-          print('Login successful!'); 
-        Navigator.pushReplacementNamed(context, '/home', arguments: {
-          'role': role,
-        });
+          print('Login successful! Token: $token'); //debugging
+          Navigator.pushReplacementNamed(context, '/home', arguments: {
+            'role': role,
+          });
         } else if (responseData['error'] != null) {
           _showError('Login failed: ${responseData['error']}');
         } else {
-          _showError('Invalid response data. User ID is null.');
+          _showError('Invalid response data. User ID or token is missing.');
         }
       } else {
         _showError('Login failed: ${response.body}');
       }
     } catch (e) {
       _showError('Error: $e');
+    } finally {
+      if (mounted) { //check mounted
+         setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   void _showError(String message) {
+    if (!mounted) return; //check mounted
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -164,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () => login(),
+                  onPressed: _isLoading ? null : () => login(), 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade800,
                     foregroundColor: Colors.white,
@@ -174,7 +191,12 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     textStyle: const TextStyle(fontSize: 18),
                   ),
-                  child: const Text('Log In'),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          strokeWidth: 2,
+                        )
+                      : const Text('Log In'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
@@ -216,4 +238,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
