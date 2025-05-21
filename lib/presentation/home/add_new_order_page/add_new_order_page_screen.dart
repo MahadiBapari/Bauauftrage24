@@ -26,7 +26,7 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
   final _picker = ImagePicker();
   final String _apiKey = '1234567890abcdef';
   String? _authToken;
-  File? _selectedImage;
+  List<File> _selectedImages = [];
   List<String> _selectedCategories = [];
   bool _isSubmitting = false;
 
@@ -65,63 +65,88 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
     print("Retrieved Token in AddNewOrderPage: $_authToken");
   }
 
-  Future<void> _pickImage() async {
-    final source = await showModalBottomSheet<ImageSource?>(
-      context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.photo),
-            title: const Text("Gallery"),
-            onTap: () => Navigator.pop(context, ImageSource.gallery),
-          ),
-          ListTile(
-            leading: const Icon(Icons.camera),
-            title: const Text("Camera"),
-            onTap: () => Navigator.pop(context, ImageSource.camera),
-          ),
-        ],
-      ),
-    );
+Future<void> _pickImages() async {
+  final source = await showModalBottomSheet<ImageSource?>(
+    context: context,
+    builder: (_) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.photo),
+          title: const Text("Gallery"),
+          onTap: () => Navigator.pop(context, ImageSource.gallery),
+        ),
+        ListTile(
+          leading: const Icon(Icons.camera),
+          title: const Text("Camera"),
+          onTap: () => Navigator.pop(context, ImageSource.camera),
+        ),
+      ],
+    ),
+  );
 
-    if (source != null) {
-      final XFile? picked = await _picker.pickImage(source: source);
-      if (picked != null) {
-        setState(() => _selectedImage = File(picked.path));
-      }
+  if (source == ImageSource.gallery) {
+    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+    if (pickedFiles != null) {
+      setState(() {
+        _selectedImages.addAll(pickedFiles.map((xfile) => File(xfile.path)));
+      });
+    }
+  } else if (source == ImageSource.camera) {
+    if (source == null) return;
+
+    final XFile? picked = await _picker.pickImage(source: source);
+    if (picked != null) {
+      setState(() {
+        _selectedImages.add(File(picked.path));
+      });
     }
   }
+}
 
-    Future<int?> uploadImage(File imageFile) async {
+
+Future<List<int>> uploadImages(List<File> imageFiles) async {
+  List<int> uploadedIds = [];
+
+  for (final imageFile in imageFiles) {
+    try {
       final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media');
       final request = http.MultipartRequest('POST', url)
-      ..headers.addAll({
-      'Authorization': 'Bearer $_authToken',
-      'X-API-Key': _apiKey,
-      'Content-Disposition': 'attachment; filename="${path.basename(imageFile.path)}"',
-      })
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+        ..headers.addAll({
+          'Authorization': 'Bearer $_authToken',
+          'X-API-Key': _apiKey,
+          'Content-Disposition': 'attachment; filename="${path.basename(imageFile.path)}"',
+        })
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 201) {
-      final data = jsonDecode(responseBody);
-      return data['id']; 
+        final data = jsonDecode(responseBody);
+        final mediaId = data['id'];
+        uploadedIds.add(mediaId);
       } else {
-      print('Image upload failed: $responseBody');
-      return null;
+        print('Image upload failed with status ${response.statusCode}: $responseBody');
       }
+    } catch (e) {
+      print('Exception during image upload for ${imageFile.path}: $e');
+    }
   }
+
+  return uploadedIds;
+}
+
+
 
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _submitForm() async {
+Future<void> _submitForm() async {
   if (!_formKey.currentState!.validate()) return;
+
   if (_authToken == null) {
     _showError("Authentication required. Please log in.");
     return;
@@ -129,79 +154,76 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
 
   setState(() => _isSubmitting = true);
 
-      int? imageId;
-      if (_selectedImage != null) {
-        imageId = await uploadImage(_selectedImage!);
-          if (imageId == null) {
-          _showError("Image upload failed.");
-          setState(() => _isSubmitting = false);
-          return;
-          }
-      }
+// Declare imageId as a List<int>? or List<int>
+// If you declare it as `List<int> imageId;` it cannot be null initially unless assigned later.
+// A common pattern is to make it nullable if it might not always have a value.
+// Perform the image upload and get the IDs
+List<int>? uploadedImageIds;
+try {
+  if (_selectedImages.isNotEmpty) {
+    uploadedImageIds = await uploadImages(_selectedImages);
+  }
+} catch (e) {
+  print('Error uploading images: $e');
+  // Handle the error appropriately, e.g., show a user-friendly message
+  // _showError("Failed to upload images. Please try again.");
+  return; // Stop execution if image upload fails
+}
 
-  final Map<String, dynamic> postData = {
-    "title": _titleController.text,
-    "content": _descriptionController.text,
-    "status": "publish",
-    "meta": {
-      "address_1": _streetController.text,
-      "address_2": _postalCodeController.text,
-      "address_3": _cityController.text,
-      if (imageId != null) "order_gallery": [imageId],
-    },
-    "order-categories": _selectedCategories,
-  };
+// Now, construct the postData map
+final Map<String, dynamic> postData = {
+  "title": _titleController.text,
+  "content": _descriptionController.text,
+  "status": "publish",
+  "meta": {
+    "address_1": _streetController.text,
+    "address_2": _postalCodeController.text,
+    "address_3": _cityController.text,
+    // Corrected: Use uploadedImageIds and transform it for "order_gallery"
+    if (uploadedImageIds != null && uploadedImageIds.isNotEmpty)
+      "order_gallery": uploadedImageIds.map((id) => {"id": id}).toList(),
+  },
+  "order-categories": _selectedCategories.map((e) => int.parse(e)).toList(),
+};
+
+
 
   final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order');
 
   try {
-    var request = http.MultipartRequest('POST', url);
-    request.headers['X-API-Key'] = _apiKey;
-    request.headers['Authorization'] = 'Bearer $_authToken';
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_authToken',
+        'X-API-Key': _apiKey,
+      },
+      body: jsonEncode(postData),
+    );
 
-    request.fields['title'] = postData['title'];
-    request.fields['content'] = postData['content'];
-    request.fields['status'] = postData['status'];
-    request.fields['meta[address_1]'] = (postData['meta'] as Map)['address_1'];
-    request.fields['meta[address_2]'] = (postData['meta'] as Map)['address_2'];
-    request.fields['meta[address_3]'] = (postData['meta'] as Map)['address_3'];
+      if (response.statusCode == 201) {
+        if (!mounted) return; // Check if the widget is still mounted before interacting with the UI
 
-    // ✅ Correct way: Add multiple order-categories[] fields
-    if (_selectedCategories.isNotEmpty) {
-      for (var i = 0; i < _selectedCategories.length; i++) {
-          request.fields['order-categories[$i]'] = _selectedCategories[i];
-        }
-    }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order submitted and published successfully!')),
+        );
 
-    // if (_selectedImage != null) {
-    //   var stream = http.ByteStream(DelegatingStream.typed(_selectedImage!.openRead()));
-    //   var length = await _selectedImage!.length();
-    //   var multipartFile = http.MultipartFile(
-    //     'order_gallery_',
-    //     stream,
-    //     length,
-    //     filename: path.basename(_selectedImage!.path),
-    //   );
-    //   request.files.add(multipartFile);
-    // }
+        // Reset the form fields managed by _formKey
+        _formKey.currentState!.reset();
 
-    print("Request Headers: ${request.headers}");
-    print("Request Fields: ${request.fields}");
+        setState(() {
+          // Clear the selected categories list
+          _selectedCategories.clear();
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+          // Corrected: Clear the _selectedImages list instead of assigning null
+          _selectedImages.clear(); // This is the most common and robust solution
+          // OR if _selectedImages was declared as List<File>?, then:
+          // _selectedImages = null; // This would also be valid if the type is nullable
+        });
 
-    if (response.statusCode == 201) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order submitted and published successfully!')),
-      );
-      _formKey.currentState!.reset();
-      setState(() {
-        _selectedCategories.clear();
-        _selectedImage = null;
-      });
-    } else {
+    // Optionally, you might want to navigate back or to another screen
+    // Navigator.of(context).pop(); // Example: go back to the previous screen
+  } else {
       final data = jsonDecode(response.body);
       _showError(data['message'] ?? 'Submission failed. Status Code: ${response.statusCode}');
     }
@@ -212,6 +234,7 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
     setState(() => _isSubmitting = false);
   }
 }
+
 
   @override
   void dispose() {
@@ -271,12 +294,28 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
                 const SizedBox(height: 10),
                 if (_selectedCategories.isNotEmpty) _buildSelectedChips(),
                 const SizedBox(height: 20),
-                _buildImagePicker(),
-                if (_selectedImage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Image.file(_selectedImage!, height: 100),
+               _buildImagePicker(),
+                if (_selectedImages != null && _selectedImages.isNotEmpty) // Check if the list exists and is not empty
+                  SizedBox( // Use SizedBox to give the ListView a constrained height
+                    height: 100, // Adjust this height as needed for your image previews
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal, // Makes the list scroll horizontally
+                      itemCount: _selectedImages.length,
+                      itemBuilder: (context, index) {
+                        final imageFile = _selectedImages[index]; // Get the individual File object
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0), // Add horizontal spacing between images
+                          child: Image.file(
+                            imageFile, // Pass the single File object
+                            height: 90, // Adjust individual image height (slightly less than SizedBox height)
+                            width: 90, // Maintain aspect ratio or adjust as needed
+                            fit: BoxFit.cover, // Or BoxFit.contain, etc., depending on desired scaling
+                          ),
+                        );
+                      },
+                    ),
                   ),
+               
                 const SizedBox(height: 20),
                 _buildTextField(_streetController, 'Street & House Number', true),
                 const SizedBox(height: 20),
@@ -341,23 +380,57 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
   }
 
   Widget _buildImagePicker() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ElevatedButton(
-          onPressed: _pickImage,
-          child: const Text('Choose Image'),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: _pickImages,
+              child: const Text('Choose Images'),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _selectedImages.isEmpty
+                    ? 'No images chosen'
+                    : '${_selectedImages.length} image(s) selected',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            _selectedImage == null
-                ? 'No file chosen'
-                : path.basename(_selectedImage!.path),
-            overflow: TextOverflow.ellipsis,
+        if (_selectedImages.isNotEmpty)
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, index) {
+                return Stack(
+                  children: [
+                    Image.file(_selectedImages[index], height: 100),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _selectedImages.removeAt(index);
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
+
 }
 
