@@ -66,6 +66,18 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         children: [
           ...menuItems,
+
+          // Partners Tile (shown to both roles)
+          ListTile(
+            leading: const Icon(Icons.group),
+            title: const Text('Partners'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/partners');
+            },
+          ),
+
+          // My Membership (contractors only)
           if (role == 'um_contractor')
             ListTile(
               leading: const Icon(Icons.card_membership),
@@ -75,6 +87,8 @@ class AppDrawer extends StatelessWidget {
                 onNavigateToMyMembership?.call();
               },
             ),
+
+          // Support
           ListTile(
             leading: const Icon(Icons.help),
             title: const Text('Support and help'),
@@ -83,6 +97,8 @@ class AppDrawer extends StatelessWidget {
               onNavigateToSupport?.call();
             },
           ),
+
+          // Logout
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
