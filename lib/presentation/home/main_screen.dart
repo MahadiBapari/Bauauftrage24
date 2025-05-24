@@ -47,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
         const HomePageScreen(key: ValueKey('home_page')),
         const ProfilePageScreenContractor(key: ValueKey('profile_page')),
         const MyFavouritePageScreen(key: ValueKey('my_favourite_page')),
-        const AllOrdersPageScreen(key: ValueKey('all_orders_page')),
+        AllOrdersPageScreen(key: ValueKey('all_orders_page'))
       ];
 
       _bottomNavItems = const [

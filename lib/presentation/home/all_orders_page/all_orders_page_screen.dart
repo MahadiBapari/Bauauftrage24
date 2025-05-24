@@ -1,101 +1,129 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'single_order_page_screen.dart';
 
 class AllOrdersPageScreen extends StatefulWidget {
+
   const AllOrdersPageScreen({super.key});
 
   @override
-  State<AllOrdersPageScreen> createState() => _AllOrdersPageScreenState();
+  _AllOrdersPageScreenState createState() => _AllOrdersPageScreenState();
 }
 
 class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   List<dynamic> _orders = [];
-  Map<int, String> _categoryMap = {};
-  bool _isLoading = true;
-
-  final String ordersUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order';
-  final String categoriesUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
-  final String apiKey = 'YOUR_API_KEY_HERE'; // Replace with your actual API key
+  Map<int, String> _orderImages = {};
 
   @override
   void initState() {
     super.initState();
-    fetchData();
+    fetchOrders();
   }
 
-  Future<void> fetchData() async {
-    try {
-      final categoriesResponse = await http.get(Uri.parse(categoriesUrl));
-      if (categoriesResponse.statusCode == 200) {
-        List<dynamic> categories = jsonDecode(categoriesResponse.body);
-        _categoryMap = {
-          for (var cat in categories) cat['id']: cat['name']
-        };
-      }
+  Future<void> fetchOrders() async {
+    final response = await http.get(Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order'));
 
-      final ordersResponse = await http.get(
-        Uri.parse(ordersUrl),
-        headers: {'X-API-KEY': apiKey},
-      );
-      if (ordersResponse.statusCode == 200) {
-        setState(() {
-          _orders = jsonDecode(ordersResponse.body);
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to fetch orders');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+
+      setState(() {
+        _orders = data;
+      });
+
+      for (var order in data) {
+        List<dynamic> gallery = order['meta']?['order_gallery'] ?? [];
+        if (gallery.isNotEmpty) {
+          int firstImageId = gallery[0]['id'];
+
+          final mediaUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$firstImageId';
+          final mediaResponse = await http.get(Uri.parse(mediaUrl));
+
+          if (mediaResponse.statusCode == 200) {
+            final mediaData = jsonDecode(mediaResponse.body);
+            final imageUrl = mediaData['media_details']?['sizes']?['full']?['source_url'] ?? mediaData['source_url'];
+
+            setState(() {
+              _orderImages[order['id']] = imageUrl;
+            });
+          } else {
+            print('Failed to fetch image metadata for ID: $firstImageId');
+          }
+        } else {
+          print('No images found in gallery for order ${order['id']}');
+        }
       }
-    } catch (e) {
-      print('Error: $e');
-      setState(() => _isLoading = false);
+    } else {
+      print('Failed to load orders: ${response.statusCode}');
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_orders.isEmpty) return const Center(child: Text('No orders found.'));
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('All Orders')),
+    body: _orders.isEmpty
+        ? const Center(child: CircularProgressIndicator())
+        : ListView.builder(
+            itemCount: _orders.length,
+            itemBuilder: (context, index) {
+              final order = _orders[index];
+              final imageUrl = _orderImages[order['id']];
 
-    return ListView.builder(
-      itemCount: _orders.length,
-      itemBuilder: (context, index) {
-        final order = _orders[index];
-        final meta = order['meta'] ?? {};
-        final contentHtml = order['content']?['rendered'] ?? '';
-        final title = order['title']?['rendered'] ?? 'No title';
-
-        // Convert category IDs to names
-        List<int> categoryIds = List<int>.from(order['order-categories'] ?? []);
-        String categoryNames = categoryIds
-            .map((id) => _categoryMap[id] ?? 'Unknown')
-            .join(', ');
-
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text('Categories: $categoryNames'),
-                Text('Street Address: ${meta['address_1'] ?? 'N/A'}'),
-                Text('Postal Code: ${meta['address_2'] ?? 'N/A'}'),
-                Text('City: ${meta['address_3'] ?? 'N/A'}'),
-                const SizedBox(height: 8),
-                const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(_stripHtml(contentHtml)),
-              ],
-            ),
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                elevation: 3,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SingleOrderPageScreen(order: order),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          order['title']['rendered'],
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        imageUrl != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  imageUrl,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image),
+                                ),
+                              )
+                            : Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.image_not_supported,
+                                    size: 50, color: Colors.grey),
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-        );
-      },
-    );
-  }
+  );
+}
 
-  String _stripHtml(String html) {
-    return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
-  }
 }
