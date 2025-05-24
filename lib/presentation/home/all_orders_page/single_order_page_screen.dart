@@ -22,7 +22,7 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
   final String mediaUrlBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
   final String usersApiBaseUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/';
   final String categoriesUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
-  final String apiKey = '1234567890abcdef'; // Replace with your actual API key
+  final String apiKey = '1234567890abcdef'; 
 
   @override
   void initState() {
