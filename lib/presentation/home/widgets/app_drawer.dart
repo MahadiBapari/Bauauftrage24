@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../my_order_page/my_order_page_screen.dart'; // Make sure this is imported
 
 class AppDrawer extends StatelessWidget {
   final String role;
@@ -50,7 +51,19 @@ class AppDrawer extends StatelessWidget {
         _buildTile(Icons.home, 'Feed', 0, context),
         _buildTile(Icons.person, 'Profile', 1, context),
         _buildTile(Icons.add_shopping_cart, 'Add new order', 2, context),
-        _buildTile(Icons.shopping_cart, 'My orders', 3, context),
+
+        // 🆕 My Orders (client only)
+        ListTile(
+          leading: const Icon(Icons.shopping_cart),
+          title: const Text('My Orders'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MyOrderPageScreen()),
+            );
+          },
+        ),
       ];
     } else if (role == 'um_contractor') {
       menuItems = [
@@ -67,7 +80,7 @@ class AppDrawer extends StatelessWidget {
         children: [
           ...menuItems,
 
-          // Partners Tile (shown to both roles)
+          // Partners (for both roles)
           ListTile(
             leading: const Icon(Icons.group),
             title: const Text('Partners'),
@@ -77,7 +90,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
 
-          // My Membership (contractors only)
+          // My Membership (contractor only)
           if (role == 'um_contractor')
             ListTile(
               leading: const Icon(Icons.card_membership),
@@ -88,7 +101,7 @@ class AppDrawer extends StatelessWidget {
               },
             ),
 
-          // Support
+          // Support and Help
           ListTile(
             leading: const Icon(Icons.help),
             title: const Text('Support and help'),

@@ -249,7 +249,8 @@ final Map<String, dynamic> postData = {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Order')),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      //appBar: AppBar(title: const Text('Add New Order')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(

@@ -71,6 +71,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(title: const Text('Partners')),
       body: FutureBuilder<List<Partner>>(
         future: _partnersFuture,
@@ -112,6 +113,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
             itemBuilder: (context, index) {
               final partner = partners[index];
               return Card(
+                color: const Color.fromARGB(255, 255, 253, 252),
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(

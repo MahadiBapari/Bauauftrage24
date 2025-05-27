@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../widgets/edit_profile_form_contractor.dart';
+
+import '../widgets/edit_profile_form_contractor.dart'; // Make sure this path is correct
 
 class ProfilePageScreenContractor extends StatefulWidget {
   const ProfilePageScreenContractor({super.key});
@@ -17,25 +18,38 @@ class ProfilePageScreenContractor extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePageScreenContractor> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-  final String apiKey = '1234567890abcdef'; // Replace with your actual API key.
-  File? _pickedImage;
-  final ImagePicker _picker = ImagePicker();
+  File? _pickedImage; // To hold the locally picked image
+  final ImagePicker _picker = ImagePicker(); // Image picker instance
+  final String apiKey = '1234567890abcdef'; // Your actual API key.
+
+  String? _authToken; // Store auth token
+  String? _userId;    // Store user ID
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _initAndLoadUserData(); // Combined initialization and data loading
+  }
+
+  // A new method to handle async initialization for initState
+  Future<void> _initAndLoadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _authToken = prefs.getString('auth_token');
+    _userId = prefs.getString('user_id');
+    await _loadUserData(); // Proceed to load user data from API
   }
 
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id');
+    if (!mounted) return; // Always check mounted before setState or context operations
 
-    if (userId == null) {
+    if (_userId == null) {
       _showError('User ID not found');
+      setState(() => _isLoading = false);
       return;
     }
 
+    // Load local image path first
+    final prefs = await SharedPreferences.getInstance(); // Re-get prefs if needed
     final localImagePath = prefs.getString('local_profile_image_path');
     if (localImagePath != null && localImagePath.isNotEmpty) {
       final localImageFile = File(localImagePath);
@@ -47,7 +61,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
 
     final url =
-        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId'; // Use your actual user data endpoint
+        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$_userId';
 
     try {
       final response = await http.get(
@@ -55,80 +69,192 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': apiKey,
+          if (_authToken != null) 'Authorization': 'Bearer $_authToken',
         },
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
+        // If no local image was picked and the network data has a profile picture,
+        // use the network picture for display.
+        if (_pickedImage == null &&
+            data['meta_data']?['profile-picture'] != null &&
+            (data['meta_data']['profile-picture'] as List).isNotEmpty) {
+          // You could optionally cache the network image locally here if desired.
+        }
+
         setState(() {
           _userData = data;
           _isLoading = false;
         });
       } else {
         _showError('Failed to load profile: ${response.body}');
+        setState(() => _isLoading = false);
       }
     } catch (e) {
-      _showError('Error: $e');
+      if (!mounted) return;
+      _showError('Error loading profile: $e');
+      setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _pickImageFromGallery() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null && image.path.isNotEmpty) {
-      final imagePath = image.path;
-      final imageFile = File(imagePath);
+  // --- UPDATED _pickImage function for single image and autosave ---
+  Future<void> _pickImage() async {
+    final source = await showModalBottomSheet<ImageSource?>(
+      context: context,
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo),
+            title: const Text("Gallery"),
+            onTap: () => Navigator.pop(context, ImageSource.gallery),
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera),
+            title: const Text("Camera"),
+            onTap: () => Navigator.pop(context, ImageSource.camera),
+          ),
+        ],
+      ),
+    );
+
+    if (source == null) return; // User cancelled selection
+
+    // --- Only pick a single image ---
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+
+    if (pickedFile != null && pickedFile.path.isNotEmpty) {
+      final imageFile = File(pickedFile.path);
 
       if (await imageFile.exists()) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('local_profile_image_path', imagePath);
+        await prefs.setString('local_profile_image_path', imageFile.path); // Persist local path
 
+        if (!mounted) return;
         setState(() {
-          _pickedImage = imageFile;
+          _pickedImage = imageFile; // Immediately show the picked image locally
         });
 
-        await _uploadProfileImage(imageFile);
+        // --- AUTOSAVE: Directly trigger upload and link ---
+        await _uploadAndLinkProfileImage(imageFile); // Auto-save
       } else {
+        if (!mounted) return;
         _showError("Selected image does not exist.");
       }
-    } else {
-      _showError("Failed to pick image.");
     }
   }
 
-  Future<void> _uploadProfileImage(File imageFile) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id');
-    if (userId == null) {
-      _showError('User ID not found');
+  // --- _uploadAndLinkProfileImage (orchestrates upload to media library and linking) ---
+  Future<void> _uploadAndLinkProfileImage(File imageFile) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true; // Show loading indicator
+    });
+
+    final mediaId = await _uploadImageToMediaLibrary(imageFile);
+
+    if (mediaId != null) {
+      await _linkProfileImageToUser(mediaId);
+    } else {
+      // Error message already shown by _uploadImageToMediaLibrary if it failed
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Ensure loading state is reset if upload fails
+        });
+      }
+    }
+  }
+
+  // --- _uploadImageToMediaLibrary (uploads to wp/v2/media) ---
+Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
+  
+  try {
+    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media');
+    final request = http.MultipartRequest('POST', url)
+      ..headers.addAll({
+        'Authorization': 'Bearer $_authToken',
+        'X-API-Key': apiKey,
+        'Content-Disposition': 'attachment; filename="${path.basename(imageFile.path)}"',
+      })
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(responseBody);
+      final mediaId = data['id'] as int? ?? 0;// Ensure media ID is an int
+      if (mediaId > 0) {
+        debugPrint('Image uploaded successfully with ID: $mediaId');
+        return mediaId; // Return the media ID for linking
+      } else {
+        debugPrint('Image upload returned no valid media ID: $responseBody');
+        _showError('Image upload failed: No valid media ID returned.');
+        return null;
+      }
+    } else {
+      debugPrint('Image upload failed with status ${response.statusCode}: $responseBody');
+      _showError('Image upload failed: $responseBody');
+      return null;
+    }
+  } catch (e) {
+    debugPrint('Exception during image upload: $e');
+    _showError('Exception during image upload: $e');
+    return null;
+  } // Return the upload ID if needed
+
+}
+
+  // --- _linkProfileImageToUser (links media ID to user meta) ---
+  Future<void> _linkProfileImageToUser(int mediaId) async {
+    if (_userId == null || _authToken == null) {
+      if (mounted) _showError('Missing user ID or token. Cannot update profile.');
+      // setState(() => _isLoading = false); // Will be handled by _uploadAndLinkProfileImage
       return;
     }
 
     final url =
-        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$userId'; // Use your actual update endpoint
-
-    final request = http.MultipartRequest('POST', Uri.parse(url))
-      ..headers['X-API-Key'] = apiKey
-      ..fields['meta_fields[profile-picture]'] = ''
-      ..files.add(await http.MultipartFile.fromPath(
-        'meta_files[profile-picture]',
-        imageFile.path,
-      ));
+        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$_userId';
 
     try {
-      final response = await request.send();
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken',
+          'X-API-Key': apiKey, // Your custom API key for this endpoint
+        },
+        body: json.encode({
+          'meta_input': {
+            'profile-picture': [mediaId.toString()], // Ensure it's a LIST of string IDs
+          },
+        }),
+      );
+
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
-        _loadUserData(); // Refresh profile data after upload
+        print('Profile picture meta updated successfully!');
+        // Reload user data to get the updated profile-picture URL from the server
+        await _loadUserData(); // This will also set _isLoading to false upon completion
       } else {
-        _showError(
-            'Failed to upload image from phone. Code: ${response.statusCode}');
+        print('Failed to update user meta. Status: ${response.statusCode}, Body: ${response.body}');
+        _showError('Failed to update profile picture: ${response.body}');
+        setState(() => _isLoading = false); // Stop loading on failure
       }
     } catch (e) {
-      _showError('Upload error: $e');
+      if (!mounted) return;
+      _showError('Error linking image to profile: $e');
+      setState(() => _isLoading = false); // Stop loading on exception
     }
   }
 
   void _showError(String message) {
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -176,27 +302,15 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                                   radius: 55,
                                   backgroundColor: Colors.white,
                                   backgroundImage: _pickedImage != null
-                                      ? FileImage(_pickedImage!)
-                                      : (_userData?['meta_data']
-                                                  ?['profile-picture'] !=
-                                              null &&
-                                          (_userData!['meta_data']
-                                                  ['profile-picture']
-                                              as List)
-                                              .isNotEmpty)
-                                          ? NetworkImage(
-                                              _userData!['meta_data']
-                                                  ['profile-picture'][0])
+                                      ? FileImage(_pickedImage!) // Display local image if picked
+                                      : (_userData?['meta_data']?['profile-picture'] != null &&
+                                              (_userData!['meta_data']['profile-picture'] as List).isNotEmpty)
+                                          ? NetworkImage(_userData!['meta_data']['profile-picture'][0]) // Otherwise network image
                                           : null,
                                   child: _pickedImage == null &&
-                                          (_userData?['meta_data']
-                                                  ?['profile-picture'] ==
-                                              null ||
-                                              (_userData!['meta_data']
-                                                      ['profile-picture']
-                                                  as List)
-                                                  .isEmpty)
-                                      ? const Icon(Icons.person, size: 50)
+                                          (_userData?['meta_data']?['profile-picture'] == null ||
+                                              (_userData!['meta_data']['profile-picture'] as List).isEmpty)
+                                      ? const Icon(Icons.person, size: 50) // Default icon
                                       : null,
                                 ),
                               ),
@@ -204,7 +318,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                                 bottom: 4,
                                 right: 4,
                                 child: GestureDetector(
-                                  onTap: _pickImageFromGallery,
+                                  onTap: _pickImage, // This triggers local image picking and then autosave
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
@@ -219,6 +333,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                             ],
                           ),
                         ),
+                        // Removed the "Save Profile Image" button as it's now autosave
                         const SizedBox(height: 12),
                         Text(
                           '${_userData!['meta_data']?['first_name']?[0] ?? ''} ${_userData!['meta_data']?['last_name']?[0] ?? ''}',
@@ -232,13 +347,11 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                         _buildSectionTitle(
                           'Personal Information',
                           onEditTap: () {
-                            // Show the Edit Profile Form in a dialog.
                             showDialog(
                               context: context,
                               builder: (context) => EditProfileFormContractor(
                                 userData: _userData!,
-                                onProfileUpdated:
-                                    _loadUserData, // Pass the callback
+                                onProfileUpdated: _loadUserData,
                               ),
                             );
                           },
@@ -252,14 +365,14 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                         _buildInfoRow(
                           context,
                           'Phone',
-                          _userData!['meta_data']?['user_phone']?[0] ??
+                          _userData!['meta_data']?['user_phone_']?[0] ??
                               'No phone number',
                           Icons.phone,
                         ),
                         _buildInfoRow(
                           context,
                           'Firm Name',
-                          _userData!['meta_data']?['firmenname']?[0] ??
+                          _userData!['meta_data']?['firmenname_']?[0] ??
                               'No firm name',
                           Icons.business,
                         ),
@@ -296,7 +409,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     );
   }
 
-  // Refactored _buildSectionTitle to accept an onEditTap callback.
+  // --- Helper Widgets (unchanged, just included for completeness) ---
   Widget _buildSectionTitle(String title, {VoidCallback? onEditTap}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -315,20 +428,19 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
             ),
           ),
         ),
-        if (onEditTap != null) // Conditionally show the edit button
+        if (onEditTap != null)
           InkWell(
             onTap: onEditTap,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  const Icon(Icons.edit,
-                      size: 18, color: Colors.grey), // Added edit icon
+                  const Icon(Icons.edit, size: 18, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
                     'Edit',
                     style: TextStyle(color: Theme.of(context).primaryColor),
-                  ), // Added "Edit" text
+                  ),
                 ],
               ),
             ),
@@ -364,7 +476,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                   Text(value,
                       style: const TextStyle(
                           fontSize: 15,
-                          color: const Color.fromARGB(255, 121, 105, 105))),
+                          color: Color.fromARGB(255, 121, 105, 105))),
                 ],
               ),
             ),
@@ -410,6 +522,8 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   void _handleLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
+    if (!mounted) return;
 
     showDialog(
       context: context,

@@ -3,9 +3,9 @@ import '../models/onboarding_page_models.dart';
 import '../widgets/onboarding_button.dart';
 import '../widgets/onboarding_page_indicator.dart';
 import '../widgets/onboarding_skip_button.dart';
-import '../../auth/screens/login_page.dart'; // Import LoginPage
-import '../../auth/screens/register_client_screen.dart'; // Import Client Register Screen
-import '../../auth/screens/register_contractor_screen.dart'; // Import Contractor Register Screen
+// Import LoginPage
+// Import Client Register Screen
+// Import Contractor Register Screen
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

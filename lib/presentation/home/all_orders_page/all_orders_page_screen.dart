@@ -13,7 +13,7 @@ class AllOrdersPageScreen extends StatefulWidget {
 class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   List<dynamic> _orders = [];
   List<dynamic> _filteredOrders = [];
-  Map<int, String> _orderImages = {};
+  final Map<int, String> _orderImages = {};
   List<dynamic> _categories = [];
   int? _selectedCategoryId;
   String _searchText = '';
@@ -94,125 +94,153 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      //appBar: AppBar(title: const Text('All Orders')),
-      body: Column(
-        children: [
-          // 🔍 Search Bar
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search by title...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                _searchText = value;
-                _filterOrders();
-              },
-            ),
-          ),
-
-          // 📂 Category Filter
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length + 1,
-              itemBuilder: (context, index) {
-                final isAll = index == 0;
-                final category = isAll ? null : _categories[index - 1];
-                final id = isAll ? null : category['id'];
-                final name = isAll ? 'All' : category['name'];
-
-                final isSelected = _selectedCategoryId == id;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: ChoiceChip(
-                    label: Text(name),
-                    selected: isSelected,
-                    onSelected: (_) {
-                      setState(() {
-                        _selectedCategoryId = id;
-                      });
-                      _filterOrders();
-                    },
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: GestureDetector(
+      behavior: HitTestBehavior.opaque, // Ensures taps are registered outside widgets
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // 🔍 Search Bar
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search by title...',
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
                   ),
-                );
-              },
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Color.fromARGB(143, 51, 1, 1),
+                      width: 1,
+                    ),
+                  ),
+                  hintStyle: const TextStyle(color: Colors.grey),
+                ),
+                onChanged: (value) {
+                  _searchText = value;
+                  _filterOrders();
+                },
+              ),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            // 📂 Category Filter
+            SizedBox(
+              height: 65,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length + 1,
+                itemBuilder: (context, index) {
+                  final isAll = index == 0;
+                  final category = isAll ? null : _categories[index - 1];
+                  final id = isAll ? null : category['id'];
+                  final name = isAll ? 'All' : category['name'];
+                  final isSelected = _selectedCategoryId == id;
 
-          // 📦 Orders List
-          Expanded(
-            child: _orders.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredOrders.isEmpty
-                    ? const Center(child: Text("No orders match your criteria."))
-                    : ListView.builder(
-                        itemCount: _filteredOrders.length,
-                        itemBuilder: (context, index) {
-                          final order = _filteredOrders[index];
-                          final imageUrl = _orderImages[order['id']];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: ChoiceChip(
+                      label: Text(name),
+                      selected: isSelected,
+                      selectedColor: Colors.brown.shade100,
+                      onSelected: (_) {
+                        setState(() {
+                          _selectedCategoryId = id;
+                        });
+                        _filterOrders();
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
 
-                          return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            elevation: 3,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => SingleOrderPageScreen(order: order),
-                                  ),
-                                );
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      order['title']['rendered'],
-                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            const SizedBox(height: 10),
+
+            // 📦 Orders List
+            Expanded(
+              child: _orders.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : _filteredOrders.isEmpty
+                      ? const Center(child: Text("No orders match your criteria."))
+                      : ListView.builder(
+                          itemCount: _filteredOrders.length,
+                          itemBuilder: (context, index) {
+                            final order = _filteredOrders[index];
+                            final imageUrl = _orderImages[order['id']];
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SingleOrderPageScreen(order: order),
                                     ),
-                                    const SizedBox(height: 10),
-                                    imageUrl != null
-                                        ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Image.network(
-                                              imageUrl,
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        order['title']['rendered'],
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      imageUrl != null
+                                          ? ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Image.network(
+                                                imageUrl,
+                                                height: 180,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) =>
+                                                    const Icon(Icons.broken_image),
+                                              ),
+                                            )
+                                          : Container(
                                               height: 180,
                                               width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[300],
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
                                             ),
-                                          )
-                                        : Container(
-                                            height: 180,
-                                            width: double.infinity,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                                          ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-          ),
-        ],
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
 }

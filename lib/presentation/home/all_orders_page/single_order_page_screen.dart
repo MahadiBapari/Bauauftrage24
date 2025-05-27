@@ -6,7 +6,7 @@ import 'dart:async';
 class SingleOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
 
-  const SingleOrderPageScreen({Key? key, required this.order}) : super(key: key);
+  const SingleOrderPageScreen({super.key, required this.order});
 
   @override
   State<SingleOrderPageScreen> createState() => _SingleOrderPageScreenState();

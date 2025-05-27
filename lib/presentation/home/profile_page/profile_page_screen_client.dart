@@ -343,7 +343,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                   Text(value,
                       style: const TextStyle(
                           fontSize: 15,
-                          color: const Color.fromARGB(255, 121, 105, 105))),
+                          color: Color.fromARGB(255, 121, 105, 105))),
                 ],
               ),
             ),
