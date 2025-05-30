@@ -105,39 +105,58 @@ Widget build(BuildContext context) {
         child: Column(
           children: [
             // 🔍 Search Bar
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search by title...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: const BorderSide(
-                      color: Color.fromARGB(143, 51, 1, 1),
-                      width: 1,
+                Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+                  child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.0),
+                    boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
+                    ],
                   ),
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  child: TextField(
+                    //controller: _searchController,
+                    decoration: InputDecoration(
+                    hintText: 'Search by title...',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
+                    suffixIcon: _searchText.isNotEmpty
+                      ? IconButton(
+                        icon: Icon(Icons.clear, color: Colors.grey.shade600),
+                        onPressed: () {
+                          setState(() {
+                          _searchText = '';
+                           // _searchController.clear();
+                          });
+                          _filterOrders();
+                          FocusScope.of(context).unfocus();
+                        },
+                        )
+                      : null,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 10.0),
+                    ),
+                    onChanged: (value) {
+                    setState(() {
+                      _searchText = value;
+                    });
+                    _filterOrders();
+                    },
+                  ),
+                  ),
                 ),
-                onChanged: (value) {
-                  _searchText = value;
-                  _filterOrders();
-                },
-              ),
-            ),
-
-            // 📂 Category Filter
+                ),
+             // 📂 Category Filter
             SizedBox(
               height: 65,
               child: ListView.builder(

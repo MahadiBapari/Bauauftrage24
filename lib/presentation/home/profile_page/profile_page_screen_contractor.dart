@@ -226,7 +226,7 @@ Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_authToken',
-          'X-API-Key': apiKey, // Your custom API key for this endpoint
+          'X-API-Key': apiKey, 
         },
         body: json.encode({
           'meta_input': {
