@@ -156,104 +156,133 @@ Widget build(BuildContext context) {
                   ),
                 ),
                 ),
-             // 📂 Category Filter
-            SizedBox(
-              height: 65,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length + 1,
-                itemBuilder: (context, index) {
-                  final isAll = index == 0;
-                  final category = isAll ? null : _categories[index - 1];
-                  final id = isAll ? null : category['id'];
-                  final name = isAll ? 'All' : category['name'];
-                  final isSelected = _selectedCategoryId == id;
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: ChoiceChip(
-                      label: Text(name),
-                      selected: isSelected,
-                      selectedColor: Colors.brown.shade100,
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedCategoryId = id;
-                        });
-                        _filterOrders();
-                      },
-                    ),
-                  );
-                },
+
+// 📂 Category Filter (Improved Design)
+            Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  _categories.isEmpty
+                      ? const Text("No categories available.")
+                      : SizedBox(
+                          height: 40,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _categories.length + 1, // Include "All" chip
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final isAll = index == 0;
+                              final category = isAll ? null : _categories[index - 1];
+                              final id = isAll ? null : category!['id'];
+                              final name = isAll ? 'All' : category!['name'];
+                              final isSelected = _selectedCategoryId == id;
+
+                              return ActionChip(
+                                label: Text(name),
+                                backgroundColor: isSelected
+                                    ? const Color.fromARGB(255, 85, 21, 1)
+                                    : Colors.grey[200],
+                                labelStyle: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    // Tap again to deselect
+                                    _selectedCategoryId = isSelected ? null : id;
+                                  });
+                                  _filterOrders(); // or _fetchNewArrivalsOrders(categoryId: _selectedCategoryId);
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                ],
               ),
             ),
+
 
             const SizedBox(height: 10),
 
             // 📦 Orders List
-            Expanded(
-              child: _orders.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredOrders.isEmpty
-                      ? const Center(child: Text("No orders match your criteria."))
-                      : ListView.builder(
-                          itemCount: _filteredOrders.length,
-                          itemBuilder: (context, index) {
-                            final order = _filteredOrders[index];
-                            final imageUrl = _orderImages[order['id']];
+Expanded(
+  child: _orders.isEmpty
+      ? const Center(child: CircularProgressIndicator())
+      : _filteredOrders.isEmpty
+          ? const Center(child: Text("No orders match your criteria."))
+          : ListView.builder(
+              itemCount: _filteredOrders.length,
+              itemBuilder: (context, index) {
+                final order = _filteredOrders[index];
+                final imageUrl = _orderImages[order['id']];
+                final title = order['title']['rendered'] ?? 'Untitled';
+                //final category = order['categories_names']?.join(', ') ?? 'Uncategorized';
 
-                            return Card(
-                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => SingleOrderPageScreen(order: order),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        order['title']['rendered'],
-                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      imageUrl != null
-                                          ? ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: Image.network(
-                                                imageUrl,
-                                                height: 180,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) =>
-                                                    const Icon(Icons.broken_image),
-                                              ),
-                                            )
-                                          : Container(
-                                              height: 180,
-                                              width: double.infinity,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[300],
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                                            ),
-                                    ],
-                                  ),
-                                ),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SingleOrderPageScreen(order: order),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    height: 180,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: imageUrl != null && imageUrl.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(imageUrl),
+                              fit: BoxFit.cover,
+                              colorFilter: ColorFilter.mode(
+                                Colors.black.withOpacity(0.4),
+                                BlendMode.darken,
                               ),
-                            );
-                          },
-                        ),
+                              onError: (exception, stackTrace) {
+                                debugPrint('Failed to load image: $imageUrl');
+                              },
+                            )
+                          : null,
+                      gradient: (imageUrl == null || imageUrl.isEmpty)
+                          ? const LinearGradient(
+                              colors: [
+                                Color.fromARGB(255, 85, 21, 1),
+                                Color.fromARGB(255, 121, 26, 3),
+                              ],
+                            )
+                          : null,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
+),
+
           ],
         ),
       ),

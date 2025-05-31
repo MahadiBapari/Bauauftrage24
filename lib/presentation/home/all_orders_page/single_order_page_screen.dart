@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 
 class SingleOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -22,7 +25,7 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
   final String mediaUrlBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
   final String usersApiBaseUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/';
   final String categoriesUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
-  final String apiKey = '1234567890abcdef'; 
+  final String apiKey = '1234567890abcdef';
 
   @override
   void initState() {
@@ -39,50 +42,30 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
     final List<dynamic> galleryDynamic = widget.order['meta']?['order_gallery'] ?? [];
     final List<dynamic> rawCategoryIds = widget.order['order-categories'] ?? [];
 
-    List<int> galleryImageIds = [];
-    for (var item in galleryDynamic) {
-      if (item is int) {
-        galleryImageIds.add(item);
-      } else if (item is Map<String, dynamic> && item.containsKey('id') && item['id'] is int) {
-        galleryImageIds.add(item['id'] as int);
-      } else {
-        print('Warning: Unexpected type in order_gallery: $item');
-      }
-    }
+    List<int> galleryImageIds = galleryDynamic
+    .whereType<Map>()
+    .map((item) => item['id'])
+    .whereType<int>()
+    .toList();
 
     try {
-      List<Future<dynamic>> futures = [];
+      List<Future<dynamic>> futures = [
+        http.get(Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
+        http.get(Uri.parse(categoriesUrl))
+      ];
 
-      // Add user fetch future (using your custom API endpoint)
-      futures.add(http.get(
-        Uri.parse('$usersApiBaseUrl$authorId'),
-        headers: {'X-API-KEY': apiKey},
-      ));
-      // Add categories fetch future
-      futures.add(http.get(Uri.parse(categoriesUrl)));
-
-      // Add futures for all gallery image URLs
       for (int mediaId in galleryImageIds) {
-        futures.add(http.get(
-          Uri.parse('$mediaUrlBase$mediaId'),
-          headers: {'X-API-KEY': apiKey},
-        ));
+        futures.add(http.get(Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'), headers: {'X-API-KEY': apiKey}));
       }
 
       List<dynamic> responses = await Future.wait(futures);
 
-      // Process user response (first item in responses list)
       final http.Response userResponse = responses[0];
       Map<String, dynamic>? user;
       if (userResponse.statusCode == 200) {
-        final decodedUser = jsonDecode(userResponse.body);
-        user = decodedUser is Map<String, dynamic> ? decodedUser : null;
-        print('Fetched User Data: $user'); // Keep this for debugging the structure
-      } else {
-        print('Failed to fetch user: ${userResponse.statusCode}');
+        user = jsonDecode(userResponse.body);
       }
 
-      // Process categories response (second item in responses list)
       final http.Response categoriesResponse = responses[1];
       Map<int, String> categoryMap = {};
       if (categoriesResponse.statusCode == 200) {
@@ -92,26 +75,18 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
             categoryMap[cat['id']] = cat['name'];
           }
         }
-      } else {
-        print('Failed to fetch categories: ${categoriesResponse.statusCode}');
       }
 
-      // Process gallery image responses (remaining items in responses list, starting from index 2)
       List<String> imageUrls = [];
       for (int i = 2; i < responses.length; i++) {
-        final http.Response mediaResponse = responses[i];
+        final mediaResponse = responses[i];
         if (mediaResponse.statusCode == 200) {
           final mediaData = jsonDecode(mediaResponse.body);
           final imageUrl = mediaData['source_url'];
-          if (imageUrl != null && imageUrl is String) {
-            imageUrls.add(imageUrl);
-          }
-        } else {
-          print('Failed to fetch media ID ${galleryImageIds[i - 2]}: Status ${mediaResponse.statusCode}');
+          if (imageUrl != null) imageUrls.add(imageUrl);
         }
       }
 
-      // Map raw category IDs from the order to names
       List<String> orderCategories = [];
       for (var id in rawCategoryIds) {
         if (id is int) {
@@ -127,13 +102,9 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error fetching details: $e');
+      print('Error: $e');
       setState(() {
         _isLoading = false;
-        _user = null;
-        _imageUrls = [];
-        _categoryMap = {};
-        _orderCategories = [];
       });
     }
   }
@@ -145,136 +116,183 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
     final title = order['title']?['rendered'] ?? 'No title';
     final content = _stripHtml(order['content']?['rendered'] ?? '');
 
-    final userName = _user?['display_name'] ?? 'N/A'; 
-    final userEmail = _user?['user_email'] ?? 'N/A'; 
+    final userName = _user?['display_name'] ?? 'N/A';
+    final userEmail = _user?['user_email'] ?? 'N/A';
+    String userPhone = 'N/A';
 
-    String userPhone = 'N/A'; 
-
-   
     if (_user != null) {
-      // Safely access 'meta_data'
-      Map<String, dynamic>? metaData = _user!['meta_data'];
-
+      var metaData = _user!['meta_data'];
       if (metaData != null) {
-        // Safely access 'user_phone' from 'meta_data'
-        dynamic phoneList = metaData['user_phone'];
-
-       
+        var phoneList = metaData['user_phone'];
         if (phoneList is List && phoneList.isNotEmpty) {
-          dynamic phoneValue = phoneList.first;
-          
-          userPhone = phoneValue.toString();
+          userPhone = phoneList.first.toString();
         }
       }
     }
 
+return Scaffold(
 
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_orderCategories.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        'Categories: ${_orderCategories.join(', ')}',
-                        style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  Text('Street Address: ${meta['address_1'] ?? 'N/A'}'),
-                  Text('Postal Code: ${meta['address_2'] ?? 'N/A'}'),
-                  Text('City: ${meta['address_3'] ?? 'N/A'}'),
-                  const SizedBox(height: 16),
-                  const Text('Description:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  Text(content),
-                  const SizedBox(height: 24),
-                  if (_user != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Divider(),
-                          const Text('Posted by:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Text('Name: $userName'),
-                          Text('Email: $userEmail'),
-                          Text('Phone: $userPhone'),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+  backgroundColor: Colors.white, // Safe to keep white now
+  body: _isLoading
+      ? const Center(child: CircularProgressIndicator())
+      : Stack(
+          children: [
+            // --- White Background (base layer) ---
+            Container(
+              color: Colors.white,
+            ),
 
-                  if (_imageUrls.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Gallery:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 8),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 8.0,
-                            mainAxisSpacing: 8.0,
-                            childAspectRatio: 1.0,
-                          ),
-                          itemCount: _imageUrls.length,
-                          itemBuilder: (context, index) {
-                            final imageUrl = _imageUrls[index];
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Image.network(
-                                imageUrl,
-                                fit: BoxFit.cover,
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: Colors.grey[200],
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                            : null,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey[300],
-                                    child: const Center(
-                                      child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
-                                    ),
-                                  );
-                                },
+            // --- Top Image Gallery ---
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.5,
+              width: double.infinity,
+              child: _imageUrls.isNotEmpty
+                  ? PageView.builder(
+                      itemCount: _imageUrls.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => FullScreenGallery(
+                                  images: _imageUrls,
+                                  initialIndex: index,
+                                ),
                               ),
                             );
                           },
-                        ),
-                      ],
+                          child: Hero(
+                            tag: _imageUrls[index],
+                            child: CachedNetworkImage(
+                              imageUrl: _imageUrls[index],
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) =>
+                                  const Center(child: CircularProgressIndicator()),
+                              errorWidget: (_, __, ___) =>
+                                  const Icon(Icons.broken_image, size: 40),
+                            ),
+                          ),
+                        );
+                      },
                     )
-                  else
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text('No gallery images available.'),
+                  : Container(
+                      color: Colors.grey[300],
+                      child: const Center(child: Text('No images available')),
                     ),
-                ],
-              ),
             ),
-    );
+
+            // --- Info Card ---
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.43,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8F8F8),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                ),
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_orderCategories.isNotEmpty)
+                        Text(
+                          _orderCategories.join(', '),
+                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        ),
+                      const SizedBox(height: 8),
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Text(content, style: const TextStyle(fontSize: 16)),
+
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const Text('Contact Info',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text('Name: $userName'),
+                      Text('Email: $userEmail'),
+                      Text('Phone: $userPhone'),
+
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const Text('Order Details',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text('Street Address: ${meta['address_1'] ?? 'N/A'}'),
+                      Text('Postal Code: ${meta['address_2'] ?? 'N/A'}'),
+                      Text('City: ${meta['address_3'] ?? 'N/A'}'),
+                    ],
+                  ),
+                ),
+              ),
+            ), // --- Back Button (Wrapped with SafeArea) ---
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 16.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+            ),
+    
+          ],
+        ),
+);
+
+
+
+
   }
 
   String _stripHtml(String html) {
     return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+  }
+}
+
+class FullScreenGallery extends StatelessWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const FullScreenGallery({super.key, required this.images, required this.initialIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PhotoViewGallery.builder(
+            itemCount: images.length,
+            pageController: PageController(initialPage: initialIndex),
+            builder: (context, index) {
+              return PhotoViewGalleryPageOptions(
+                imageProvider: NetworkImage(images[index]),
+                heroAttributes: PhotoViewHeroAttributes(tag: images[index]),
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.covered * 2,
+              );
+            },
+            scrollPhysics: const BouncingScrollPhysics(),
+            backgroundDecoration: const BoxDecoration(color: Colors.black),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

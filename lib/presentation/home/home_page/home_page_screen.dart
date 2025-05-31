@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async'; // Added for Future.wait
+import '../all_orders_page/single_order_page_screen.dart';
+// Assuming SingleOrderPageScreen is in single_order_page_screen.dart/ <--- Adjust this import path
 
 class HomePageScreen extends StatefulWidget {
   const HomePageScreen({super.key});
@@ -14,39 +17,48 @@ class _HomePageScreenState extends State<HomePageScreen> {
   String displayName = "User";
   bool isLoadingUser = true;
   bool isLoadingPromos = true;
+
+  // New state variables for categories and new arrivals
+  List<Map<String, dynamic>> _categories = [];
+  String? _selectedCategoryId; // Stores the ID of the selected category
+  List<Map<String, dynamic>> _newArrivalsOrders = []; // Stores combined display and full order data
+  bool isLoadingCategories = true;
+  bool isLoadingNewArrivals = true;
+
+  // This list will hold orders for the "Promo Cards" section
+  List<Map<String, dynamic>> promoOrders = []; 
+
   String? _authToken;
 
   static const String apiKey = '1234567890abcdef';
 
-  List<String> categories = [];
-  List<Map<String, String>> products = [];
-  List<Map<String, dynamic>> promoOrders = [];
-
-  final TextEditingController _searchController = TextEditingController();
-  String _searchText = '';
 
   @override
   void initState() {
     super.initState();
-    _loadAuthTokenAndFetchAllData();
-    _loadCategoriesAndProducts();
+    // Use Future.wait to fetch initial data concurrently
+    _loadInitialData(); 
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadAuthTokenAndFetchAllData() async {
+  Future<void> _loadInitialData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _authToken = prefs.getString('auth_token');
     });
+
     await Future.wait([
       _fetchUser(),
       _fetchPromoOrders(),
+      _fetchCategories(),
+      // Initial fetch for new arrivals without category filter
+      _fetchNewArrivalsOrders(categoryId: _selectedCategoryId), 
     ]);
+  }
+
+  @override
+  void dispose() {
+    promoOrders.clear(); // Clear promo orders when disposing
+    super.dispose();
   }
 
   Future<void> _fetchUser() async {
@@ -73,8 +85,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // Note: This _fetchUser still correctly uses 'meta_data' based on its endpoint.
-        // The change to 'meta' is only for _fetchPromoOrders.
         final metaData = data['meta_data'];
         final List<dynamic>? firstNameList = metaData?['first_name'];
         final List<dynamic>? lastNameList = metaData?['last_name'];
@@ -99,17 +109,137 @@ class _HomePageScreenState extends State<HomePageScreen> {
     }
   }
 
-  void _loadCategoriesAndProducts() {
+  // --- Fetch Categories ---
+  Future<void> _fetchCategories() async {
     setState(() {
-      categories = ["Elektriker", "Flachdach", "Gärtner", "Gipser"];
-      products = [
-        {"title": "DEMO 1"},
-        {"title": "DEMO 2"},
-        {"title": "DEMO 3"},
-      ];
+      isLoadingCategories = true;
     });
+
+    final categoriesEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
+    List<Map<String, dynamic>> fetchedCategories = [
+      {'id': null, 'name': 'All Categories'} // Add an "All Categories" option
+    ];
+
+    try {
+      final response = await http.get(Uri.parse(categoriesEndpoint));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        for (var cat in data) {
+          if (cat['id'] != null && cat['name'] != null) {
+            fetchedCategories.add({'id': cat['id'].toString(), 'name': cat['name']});
+          }
+        }
+        debugPrint('Fetched ${fetchedCategories.length - 1} categories.');
+      } else {
+        debugPrint('Failed to load categories: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _categories = fetchedCategories;
+          isLoadingCategories = false;
+        });
+      }
+    }
   }
 
+  // --- Fetch Newest Orders (for New Arrivals section) ---
+  Future<void> _fetchNewArrivalsOrders({String? categoryId}) async {
+    setState(() {
+      isLoadingNewArrivals = true;
+    });
+
+    String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?_orderby=date&_order=desc&per_page=6';
+    if (categoryId != null) {
+      ordersEndpoint += '&order-categories=$categoryId';
+    }
+    const String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
+
+    List<Map<String, dynamic>> fetchedOrders = [];
+
+    try {
+      final headers = <String, String>{};
+      if (_authToken != null) {
+        headers['Authorization'] = 'Bearer $_authToken';
+      }
+
+      final ordersResponse = await http.get(
+        Uri.parse(ordersEndpoint),
+        headers: headers,
+      );
+
+      if (!mounted) return;
+
+      if (ordersResponse.statusCode == 200) {
+        List<dynamic> ordersData = json.decode(ordersResponse.body);
+        debugPrint('Fetched ${ordersData.length} new arrivals orders (filtered by category ID: $categoryId)');
+
+        for (var order in ordersData) {
+          String title = order['title']?['rendered'] ?? 'No Title';
+          String categoryName = order['acf']?['category'] ?? 'No Category'; // This gives category name
+          String imageUrl = '';
+
+          // --- Image Fetching Logic (now using 'meta') ---
+          if (order['meta'] != null && order['meta']['order_gallery'] != null) {
+            if (order['meta']['order_gallery'] is List && order['meta']['order_gallery'].isNotEmpty) {
+              final dynamic firstGalleryItem = order['meta']['order_gallery'][0];
+              int? imageId;
+
+              if (firstGalleryItem is Map<String, dynamic> && firstGalleryItem.containsKey('id')) {
+                imageId = firstGalleryItem['id'] as int?;
+              } else if (firstGalleryItem is int) {
+                imageId = firstGalleryItem;
+              }
+
+              if (imageId != null) {
+                final mediaUrl = Uri.parse('$mediaEndpointBase$imageId');
+                final mediaResponse = await http.get(mediaUrl);
+                if (!mounted) return;
+
+                if (mediaResponse.statusCode == 200) {
+                  try {
+                    final mediaData = json.decode(mediaResponse.body);
+                    imageUrl = mediaData['source_url'] ?? '';
+                  } catch (e) {
+                    debugPrint('Error decoding media data for ID $imageId: $e. Response body: ${mediaResponse.body}');
+                  }
+                } else {
+                  debugPrint('Failed to load media for ID $imageId: ${mediaResponse.statusCode} - ${mediaResponse.body}');
+                }
+              }
+            }
+          }
+          // --- End Image Fetching Logic ---
+
+          // Store both display data and the full order object
+          fetchedOrders.add({
+            "displayTitle": title,
+            "displayCategory": categoryName,
+            "displayImageUrl": imageUrl,
+            "fullOrder": order, // Store the complete order object here
+          });
+        }
+      } else {
+        debugPrint('Failed to load new arrivals: ${ordersResponse.statusCode} - ${ordersResponse.body}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching new arrivals orders: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _newArrivalsOrders = fetchedOrders;
+          isLoadingNewArrivals = false;
+        });
+      }
+    }
+  }
+
+  // --- EXISTING: Fetch Promo Orders (updated to store full order data) ---
   Future<void> _fetchPromoOrders() async {
     setState(() {
       isLoadingPromos = true;
@@ -135,36 +265,27 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
       if (ordersResponse.statusCode == 200) {
         List<dynamic> ordersData = json.decode(ordersResponse.body);
-        debugPrint('Orders Fetched: ${ordersData.length} items');
+        debugPrint('Promo Orders Fetched: ${ordersData.length} items');
 
         for (var order in ordersData) {
           String title = order['title']?['rendered'] ?? 'No Title';
-          String category = order['acf']?['category'] ?? 'No Category';
+          String categoryName = order['acf']?['category'] ?? 'No Category';
           String imageUrl = '';
 
-          // --- START Image Fetching Logic with corrected key 'meta' ---
-          // CHANGED: Access 'meta' instead of 'meta_data'
+          // --- Image Fetching Logic (using 'meta') ---
           if (order['meta'] != null && order['meta']['order_gallery'] != null) {
-            debugPrint('Order ID: ${order['id']}, Gallery Raw: ${order['meta']['order_gallery']}');
-
-            // CHANGED: Access 'meta' instead of 'meta_data'
             if (order['meta']['order_gallery'] is List && order['meta']['order_gallery'].isNotEmpty) {
               final dynamic firstGalleryItem = order['meta']['order_gallery'][0];
               int? imageId;
 
-              // Check if the item is a Map and contains 'id', or if it's just an int (ID)
               if (firstGalleryItem is Map<String, dynamic> && firstGalleryItem.containsKey('id')) {
                 imageId = firstGalleryItem['id'] as int?;
               } else if (firstGalleryItem is int) {
                 imageId = firstGalleryItem;
               }
 
-              debugPrint('Extracted imageId for Order ${order['id']}: $imageId');
-
               if (imageId != null) {
                 final mediaUrl = Uri.parse('$mediaEndpointBase$imageId');
-                debugPrint('Attempting to fetch media from: $mediaUrl');
-
                 final mediaResponse = await http.get(mediaUrl);
                 if (!mounted) return;
 
@@ -172,29 +293,23 @@ class _HomePageScreenState extends State<HomePageScreen> {
                   try {
                     final mediaData = json.decode(mediaResponse.body);
                     imageUrl = mediaData['source_url'] ?? '';
-                    debugPrint('Successfully fetched image URL for ID $imageId: $imageUrl');
                   } catch (e) {
                     debugPrint('Error decoding media data for ID $imageId: $e. Response body: ${mediaResponse.body}');
                   }
                 } else {
                   debugPrint('Failed to load media for ID $imageId: ${mediaResponse.statusCode} - ${mediaResponse.body}');
                 }
-              } else {
-                debugPrint('No valid imageId found in first gallery item for Order ${order['id']}');
               }
-            } else {
-              debugPrint('Order ${order['id']}: order_gallery is empty or not a list.');
             }
-          } else {
-            // Updated debug message to reflect checking 'meta'
-            debugPrint('Order ${order['id']}: "meta" field or "order_gallery" within "meta" not found or is null.');
           }
-          // --- END Image Fetching Logic ---
+          // --- End Image Fetching Logic ---
 
+          // Store both display data and the full order object
           fetchedPromoOrders.add({
-            "title": title,
-            "category": category,
-            "imageUrl": imageUrl,
+            "displayTitle": title,
+            "displayCategory": categoryName,
+            "displayImageUrl": imageUrl,
+            "fullOrder": order, // Store the complete order object here
           });
         }
       } else {
@@ -214,7 +329,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
       }
     }
   }
-
 
 
   @override
@@ -237,7 +351,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
               ),
               const SizedBox(height: 24),
 
-              const SizedBox(height: 24),
+               const SizedBox(height: 24),
 
               // Promo Cards displayed horizontally
               isLoadingPromos
@@ -252,16 +366,20 @@ class _HomePageScreenState extends State<HomePageScreen> {
                             separatorBuilder: (context, index) => const SizedBox(width: 14),
                             itemBuilder: (context, index) {
                               final promo = promoOrders[index];
-                              debugPrint('Promo Card Image URL: ${promo["imageUrl"]} for ${promo["title"]}');
-                              return _buildPromoCard(
-                                  promo["title"]!, promo["category"]!, promo["imageUrl"]);
+                              // This card isn't made tappable to SingleOrderPageScreen yet.
+                              // If you want it to be, uncomment the InkWell wrapper and adjust onTap.
+                              return _buildOrderCard(
+                                  promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
                             },
                           ),
                         ),
               const SizedBox(height: 24),
 
+              // --- UPDATED: Category Section ---
               _buildCategorySection(),
               const SizedBox(height: 20),
+
+              // --- UPDATED: New Arrivals Section ---
               _buildNewArrivals(),
             ],
           ),
@@ -270,9 +388,11 @@ class _HomePageScreenState extends State<HomePageScreen> {
     );
   }
 
-  Widget _buildPromoCard(String title, String category, String? imageUrl) {
+  // Renamed _buildPromoCard to _buildOrderCard for reusability
+  // This widget is for displaying a single order card.
+  Widget _buildOrderCard(String title, String category, String? imageUrl) {
     return Container(
-      width: 280,
+      width: 280, 
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -313,69 +433,129 @@ class _HomePageScreenState extends State<HomePageScreen> {
     );
   }
 
+  // --- UPDATED: _buildCategorySection ---
   Widget _buildCategorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
-        categories.isEmpty
-            ? const Text("No categories available.")
-            : SizedBox(
-                height: 40,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) {
-                    return Chip(
-                      label: Text(categories[index]),
-                      backgroundColor: Colors.grey[200],
-                    );
-                  },
-                ),
-              ),
+        isLoadingCategories
+            ? const Center(child: CircularProgressIndicator())
+            : _categories.isEmpty
+                ? const Text("No categories available.")
+                : SizedBox(
+                    height: 40,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        final isSelected = _selectedCategoryId == category['id'];
+                        return ActionChip(
+                          label: Text(category['name']!),
+                          backgroundColor: isSelected ? const Color.fromARGB(255, 85, 21, 1) : Colors.grey[200],
+                          labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                          onPressed: () {
+                            setState(() {
+                              // If already selected, deselect (set to null)
+                              // Otherwise, select the new category ID
+                              _selectedCategoryId = isSelected ? null : category['id'];
+                            });
+                            _fetchNewArrivalsOrders(categoryId: _selectedCategoryId);
+                          },
+                        );
+                      },
+                    ),
+                  ),
       ],
     );
   }
 
+  // --- UPDATED: _buildNewArrivals ---
   Widget _buildNewArrivals() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("New Arrivals", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
-        products.isEmpty
-            ? const Text("No new products.")
-            : SizedBox(
-                height: 220,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: products.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    return Container(
-                      width: 140,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Spacer(),
-                          Text(
-                            product['title'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+        isLoadingNewArrivals
+            ? const Center(child: CircularProgressIndicator())
+            : _newArrivalsOrders.isEmpty
+                ? const Text("No new orders in this category.")
+                : SizedBox(
+                    height: 220,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _newArrivalsOrders.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                      itemBuilder: (context, index) {
+                        final orderData = _newArrivalsOrders[index];
+                        // Get display properties
+                        final String title = orderData["displayTitle"]!;
+                        final String category = orderData["displayCategory"]!;
+                        final String? imageUrl = orderData["displayImageUrl"];
+                        // Get the full order object to pass
+                        final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
+
+                        return InkWell( // Make the card tappable
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SingleOrderPageScreen(
+                                  order: fullOrder, // Pass the entire order object
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 160,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(16),
+                              image: imageUrl != null && imageUrl.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(imageUrl),
+                                      fit: BoxFit.cover,
+                                      colorFilter: ColorFilter.mode(
+                                        Colors.black.withOpacity(0.3),
+                                        BlendMode.darken,
+                                      ),
+                                      onError: (exception, stackTrace) {
+                                        debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
+                                      },
+                                    )
+                                  : null,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Spacer(),
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                if (category.isNotEmpty && category != 'No Category')
+                                  Text(
+                                    category,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
+                        );
+                      },
+                    ),
+                  ),
       ],
     );
   }
