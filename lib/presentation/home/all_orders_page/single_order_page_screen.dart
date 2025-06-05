@@ -5,6 +5,9 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+
 
 class SingleOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -32,6 +35,7 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
     super.initState();
     fetchDetails();
   }
+
 
   Future<void> fetchDetails() async {
     setState(() {
@@ -109,6 +113,8 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
     }
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
@@ -130,9 +136,42 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
       }
     }
 
+Future<void> _launchPhone(String phoneNumber) async {
+  if (phoneNumber.isEmpty || phoneNumber == 'N/A') {
+    print("Invalid phone number: $phoneNumber");
+    return;
+  }
+
+  final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+  if (await canLaunchUrl(phoneUri)) {
+    await launchUrl(phoneUri);
+  } else {
+    print("Could not launch phone call");
+  }
+}
+
+Future<void> _launchEmail(String email) async {
+  if (email.isEmpty || email == 'N/A') {
+    print("Invalid email: $email");
+    return;
+  }
+
+  final Uri emailUri = Uri(
+    scheme: 'mailto',
+    path: email,
+    queryParameters: {'subject': 'Regarding your order'},
+  );
+
+  if (await canLaunchUrl(emailUri)) {
+    await launchUrl(emailUri);
+  } else {
+    print("Could not launch email");
+  }
+}
+
 return Scaffold(
 
-  backgroundColor: Colors.white, // Safe to keep white now
+  backgroundColor: Colors.white, 
   body: _isLoading
       ? const Center(child: CircularProgressIndicator())
       : Stack(
@@ -199,40 +238,187 @@ return Scaffold(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_orderCategories.isNotEmpty)
-                        Text(
-                          _orderCategories.join(', '),
-                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          if (_orderCategories.isNotEmpty)
+                          Text(
+                            _orderCategories.join(', '),
+                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                          ),
+                          const SizedBox(width: 18),
+                          Text('$userName',
+                              style: const TextStyle(
+                                  color: Color.fromARGB(255, 59, 59, 59),
+                                  fontSize: 16, 
+                                  fontWeight: FontWeight.bold)),
+                          
+                        ],
                         ),
-                      const SizedBox(height: 8),
+
+                      
+                      //icons  
+                                    Positioned(
+                                    bottom: 30,
+                                    left: 24,
+                                    right: 24,
+                                    // Add more top margin by wrapping with Padding
+                                    child: Padding(
+                                    padding: const EdgeInsets.only(top: 24.0), // Increase this value for more margin
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceAround, // more space between buttons
+                                      children: [
+                                      // Email Button (now on the left)
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                        shape: const CircleBorder(),
+                                        padding: const EdgeInsets.all(18),
+                                        backgroundColor: const Color.fromARGB(0, 202, 180, 180),
+                                        elevation: 0,
+                                        // shadowColor: Colors.black38,
+                                        ),
+                                        onPressed: () => _launchEmail(userEmail),
+                                        child: const Icon(Icons.email, color: Color.fromARGB(255, 58, 0, 0), size: 32),
+                                      ),
+
+                                          // Address Popup Button
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                        shape: const CircleBorder(),
+                                        padding: const EdgeInsets.all(20),
+                                        backgroundColor: const Color.fromARGB(0, 255, 255, 255),
+                                        elevation: 0,
+                                        //shadowColor: Colors.black38,
+                                        ),
+                                        onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => Dialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                            backgroundColor: Colors.white,
+                                            insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(24.0),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      const Icon(Icons.location_on, color: Color.fromARGB(255, 77, 0, 0), size: 28),
+                                                      const SizedBox(width: 10),
+                                                      const Text(
+                                                        'Address',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Color(0xFF222222),
+                                                        ),
+                                                      ),
+                                                      const Spacer(),
+                                                      IconButton(
+                                                        icon: const Icon(Icons.close, color: Colors.grey),
+                                                        onPressed: () => Navigator.of(context).pop(),
+                                                        splashRadius: 20,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 18),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(Icons.home, color: Color(0xFF757575), size: 20),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Text(
+                                                          meta['address_1'] ?? 'N/A',
+                                                          style: const TextStyle(fontSize: 16, color: Color(0xFF444444)),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(Icons.local_post_office, color: Color(0xFF757575), size: 20),
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        meta['address_2'] ?? 'N/A',
+                                                        style: const TextStyle(fontSize: 16, color: Color(0xFF444444)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(Icons.location_city, color: Color(0xFF757575), size: 20),
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        meta['address_3'] ?? 'N/A',
+                                                        style: const TextStyle(fontSize: 16, color: Color(0xFF444444)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                 
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                        },
+                                        child: const Icon(Icons.location_on, color: Color.fromARGB(255, 75, 1, 1), size: 32),
+                                      ),
+
+                                      // Phone Button (now on the right)
+                                       ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                        shape: const CircleBorder(),
+                                        padding: const EdgeInsets.all(18),
+                                        backgroundColor: const Color.fromARGB(0, 77, 19, 5),
+                                        elevation: 0,
+                                        //shadowColor: Colors.black38,
+                                        ),
+                                        onPressed: () => _launchPhone(userPhone),
+                                        child: const Icon(Icons.phone, color: Color.fromARGB(255, 59, 0, 0), size: 32),
+                                       )
+                                      ],
+                                    ),
+                                    ),
+                                  ),
+
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 26),
                       Text(title,
                           style: const TextStyle(
                               fontSize: 22, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      Text(content, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 8),  
 
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const Text('Contact Info',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Text('Name: $userName'),
-                      Text('Email: $userEmail'),
-                      Text('Phone: $userPhone'),
+                        // const SizedBox(height: 8),
+                        // const Text('Order Details',
+                        //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
 
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const Text('Order Details',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Text('Street Address: ${meta['address_1'] ?? 'N/A'}'),
-                      Text('Postal Code: ${meta['address_2'] ?? 'N/A'}'),
-                      Text('City: ${meta['address_3'] ?? 'N/A'}'),
+                        const SizedBox(height: 12),
+                        Text(content, style: const TextStyle(fontSize: 16)),
+
+                      // const SizedBox(height: 8),
+                      // Text('Name: $userName'),
+                      // Text('Email: $userEmail'),
+                      // Text('Phone: $userPhone'),
+
+                      // const SizedBox(height: 16),
+                      // const Divider(),
+                      // const Text('Order Details',
+                      //     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      // const SizedBox(height: 8),
+                      // Text('Street Address: ${meta['address_1'] ?? 'N/A'}'),
+                      // Text('Postal Code: ${meta['address_2'] ?? 'N/A'}'),
+                      // Text('City: ${meta['address_3'] ?? 'N/A'}'),
                     ],
                   ),
                 ),
               ),
-            ), // --- Back Button (Wrapped with SafeArea) ---
+            ), 
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8.0, left: 16.0),
@@ -242,6 +428,10 @@ return Scaffold(
                   ),
                 ),
             ),
+            // --- Floating Contact Buttons at Bottom ---
+
+        
+
     
           ],
         ),
