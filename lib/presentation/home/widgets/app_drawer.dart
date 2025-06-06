@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../my_order_page/my_order_page_screen.dart'; // Make sure this is imported
+import '../my_order_page/my_order_page_screen.dart'; // Ensure this is correctly imported
 
 class AppDrawer extends StatelessWidget {
   final String role;
@@ -69,7 +69,7 @@ class AppDrawer extends StatelessWidget {
       menuItems = [
         _buildTile(Icons.home, 'Feed', 0, context),
         _buildTile(Icons.person, 'Profile', 1, context),
-        _buildTile(Icons.favorite, 'Favorites', 2, context),
+        _buildTile(Icons.card_membership, 'My Membership', 2, context),
         _buildTile(Icons.shopping_bag, 'All Orders', 3, context),
       ];
     }
@@ -89,17 +89,6 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/partners');
             },
           ),
-
-          // My Membership (contractor only)
-          if (role == 'um_contractor')
-            ListTile(
-              leading: const Icon(Icons.card_membership),
-              title: const Text('My membership'),
-              onTap: () {
-                Navigator.pop(context);
-                onNavigateToMyMembership?.call();
-              },
-            ),
 
           // Support and Help
           ListTile(

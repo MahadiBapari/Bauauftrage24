@@ -39,33 +39,34 @@ class _MainScreenState extends State<MainScreen> {
     _fetchUser();
   }
 
-  void _initializeScreens() {
-    if (widget.role == 'um_client') {
-      _screens = [
-        const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreenClient(key: ValueKey('profile_page')),
-        const AddNewOrderPageScreen(key: ValueKey('add_new_order_page')),
-      ];
-      _icons = [Icons.home, Icons.person];
-      _labels = ['Home', 'Profile'];
-    } else if (widget.role == 'um_contractor') {
-      _screens = [
-        const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreenContractor(key: ValueKey('profile_page')),
-        const MyFavouritePageScreen(key: ValueKey('my_favourite_page')),
-        AllOrdersPageScreen(key: ValueKey('all_orders_page')),
-      ];
-      _icons = [Icons.home, Icons.person, Icons.favorite, Icons.shopping_bag];
-      _labels = ['Home', 'Profile', 'Favorites', 'All Orders'];
-    } else {
-      _screens = [
-        const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreenClient(key: ValueKey('profile_page')),
-      ];
-      _icons = [Icons.home, Icons.person];
-      _labels = ['Home', 'Profile'];
-    }
+void _initializeScreens() {
+  if (widget.role == 'um_client') {
+    _screens = [
+      const HomePageScreen(key: ValueKey('home_page')),
+      const ProfilePageScreenClient(key: ValueKey('profile_page')),
+      const AddNewOrderPageScreen(key: ValueKey('add_new_order_page')),
+    ];
+    _icons = [Icons.home, Icons.person];
+    _labels = ['Home', 'Profile'];
+  } else if (widget.role == 'um_contractor') {
+    _screens = [
+      const HomePageScreen(key: ValueKey('home_page')),
+      const ProfilePageScreenContractor(key: ValueKey('profile_page')),
+      const MyMembershipPageScreen(key: ValueKey('my_membership_page')),
+      AllOrdersPageScreen(key: ValueKey('all_orders_page')),
+    ];
+    _icons = [Icons.home, Icons.person, Icons.workspace_premium, Icons.shopping_bag];
+    _labels = ['Home', 'Profile', 'Membership', 'All Orders'];
+  } else {
+    _screens = [
+      const HomePageScreen(key: ValueKey('home_page')),
+      const ProfilePageScreenClient(key: ValueKey('profile_page')),
+    ];
+    _icons = [Icons.home, Icons.person];
+    _labels = ['Home', 'Profile'];
   }
+}
+
 
   void _onItemTapped(int index) {
     setState(() {
@@ -140,29 +141,26 @@ Future<void> _fetchUser() async {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Row(
+            padding: const EdgeInsets.only(right: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  isLoading ? 'UserName' : displayName,
-                  style: const TextStyle(
+                const SizedBox(height: 8),
+                const Text(
+                  'BAUAUFTRÄGE24',
+                  style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 24, 2, 0),
                   ),
                 ),
-                const SizedBox(width: 10),
-                const CircleAvatar(
-                  radius: 18,
-                  backgroundImage: NetworkImage('https://via.placeholder.com/150'),
-                  backgroundColor: Colors.grey,
-                ),
-                const SizedBox(width: 12),
               ],
             ),
           ),
         ],
       ),
+
+      
       drawer: AppDrawer(
         role: widget.role,
         onItemTap: _onItemTapped,

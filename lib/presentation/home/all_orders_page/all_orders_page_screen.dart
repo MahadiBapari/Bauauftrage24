@@ -11,65 +11,171 @@ class AllOrdersPageScreen extends StatefulWidget {
 }
 
 class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
-  List<dynamic> _orders = [];
-  List<dynamic> _filteredOrders = [];
-  final Map<int, String> _orderImages = {};
-  List<dynamic> _categories = [];
-  int? _selectedCategoryId;
+  // Loading states
+  bool _isLoadingOrders = true;
+  bool _isLoadingCategories = true;
+
+  // Data lists
+  List<Map<String, dynamic>> _orders = []; // Stores raw fetched orders with image URLs
+  List<Map<String, dynamic>> _filteredOrders = []; // Stores orders after search/category filter
+  List<Map<String, dynamic>> _categories = []; // Stores fetched categories with ID and Name
+
+  // Filter/Search states
+  int? _selectedCategoryId; // null for "All Categories"
   String _searchText = '';
+
+  // API constants
+  final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order';
+  final String categoriesEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
+  final String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
+  final String apiKey = '1234567890abcdef'; // Assuming API key needed for user data
 
   @override
   void initState() {
     super.initState();
-    fetchOrders();
-    fetchCategories();
+    _loadAllData(); // Start fetching all necessary data
   }
 
-  Future<void> fetchOrders() async {
-    final response = await http.get(Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-
+  // Combines all data fetching operations using Future.wait
+  Future<void> _loadAllData() async {
+    // Set initial loading states
+    if (mounted) {
       setState(() {
-        _orders = data;
+        _isLoadingOrders = true;
+        _isLoadingCategories = true;
       });
+    }
 
-      _filterOrders();
-
-      for (var order in data) {
-        List<dynamic> gallery = order['meta']?['order_gallery'] ?? [];
-        if (gallery.isNotEmpty) {
-          int firstImageId = gallery[0]['id'];
-          final mediaUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$firstImageId';
-          final mediaResponse = await http.get(Uri.parse(mediaUrl));
-
-          if (mediaResponse.statusCode == 200) {
-            final mediaData = jsonDecode(mediaResponse.body);
-            final imageUrl = mediaData['media_details']?['sizes']?['full']?['source_url'] ?? mediaData['source_url'];
-
-            setState(() {
-              _orderImages[order['id']] = imageUrl;
-            });
-          }
-        }
+    try {
+      // Fetch orders and categories concurrently
+      await Future.wait([
+        _fetchOrders(),
+        _fetchCategories(),
+      ]);
+    } catch (e) {
+      debugPrint('Error loading all data: $e');
+    } finally {
+      // Ensure loading states are false even if there's an error
+      if (mounted) {
+        setState(() {
+          _isLoadingOrders = false;
+          _isLoadingCategories = false;
+        });
+        // Call filter after data is loaded
+        _filterOrders();
       }
-    } else {
-      print('Failed to load orders: ${response.statusCode}');
     }
   }
 
-  Future<void> fetchCategories() async {
-    final response = await http.get(Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories'));
+  Future<void> _fetchOrders() async {
+    List<Map<String, dynamic>> fetchedOrders = [];
+    try {
+      final headers = <String, String>{};
+      // You might need an Authorization header here if orders are protected
+      // if (_authToken != null) {
+      //   headers['Authorization'] = 'Bearer $_authToken';
+      // }
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      final response = await http.get(Uri.parse(ordersEndpoint), headers: headers);
 
-      setState(() {
-        _categories = data;
-      });
-    } else {
-      print('Failed to load categories: ${response.statusCode}');
+      if (!mounted) return; // Crucial check after await
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        for (var order in data) {
+          String imageUrl = '';
+          List<dynamic> galleryDynamic = order['meta']?['order_gallery'] ?? [];
+
+          // Robustly extract first image ID
+          if (galleryDynamic.isNotEmpty) {
+            dynamic firstItem = galleryDynamic[0];
+            int? firstImageId;
+
+            if (firstItem is Map && firstItem.containsKey('id') && firstItem['id'] is int) {
+              firstImageId = firstItem['id'];
+            } else if (firstItem is int) {
+              firstImageId = firstItem;
+            }
+
+            if (firstImageId != null) {
+              final mediaUrl = '$mediaEndpointBase$firstImageId';
+              final mediaResponse = await http.get(Uri.parse(mediaUrl)); // Media endpoint generally public
+
+              if (!mounted) return; // Crucial check after inner await
+
+              if (mediaResponse.statusCode == 200) {
+                try {
+                  final mediaData = jsonDecode(mediaResponse.body);
+                  // Prioritize 'source_url' directly from media endpoint, if available
+                  // 'media_details.sizes.full.source_url' is more common for images from posts/pages
+                  // but less common for direct media endpoint responses unless embedded.
+                  imageUrl = mediaData['source_url'] ?? mediaData['media_details']?['sizes']?['full']?['source_url'] ?? '';
+                } catch (e) {
+                  debugPrint('Error decoding media data for ID $firstImageId: $e');
+                }
+              } else {
+                debugPrint('Failed to fetch media for ID $firstImageId: ${mediaResponse.statusCode}');
+              }
+            }
+          }
+          // Add imageUrl directly to the order map for easier access
+          order['imageUrl'] = imageUrl;
+          fetchedOrders.add(order);
+        }
+
+        if (mounted) {
+          setState(() {
+            _orders = fetchedOrders;
+            // No need to call _filterOrders here, it's called after _loadAllData
+          });
+        }
+      } else {
+        debugPrint('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching orders: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingOrders = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    List<Map<String, dynamic>> fetchedCategories = [
+      {'id': null, 'name': 'All Categories'} // Add an "All Categories" option
+    ];
+    try {
+      final response = await http.get(Uri.parse(categoriesEndpoint));
+
+      if (!mounted) return; // Crucial check after await
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        for (var cat in data) {
+          if (cat['id'] is int && cat['name'] is String) {
+            fetchedCategories.add({'id': cat['id'], 'name': cat['name']});
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _categories = fetchedCategories;
+          });
+        }
+      } else {
+        debugPrint('Failed to load categories: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
     }
   }
 
@@ -78,21 +184,24 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
     final search = normalize(_searchText);
 
-    setState(() {
-      _filteredOrders = _orders.where((order) {
-        final title = normalize(order['title']['rendered'].toString());
-        final matchesSearch = title.contains(search);
+    if (mounted) { 
+      setState(() {
+        _filteredOrders = _orders.where((order) {
+          final title = normalize(order['title']?['rendered'].toString() ?? '');
+          final matchesSearch = title.contains(search);
 
-        if (_selectedCategoryId == null) return matchesSearch;
+          if (_selectedCategoryId == null) {
+            return matchesSearch; // If "All Categories" is selected
+          }
 
-        final orderCategories = order['order-categories'] ?? [];
-        final matchesCategory = orderCategories.contains(_selectedCategoryId);
+          final orderCategoryIds = order['order-categories'] ?? [];
+          final matchesCategory = orderCategoryIds.contains(_selectedCategoryId);
 
-        return matchesSearch && matchesCategory;
-      }).toList();
-    });
+          return matchesSearch && matchesCategory;
+        }).toList();
+      });
+    }
   }
-
 
  @override
 Widget build(BuildContext context) {
@@ -217,7 +326,7 @@ Expanded(
               itemCount: _filteredOrders.length,
               itemBuilder: (context, index) {
                 final order = _filteredOrders[index];
-                final imageUrl = _orderImages[order['id']];
+                final imageUrl = order['imageUrl'] ?? '';
                 final title = order['title']['rendered'] ?? 'Untitled';
                 //final category = order['categories_names']?.join(', ') ?? 'Uncategorized';
 

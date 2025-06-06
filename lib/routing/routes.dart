@@ -8,7 +8,7 @@ import '../presentation/home/main_screen.dart';
 import '../presentation/home/support_and_help_page/support_and_help_page_screen.dart';
 import '../presentation/home/my_favourite_page/my_favourite_page_screen.dart';
 import '../presentation/home/my_membership_page/my_membership_page_screen.dart';
-import '../presentation/home/partners_page/partners_page_screen.dart'; // ✅ Partner page import
+import '../presentation/home/partners_page/partners_page_screen.dart'; 
 
 class AppRoutes {
   static const String splash = '/';
