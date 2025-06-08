@@ -88,7 +88,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _partnersFuture = fetchPartners(); // Retry fetching data
+                        _partnersFuture = fetchPartners(); 
                       });
                     },
                     child: const Text('Retry'),
@@ -134,12 +134,10 @@ class _PartnerScreenState extends State<PartnerScreen> {
                                   return const SizedBox(
                                     width: 100,
                                     height: 100,
-                                    // You can use a specific color or placeholder image here if desired,
-                                    // or just leave it empty.
-                                    // child: ColoredBox(color: Colors.grey[200]!), // Example: grey placeholder
+                                    
                                   );
                                 }
-                                // Logo URL loaded successfully, display the Image.network
+                                
                                 return SizedBox(
                                   width: 100,
                                   height: 100,
@@ -147,7 +145,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                                     logoSnapshot.data!,
                                     fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) {
-                                      // This errorBuilder is for the Image.network itself, if the URL is bad
+                                      
                                       return const Icon(
                                         Icons.broken_image,
                                         size: 50,
@@ -155,8 +153,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                                       );
                                     },
                                     loadingBuilder: (context, child, loadingProgress) {
-                                      // This loadingBuilder is for the actual image bytes download
-                                      // We can return 'child' immediately to hide the loading indicator for bytes too
+                                     
                                       if (loadingProgress == null) return child;
                                       // Or, if you want a subtle loading indicator for the bytes:
                                       // return Center(
@@ -167,7 +164,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                                       //     strokeWidth: 2,
                                       //   ),
                                       // );
-                                      return child; // Directly return the image child without a loading indicator
+                                      return child; 
                                     },
                                   ),
                                 );
@@ -188,7 +185,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                       Text(
                         partner.address,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(fontSize: 12, color: Color.fromARGB(255, 129, 129, 129)),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

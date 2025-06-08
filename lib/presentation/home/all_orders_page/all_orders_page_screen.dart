@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'single_order_page_screen.dart';
+import 'dart:async'; // Added for Future.wait
+
+import 'package:cached_network_image/cached_network_image.dart'; // Ensure this is imported if used for images
+import 'single_order_page_screen.dart'; // Ensure this is imported
 
 class AllOrdersPageScreen extends StatefulWidget {
   const AllOrdersPageScreen({super.key});
@@ -14,6 +17,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   // Loading states
   bool _isLoadingOrders = true;
   bool _isLoadingCategories = true;
+  bool _isFetchingMore = false; // New: To track if more orders are being fetched
 
   // Data lists
   List<Map<String, dynamic>> _orders = []; // Stores raw fetched orders with image URLs
@@ -24,6 +28,14 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   int? _selectedCategoryId; // null for "All Categories"
   String _searchText = '';
 
+  // Pagination states
+  int _currentPage = 1;
+  final int _perPage = 10;
+  bool _hasMoreOrders = true; // New: To check if there are more pages to load
+
+  // Scroll controller for pagination
+  final ScrollController _scrollController = ScrollController();
+
   // API constants
   final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order';
   final String categoriesEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
@@ -33,12 +45,26 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAllData(); // Start fetching all necessary data
+    _loadAllData(); // Start fetching initial data
+    _scrollController.addListener(_scrollListener); // Add listener for pagination
   }
 
-  // Combines all data fetching operations using Future.wait
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Listener for scroll events to trigger pagination
+  void _scrollListener() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !_isFetchingMore && _hasMoreOrders) {
+      _loadMoreOrders();
+    }
+  }
+
+  // Combines all initial data fetching operations using Future.wait
   Future<void> _loadAllData() async {
-    // Set initial loading states
     if (mounted) {
       setState(() {
         _isLoadingOrders = true;
@@ -47,28 +73,42 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     }
 
     try {
-      // Fetch orders and categories concurrently
       await Future.wait([
-        _fetchOrders(),
+        _fetchOrders(page: 1, perPage: _perPage, append: false), // Initial fetch, do not append
         _fetchCategories(),
       ]);
     } catch (e) {
       debugPrint('Error loading all data: $e');
     } finally {
-      // Ensure loading states are false even if there's an error
       if (mounted) {
         setState(() {
           _isLoadingOrders = false;
           _isLoadingCategories = false;
         });
-        // Call filter after data is loaded
-        _filterOrders();
+        _filterOrders(); // Apply initial filter after all data is loaded
       }
     }
   }
 
-  Future<void> _fetchOrders() async {
-    List<Map<String, dynamic>> fetchedOrders = [];
+  // New method to load more orders for pagination
+  Future<void> _loadMoreOrders() async {
+    if (mounted) {
+      setState(() {
+        _isFetchingMore = true;
+      });
+    }
+    _currentPage++;
+    await _fetchOrders(page: _currentPage, perPage: _perPage, append: true);
+
+    if (mounted) {
+      setState(() {
+        _isFetchingMore = false;
+      });
+    }
+  }
+
+  Future<void> _fetchOrders({required int page, required int perPage, required bool append}) async {
+    List<Map<String, dynamic>> currentFetchedOrders = [];
     try {
       final headers = <String, String>{};
       // You might need an Authorization header here if orders are protected
@@ -76,7 +116,10 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
       //   headers['Authorization'] = 'Bearer $_authToken';
       // }
 
-      final response = await http.get(Uri.parse(ordersEndpoint), headers: headers);
+      final response = await http.get(
+        Uri.parse('$ordersEndpoint?page=$page&per_page=$perPage'),
+        headers: headers,
+      );
 
       if (!mounted) return; // Crucial check after await
 
@@ -87,7 +130,6 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
           String imageUrl = '';
           List<dynamic> galleryDynamic = order['meta']?['order_gallery'] ?? [];
 
-          // Robustly extract first image ID
           if (galleryDynamic.isNotEmpty) {
             dynamic firstItem = galleryDynamic[0];
             int? firstImageId;
@@ -100,16 +142,13 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
             if (firstImageId != null) {
               final mediaUrl = '$mediaEndpointBase$firstImageId';
-              final mediaResponse = await http.get(Uri.parse(mediaUrl)); // Media endpoint generally public
+              final mediaResponse = await http.get(Uri.parse(mediaUrl));
 
               if (!mounted) return; // Crucial check after inner await
 
               if (mediaResponse.statusCode == 200) {
                 try {
                   final mediaData = jsonDecode(mediaResponse.body);
-                  // Prioritize 'source_url' directly from media endpoint, if available
-                  // 'media_details.sizes.full.source_url' is more common for images from posts/pages
-                  // but less common for direct media endpoint responses unless embedded.
                   imageUrl = mediaData['source_url'] ?? mediaData['media_details']?['sizes']?['full']?['source_url'] ?? '';
                 } catch (e) {
                   debugPrint('Error decoding media data for ID $firstImageId: $e');
@@ -119,26 +158,33 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
               }
             }
           }
-          // Add imageUrl directly to the order map for easier access
           order['imageUrl'] = imageUrl;
-          fetchedOrders.add(order);
+          currentFetchedOrders.add(order);
         }
 
         if (mounted) {
           setState(() {
-            _orders = fetchedOrders;
-            // No need to call _filterOrders here, it's called after _loadAllData
+            if (append) {
+              _orders.addAll(currentFetchedOrders); // Append for pagination
+            } else {
+              _orders = currentFetchedOrders; // Overwrite for initial load
+            }
+            _hasMoreOrders = data.length == _perPage; // Check if the number of fetched items equals perPage
           });
         }
       } else {
         debugPrint('Failed to load orders: ${response.statusCode}');
+        if (mounted) {
+          setState(() {
+            _hasMoreOrders = false; // No more orders if fetch failed
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error fetching orders: $e');
-    } finally {
       if (mounted) {
         setState(() {
-          _isLoadingOrders = false;
+          _hasMoreOrders = false; // No more orders on error
         });
       }
     }
@@ -151,7 +197,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     try {
       final response = await http.get(Uri.parse(categoriesEndpoint));
 
-      if (!mounted) return; // Crucial check after await
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -180,18 +226,18 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   }
 
   void _filterOrders() {
-    String normalize(String input) => input.toLowerCase().replaceAll(RegExp(r'\\s+'), '');
+    String normalize(String input) => input.toLowerCase().replaceAll(RegExp(r'\s+'), '');
 
     final search = normalize(_searchText);
 
-    if (mounted) { 
+    if (mounted) {
       setState(() {
         _filteredOrders = _orders.where((order) {
           final title = normalize(order['title']?['rendered'].toString() ?? '');
           final matchesSearch = title.contains(search);
 
           if (_selectedCategoryId == null) {
-            return matchesSearch; // If "All Categories" is selected
+            return matchesSearch;
           }
 
           final orderCategoryIds = order['order-categories'] ?? [];
@@ -203,201 +249,222 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     }
   }
 
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.white,
-    body: GestureDetector(
-      behavior: HitTestBehavior.opaque, // Ensures taps are registered outside widgets
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: SafeArea(
-        child: Column(
-          children: [
-            // 🔍 Search Bar
-                Container(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+     
+      body: GestureDetector( // Main GestureDetector for the body
+        behavior: HitTestBehavior.opaque, // Ensures taps are registered outside widgets
+        onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Search Bar
+              Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
                   child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.0),
-                    boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 2,
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    ],
-                  ),
-                  child: TextField(
-                    //controller: _searchController,
-                    decoration: InputDecoration(
-                    hintText: 'Search by title...',
-                    hintStyle: TextStyle(color: Colors.grey.shade500),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
-                    suffixIcon: _searchText.isNotEmpty
-                      ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey.shade600),
-                        onPressed: () {
-                          setState(() {
-                          _searchText = '';
-                           // _searchController.clear();
-                          });
-                          _filterOrders();
-                          FocusScope.of(context).unfocus();
-                        },
-                        )
-                      : null,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 10.0),
-                    ),
-                    onChanged: (value) {
-                    setState(() {
-                      _searchText = value;
-                    });
-                    _filterOrders();
-                    },
-                  ),
-                  ),
-                ),
-                ),
-
-
-// 📂 Category Filter (Improved Design)
-            Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  _categories.isEmpty
-                      ? const Text("No categories available.")
-                      : SizedBox(
-                          height: 40,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _categories.length + 1, // Include "All" chip
-                            separatorBuilder: (_, __) => const SizedBox(width: 10),
-                            itemBuilder: (context, index) {
-                              final isAll = index == 0;
-                              final category = isAll ? null : _categories[index - 1];
-                              final id = isAll ? null : category!['id'];
-                              final name = isAll ? 'All' : category!['name'];
-                              final isSelected = _selectedCategoryId == id;
-
-                              return ActionChip(
-                                label: Text(name),
-                                backgroundColor: isSelected
-                                    ? const Color.fromARGB(255, 85, 21, 1)
-                                    : Colors.grey[200],
-                                labelStyle: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                    child: TextField(
+                      // controller: _searchController, // Uncomment and declare if you need to clear programmatically
+                      decoration: InputDecoration(
+                        hintText: 'Search by title...',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
+                        suffixIcon: _searchText.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, color: Colors.grey.shade600),
                                 onPressed: () {
-                                  setState(() {
-                                    // Tap again to deselect
-                                    _selectedCategoryId = isSelected ? null : id;
-                                  });
-                                  _filterOrders(); // or _fetchNewArrivalsOrders(categoryId: _selectedCategoryId);
+                                  if (mounted) {
+                                    setState(() {
+                                      _searchText = '';
+                                      // _searchController?.clear(); // If using controller
+                                    });
+                                  }
+                                  _filterOrders();
+                                  FocusScope.of(context).unfocus();
                                 },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 10.0),
+                      ),
+                      onChanged: (value) {
+                        if (mounted) {
+                          setState(() {
+                            _searchText = value;
+                          });
+                        }
+                        _filterOrders();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+              // Category Filter
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _isLoadingCategories
+                        ? const Center(child: CircularProgressIndicator())
+                        : _categories.isEmpty
+                            ? const Text("No categories available.")
+                            : SizedBox(
+                                height: 40,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _categories.length,
+                                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                  itemBuilder: (context, index) {
+                                    final category = _categories[index];
+                                    final id = category['id'];
+                                    final name = category['name'];
+                                    final isSelected = _selectedCategoryId == id;
+
+                                    return ActionChip(
+                                      label: Text(name!),
+                                      backgroundColor: isSelected
+                                          ? const Color.fromARGB(255, 85, 21, 1)
+                                          : Colors.grey[200],
+                                      labelStyle: TextStyle(
+                                        color: isSelected ? Colors.white : Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      onPressed: () {
+                                        // Dismiss keyboard when a category chip is tapped
+                                        FocusScope.of(context).unfocus();
+                                        if (mounted) {
+                                          setState(() {
+                                            _selectedCategoryId = isSelected ? null : id;
+                                          });
+                                        }
+                                        _filterOrders();
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Orders List
+              Expanded(
+                child: _isLoadingOrders
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredOrders.isEmpty
+                        ? const Center(child: Text("No orders found matching your criteria."))
+                        : ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _filteredOrders.length + (_hasMoreOrders ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _filteredOrders.length) {
+                                return _isFetchingMore
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: Center(child: CircularProgressIndicator()),
+                                      )
+                                    : const SizedBox.shrink();
+                              }
+
+                              final order = _filteredOrders[index];
+                              final imageUrl = order['imageUrl'] ?? '';
+                              final title = order['title']['rendered'] ?? 'Untitled';
+                              final categoryName = order['acf']?['category'] ?? 'N/A';
+
+                              return GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context).unfocus(); // Dismiss keyboard on card tap
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SingleOrderPageScreen(order: order),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  height: 180,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    image: imageUrl.isNotEmpty
+                                        ? DecorationImage(
+                                            image: NetworkImage(imageUrl),
+                                            fit: BoxFit.cover,
+                                            colorFilter: ColorFilter.mode(
+                                              Colors.black.withOpacity(0.4),
+                                              BlendMode.darken,
+                                            ),
+                                            onError: (exception, stackTrace) {
+                                              debugPrint('Failed to load image: $imageUrl');
+                                            },
+                                          )
+                                        : null,
+                                    gradient: imageUrl.isEmpty
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Color.fromARGB(255, 85, 21, 1),
+                                              Color.fromARGB(255, 121, 26, 3),
+                                            ],
+                                          )
+                                        : null,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          title,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          categoryName,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               );
                             },
                           ),
-                        ),
-                ],
               ),
-            ),
-
-
-            const SizedBox(height: 10),
-
-            // 📦 Orders List
-Expanded(
-  child: _orders.isEmpty
-      ? const Center(child: CircularProgressIndicator())
-      : _filteredOrders.isEmpty
-          ? const Center(child: Text("No orders match your criteria."))
-          : ListView.builder(
-              itemCount: _filteredOrders.length,
-              itemBuilder: (context, index) {
-                final order = _filteredOrders[index];
-                final imageUrl = order['imageUrl'] ?? '';
-                final title = order['title']['rendered'] ?? 'Untitled';
-                //final category = order['categories_names']?.join(', ') ?? 'Uncategorized';
-
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SingleOrderPageScreen(order: order),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    height: 180,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      image: imageUrl != null && imageUrl.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(imageUrl),
-                              fit: BoxFit.cover,
-                              colorFilter: ColorFilter.mode(
-                                Colors.black.withOpacity(0.4),
-                                BlendMode.darken,
-                              ),
-                              onError: (exception, stackTrace) {
-                                debugPrint('Failed to load image: $imageUrl');
-                              },
-                            )
-                          : null,
-                      gradient: (imageUrl == null || imageUrl.isEmpty)
-                          ? const LinearGradient(
-                              colors: [
-                                Color.fromARGB(255, 85, 21, 1),
-                                Color.fromARGB(255, 121, 26, 3),
-                              ],
-                            )
-                          : null,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-),
-
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 }

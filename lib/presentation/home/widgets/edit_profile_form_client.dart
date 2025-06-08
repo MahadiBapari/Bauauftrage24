@@ -19,12 +19,7 @@ class EditProfileFormClient extends StatefulWidget {
 class _EditProfileFormClientState extends State<EditProfileFormClient> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _firmNameController = TextEditingController();
-  final _uidNumberController = TextEditingController();
-  final _availableTimeController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
 
@@ -32,8 +27,6 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
   void initState() {
     super.initState();
 
-    // Set values from userData
-    _emailController.text = widget.userData['user_email'] ?? '';
     _phoneController.text = widget.userData['meta_data']?['user_phone_']?[0] ?? '';
     _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
     _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
@@ -43,11 +36,9 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     if (_formKey.currentState!.validate()) {
       final updatedData = {
         'user_id': widget.userData['ID'].toString(),
-        'email': _emailController.text,
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
         'user_phone_': _phoneController.text,
-       
       };
 
       const apiKey = '1234567890abcdef';
@@ -98,51 +89,108 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Edit Profile'),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              
-              TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(labelText: 'First Name'),
-              ),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(labelText: 'Last Name'),
-              ),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) =>
-                    value == null || !value.contains('@') ? 'Enter a valid email' : null,
-              ),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone'),
-              ),
-           
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _updateProfile,
-                child: const Text('Save Changes'),
-              ),
-            ],
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header with X icon
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const Spacer(),
+                const Text(
+                  'Edit Profile',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                const SizedBox(width: 48), // To balance the close button
+              ],
+            ),
           ),
-        ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  // First Name
+                  TextFormField(
+                    controller: _firstNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'First Name',
+                      prefixIcon: Icon(Icons.person_outline),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Last Name
+                  TextFormField(
+                    controller: _lastNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Last Name',
+                      prefixIcon: Icon(Icons.person_outline),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Email (readonly)
+                  TextFormField(
+                    initialValue: widget.userData['user_email'] ?? '',
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Email (not editable)',
+                      prefixIcon: Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Phone
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _updateProfile,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Changes'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color.fromARGB(255, 61, 2, 2),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-      ],
     );
   }
 }

@@ -55,7 +55,7 @@ void _initializeScreens() {
       const MyMembershipPageScreen(key: ValueKey('my_membership_page')),
       AllOrdersPageScreen(key: ValueKey('all_orders_page')),
     ];
-    _icons = [Icons.home, Icons.person, Icons.workspace_premium, Icons.shopping_bag];
+    _icons = [Icons.home, Icons.person, Icons.card_membership, Icons.shopping_bag];
     _labels = ['Home', 'Profile', 'Membership', 'All Orders'];
   } else {
     _screens = [
@@ -202,7 +202,7 @@ Future<void> _fetchUser() async {
                 _icons[index],
                 color: _selectedIndex == index
                     ? const Color.fromARGB(255, 61, 14, 10)
-                    : const Color.fromARGB(255, 88, 4, 1),
+                    : const Color.fromARGB(255, 133, 13, 9),
                 size: 32,
               ),
               onPressed: () => _onItemTapped(index),

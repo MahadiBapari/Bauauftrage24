@@ -13,10 +13,12 @@ class EditProfileFormContractor extends StatefulWidget {
   });
 
   @override
-  State<EditProfileFormContractor> createState() => _EditProfileFormContractorState();
+  State<EditProfileFormContractor> createState() =>
+      _EditProfileFormContractorState();
 }
 
-class _EditProfileFormContractorState extends State<EditProfileFormContractor> {
+class _EditProfileFormContractorState
+    extends State<EditProfileFormContractor> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
@@ -31,15 +33,19 @@ class _EditProfileFormContractorState extends State<EditProfileFormContractor> {
   @override
   void initState() {
     super.initState();
-
-    // Set values from userData
     _emailController.text = widget.userData['user_email'] ?? '';
-    _phoneController.text = widget.userData['meta_data']?['user_phone_']?[0] ?? '';
-    _firmNameController.text = widget.userData['meta_data']?['firmenname_']?[0] ?? '';
-    _uidNumberController.text = widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
-    _availableTimeController.text = widget.userData['meta_data']?['available_time']?[0] ?? '';
-    _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
-    _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
+    _phoneController.text =
+        widget.userData['meta_data']?['user_phone_']?[0] ?? '';
+    _firmNameController.text =
+        widget.userData['meta_data']?['firmenname_']?[0] ?? '';
+    _uidNumberController.text =
+        widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
+    _availableTimeController.text =
+        widget.userData['meta_data']?['available_time']?[0] ?? '';
+    _firstNameController.text =
+        widget.userData['meta_data']?['first_name']?[0] ?? '';
+    _lastNameController.text =
+        widget.userData['meta_data']?['last_name']?[0] ?? '';
   }
 
   Future<void> _updateProfile() async {
@@ -56,7 +62,8 @@ class _EditProfileFormContractorState extends State<EditProfileFormContractor> {
       };
 
       const apiKey = '1234567890abcdef';
-      const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/';
+      const url =
+          'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/';
 
       try {
         final response = await http.post(
@@ -101,75 +108,169 @@ class _EditProfileFormContractorState extends State<EditProfileFormContractor> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Edit Profile'),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+ @override
+Widget build(BuildContext context) {
+  return Dialog(
+    insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+    backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header with X icon and Title
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
             children: [
-              
-              TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(labelText: 'First Name'),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
               ),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(labelText: 'Last Name'),
+              const Spacer(),
+              const Text(
+                'Edit Contractor Profile',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) =>
-                    value == null || !value.contains('@') ? 'Enter a valid email' : null,
-              ),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone'),
-              ),
-              TextFormField(
-                controller: _firmNameController,
-                decoration: const InputDecoration(labelText: 'Firm Name'),
-              ),
-              TextFormField(
-                controller: _uidNumberController,
-                decoration: const InputDecoration(labelText: 'UID Number'),
-              ),
-              DropdownButtonFormField<String>(
-                value: _availableTimeController.text.isNotEmpty ? _availableTimeController.text : null,
-                decoration: const InputDecoration(labelText: 'Available Time'),
-                items: const [
-                  DropdownMenuItem(value: '08.00 - 12.00 Uhr', child: Text('08.00 - 12.00 Uhr')),
-                  DropdownMenuItem(value: '12.00 - 14.00 Uhr', child: Text('12.00 - 14.00 Uhr')),
-                  DropdownMenuItem(value: '14.00 - 18.00 Uhr', child: Text('14.00 - 18.00 Uhr')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _availableTimeController.text = value ?? '';
-                  });
-                },
-              ),
-
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _updateProfile,
-                child: const Text('Save Changes'),
-              ),
+              const Spacer(),
+              const SizedBox(width: 48),
             ],
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+
+        const Divider(height: 1),
+
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // First Name
+                  TextFormField(
+                    controller: _firstNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'First Name',
+                      prefixIcon: Icon(Icons.person_outline),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Last Name
+                  TextFormField(
+                    controller: _lastNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Last Name',
+                      prefixIcon: Icon(Icons.person_outline),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Email
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => value == null || !value.contains('@')
+                        ? 'Enter a valid email'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Phone
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Firm Name
+                  TextFormField(
+                    controller: _firmNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Firm Name',
+                      prefixIcon: Icon(Icons.business_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // UID Number
+                  TextFormField(
+                    controller: _uidNumberController,
+                    decoration: const InputDecoration(
+                      labelText: 'UID Number',
+                      prefixIcon: Icon(Icons.confirmation_number_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Available Time Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _availableTimeController.text.isNotEmpty
+                        ? _availableTimeController.text
+                        : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Available Time',
+                      prefixIcon: Icon(Icons.access_time),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: '08.00 - 12.00 Uhr',
+                          child: Text('08.00 - 12.00 Uhr')),
+                      DropdownMenuItem(
+                          value: '12.00 - 14.00 Uhr',
+                          child: Text('12.00 - 14.00 Uhr')),
+                      DropdownMenuItem(
+                          value: '14.00 - 18.00 Uhr',
+                          child: Text('14.00 - 18.00 Uhr')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _availableTimeController.text = value ?? '';
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _updateProfile,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Changes'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color.fromARGB(255, 61, 2, 2),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
+
 }
