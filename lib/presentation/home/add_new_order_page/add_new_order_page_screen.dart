@@ -296,7 +296,7 @@ final Map<String, dynamic> postData = {
                 if (_selectedCategories.isNotEmpty) _buildSelectedChips(),
                 const SizedBox(height: 20),
                _buildImagePicker(),
-                if (_selectedImages != null && _selectedImages.isNotEmpty) // Check if the list exists and is not empty
+                if (_selectedImages.isNotEmpty) // Check if the list exists and is not empty
                   SizedBox( // Use SizedBox to give the ListView a constrained height
                     height: 100, // Adjust this height as needed for your image previews
                     child: ListView.builder(
