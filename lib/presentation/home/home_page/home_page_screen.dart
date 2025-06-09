@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async'; // Added for Future.wait
 
+import '../../../utils/cache_manager.dart';
+import '../../../widgets/custom_loading_indicator.dart';
+import '../../../widgets/membership_required_dialog.dart';
 import '../all_orders_page/single_order_page_screen.dart'; // Ensure this is correctly imported
 import '../my_membership_page/membership_form_page_screen.dart'; // Import for the form page
 
@@ -29,7 +32,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   String? _authToken;
 
-  static const String apiKey = '1234567890abcdef'; // Your API Key
+  static const String apiKey = '1234567890abcdef'; 
 
   bool _isLoadingMembership = true;
   bool _isActiveMembership = false;
@@ -47,11 +50,13 @@ class _HomePageScreenState extends State<HomePageScreen> {
   // Add refresh timer
   Timer? _refreshTimer;
 
+  final CacheManager _cacheManager = CacheManager();
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-    // Set up periodic refresh
     _refreshTimer = Timer.periodic(const Duration(minutes: 15), (_) {
       _refreshDataInBackground();
     });
@@ -64,23 +69,85 @@ class _HomePageScreenState extends State<HomePageScreen> {
     super.dispose();
   }
 
-  // Add method to check if cache is expired
-  Future<bool> _isCacheExpired() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastRefresh = prefs.getInt(_lastRefreshKey);
-    if (lastRefresh == null) return true;
-    
-    final now = DateTime.now().millisecondsSinceEpoch;
-    return now - lastRefresh > _cacheExpiration.inMilliseconds;
+  Future<void> _loadInitialData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _authToken = prefs.getString('auth_token');
+        });
+      }
+
+      // Load all data from cache first
+      final cachedData = await Future.wait([
+        _cacheManager.loadFromCache('user_data'),
+        _cacheManager.loadFromCache('promo_orders'),
+        _cacheManager.loadFromCache('categories'),
+        _cacheManager.loadFromCache('new_arrivals'),
+        _cacheManager.loadFromCache('membership_status'),
+        _cacheManager.loadFromCache('partners'),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          // Update state with cached data
+          if (cachedData[0] != null) {
+            displayName = cachedData[0] as String;
+            isLoadingUser = false;
+          }
+          if (cachedData[1] != null) {
+            promoOrders = List<Map<String, dynamic>>.from(cachedData[1] as List);
+            isLoadingPromos = false;
+          }
+          if (cachedData[2] != null) {
+            _categories = List<Map<String, dynamic>>.from(cachedData[2] as List);
+            isLoadingCategories = false;
+          }
+          if (cachedData[3] != null) {
+            _newArrivalsOrders = List<Map<String, dynamic>>.from(cachedData[3] as List);
+            isLoadingNewArrivals = false;
+          }
+          if (cachedData[4] != null) {
+            final membershipData = cachedData[4] as Map<String, dynamic>;
+            _isActiveMembership = membershipData['active'] as bool;
+            _membershipStatusMessage = membershipData['message'] as String;
+            _isLoadingMembership = false;
+          }
+          if (cachedData[5] != null) {
+            _partners = (cachedData[5] as List)
+                .map((item) => Partner.fromJson(item as Map<String, dynamic>))
+                .toList();
+            _isLoadingPartners = false;
+          }
+        });
+      }
+
+      // Check which data needs refreshing
+      final needsRefresh = await Future.wait([
+        _cacheManager.isCacheExpired('user_data'),
+        _cacheManager.isCacheExpired('promo_orders'),
+        _cacheManager.isCacheExpired('categories'),
+        _cacheManager.isCacheExpired('new_arrivals'),
+        _cacheManager.isCacheExpired('membership_status'),
+        _cacheManager.isCacheExpired('partners'),
+      ]);
+
+      // Refresh only expired data
+      if (needsRefresh.any((needs) => needs)) {
+        await _refreshDataInBackground();
+      }
+    } catch (e) {
+      debugPrint('Error loading initial data: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  // Add method to update last refresh timestamp
-  Future<void> _updateLastRefreshTimestamp() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_lastRefreshKey, DateTime.now().millisecondsSinceEpoch);
-  }
-
-  // Add background refresh method
   Future<void> _refreshDataInBackground() async {
     if (!mounted) return;
     
@@ -93,152 +160,31 @@ class _HomePageScreenState extends State<HomePageScreen> {
         _fetchMembershipStatus(),
         _fetchPartners(),
       ]);
-      await _updateLastRefreshTimestamp();
     } catch (e) {
       debugPrint('Background refresh failed: $e');
     }
   }
 
-  // --- Helper to save data to SharedPreferences ---
-  Future<void> _saveDataToCache(String key, dynamic data) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (data is String) {
-      prefs.setString(key, data);
-    } else if (data is bool) {
-      prefs.setBool(key, data);
-    } else if (data is int) {
-      prefs.setInt(key, data);
-    } else if (data is double) {
-      prefs.setDouble(key, data);
-    } else if (data is List<String>) {
-      prefs.setStringList(key, data);
-    } else if (data is List) { // Handle List<Map<String, dynamic>> by encoding
-      prefs.setString(key, json.encode(data));
-    } else if (data is Map) { // Handle Map<String, dynamic> by encoding
-       prefs.setString(key, json.encode(data));
-    } else {
-      debugPrint('Warning: Attempting to save unsupported type for key $key: ${data.runtimeType}');
-    }
-    await _updateLastRefreshTimestamp();
-    debugPrint('Data cached for key: $key');
-  }
-
-  // --- Helper to load data from SharedPreferences ---
-  Future<dynamic> _loadDataFromCache(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    final cachedData = prefs.get(key);
-    debugPrint('Loading data for key: $key, raw type: ${cachedData.runtimeType}');
-    if (cachedData != null) {
-      if (cachedData is String) {
-        try {
-          return json.decode(cachedData);
-        } catch (e) {
-          return cachedData;
-        }
-      }
-      return cachedData;
-    }
-    return null;
-  }
-
-  // This method now focuses on loading cache first, then initiating network fetches.
-  Future<void> _loadInitialData() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _authToken = prefs.getString('auth_token');
-      });
-    }
-
-    // Check if cache is expired
-    final isExpired = await _isCacheExpired();
-
-    // --- Phase 1: Load from Cache (Synchronously for immediate display) ---
-    final cachedUser = await _loadDataFromCache('cached_user_data');
-    final cachedPromos = await _loadDataFromCache('cached_promo_orders');
-    final cachedCategories = await _loadDataFromCache('cached_categories');
-    final cachedNewArrivals = await _loadDataFromCache('cached_new_arrivals');
-    final cachedMembershipActive = await _loadDataFromCache('cached_membership_active');
-    final cachedMembershipMessage = await _loadDataFromCache('cached_membership_message');
-    final cachedPartners = await _loadDataFromCache('cached_partners');
-
-    if (mounted) {
-      setState(() {
-        // User Name
-        if (cachedUser is String) {
-          displayName = cachedUser;
-          isLoadingUser = false;
-        } else {
-          isLoadingUser = true; // Still loading if not in cache
-        }
-        // Promo Orders
-        if (cachedPromos is List) {
-          promoOrders = List<Map<String, dynamic>>.from(cachedPromos);
-          isLoadingPromos = false;
-        } else {
-          isLoadingPromos = true;
-        }
-        // Categories
-        if (cachedCategories is List) {
-          _categories = List<Map<String, dynamic>>.from(cachedCategories);
-          isLoadingCategories = false;
-        } else {
-          isLoadingCategories = true;
-        }
-        // New Arrivals
-        if (cachedNewArrivals is List) {
-          _newArrivalsOrders = List<Map<String, dynamic>>.from(cachedNewArrivals);
-          isLoadingNewArrivals = false;
-        } else {
-          isLoadingNewArrivals = true;
-        }
-        // Membership Status
-        if (cachedMembershipActive is bool) {
-          _isActiveMembership = cachedMembershipActive;
-          _isLoadingMembership = false;
-        } else {
-          _isLoadingMembership = true;
-        }
-        if (cachedMembershipMessage is String) {
-          _membershipStatusMessage = cachedMembershipMessage;
-        }
-        // Partners
-        if (cachedPartners is List) {
-          _partners = cachedPartners.map((item) => Partner.fromJson(item as Map<String, dynamic>)).toList();
-          _isLoadingPartners = false;
-        } else {
-          _isLoadingPartners = true;
-        }
-      });
-    }
-
-    // --- Phase 2: Fetch Fresh Data if cache is expired or empty ---
-    if (isExpired || cachedUser == null || cachedPromos == null || cachedCategories == null) {
-      _refreshDataInBackground();
-    }
-  }
-
   Future<void> _fetchUser() async {
     if (!mounted) return;
-    setState(() => isLoadingUser = true); // Set loading for this specific section
-
-    final prefs = await SharedPreferences.getInstance();
-    final userIdString = prefs.getString('user_id');
-
-    if (userIdString == null) {
-      if (mounted) setState(() => isLoadingUser = false);
-      return;
-    }
-
-    final int? userId = int.tryParse(userIdString);
-    if (userId == null) {
-      if (mounted) setState(() => isLoadingUser = false);
-      return;
-    }
-
-    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId');
+    setState(() => isLoadingUser = true);
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final userIdString = prefs.getString('user_id');
+
+      if (userIdString == null) {
+        if (mounted) setState(() => isLoadingUser = false);
+        return;
+      }
+
+      final int? userId = int.tryParse(userIdString);
+      if (userId == null) {
+        if (mounted) setState(() => isLoadingUser = false);
+        return;
+      }
+
+      final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId');
       final response = await http.get(url, headers: {'X-API-Key': apiKey});
 
       if (!mounted) return;
@@ -261,7 +207,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             displayName = newDisplayName;
           });
         }
-        await _saveDataToCache('cached_user_data', newDisplayName);
+        await _cacheManager.saveToCache('user_data', newDisplayName);
       } else {
         debugPrint('Failed to load user data: ${response.statusCode} - ${response.body}');
       }
@@ -287,8 +233,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _membershipStatusMessage = 'Please log in to check your membership status.';
           });
         }
-        await _saveDataToCache('cached_membership_active', false);
-        await _saveDataToCache('cached_membership_message', 'Please log in to check your membership status.');
+        await _cacheManager.saveToCache('membership_status', {'active': false, 'message': 'Please log in to check your membership status.'});
         return;
       }
 
@@ -314,8 +259,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _membershipStatusMessage = message;
           });
         }
-        await _saveDataToCache('cached_membership_active', active);
-        await _saveDataToCache('cached_membership_message', message);
+        await _cacheManager.saveToCache('membership_status', {'active': active, 'message': message});
       } else {
         debugPrint('Failed to load membership status: ${response.statusCode} - ${response.body}');
         if (mounted) {
@@ -324,8 +268,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _membershipStatusMessage = 'Error checking membership status. Please try again.';
           });
         }
-        await _saveDataToCache('cached_membership_active', false);
-        await _saveDataToCache('cached_membership_message', 'Error checking membership status. Please try again.');
+        await _cacheManager.saveToCache('membership_status', {'active': false, 'message': 'Error checking membership status. Please try again.'});
       }
     } catch (e) {
       debugPrint('Error fetching membership status: $e');
@@ -335,8 +278,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
           _membershipStatusMessage = 'Could not connect to membership service. Check your internet.';
         });
       }
-      await _saveDataToCache('cached_membership_active', false);
-      await _saveDataToCache('cached_membership_message', 'Could not connect to membership service. Check your internet.');
+      await _cacheManager.saveToCache('membership_status', {'active': false, 'message': 'Could not connect to membership service. Check your internet.'});
     } finally {
       if (mounted) setState(() => _isLoadingMembership = false);
     }
@@ -368,7 +310,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _categories = fetchedCategories;
           });
         }
-        await _saveDataToCache('cached_categories', fetchedCategories);
+        await _cacheManager.saveToCache('categories', fetchedCategories);
       } else {
         debugPrint('Failed to load categories: ${response.statusCode} - ${response.body}');
       }
@@ -452,7 +394,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _newArrivalsOrders = fetchedOrders;
           });
         }
-        await _saveDataToCache('cached_new_arrivals', fetchedOrders);
+        await _cacheManager.saveToCache('new_arrivals', fetchedOrders);
       } else {
         debugPrint('Failed to load new arrivals: ${ordersResponse.statusCode} - ${ordersResponse.body}');
       }
@@ -533,7 +475,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             promoOrders = fetchedPromoOrders;
           });
         }
-        await _saveDataToCache('cached_promo_orders', fetchedPromoOrders);
+        await _cacheManager.saveToCache('promo_orders', fetchedPromoOrders);
       } else {
         debugPrint('Failed to load orders: ${ordersResponse.statusCode} - ${ordersResponse.body}');
       }
@@ -620,7 +562,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _partners = fetchedPartners;
           });
         }
-        await _saveDataToCache('cached_partners', fetchedPartners.map((p) => p.toJson()).toList());
+        await _cacheManager.saveToCache('partners', fetchedPartners.map((p) => p.toJson()).toList());
       } else {
         debugPrint('Failed to load partners: ${response.statusCode} - ${response.body}');
       }
@@ -631,87 +573,96 @@ class _HomePageScreenState extends State<HomePageScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: ListView(
-            children: [
-              Text(
-                'Welcome back,',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              ),
-              const SizedBox(height: 4),
-              isLoadingUser
-                  ? const CircularProgressIndicator.adaptive() // Show loading only for username
-                  : Text(
-                      displayName,
-                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+      body: _isLoading
+          ? const CustomLoadingIndicator(
+              message: 'Loading data...',
+            )
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: ListView(
+                  children: [
+                    Text(
+                      'Welcome back,',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                     ),
-              const SizedBox(height: 24),
-
-              // --- Conditional "Get Membership" Card ---
-              _isLoadingMembership
-                  ? const Center(child: CircularProgressIndicator.adaptive()) // Show loading for membership card
-                  : !_isActiveMembership
-                      ? _buildGetMembershipCard(context)
-                      : const SizedBox.shrink(),
-
-              const SizedBox(height: 24),
-
-
-
-
-              Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              isLoadingPromos
-                  ? const Center(child: CircularProgressIndicator.adaptive()) // Show loading for promos
-                  : promoOrders.isEmpty
-                      ? const Center(child: Text("No promotions available."))
-                      : SizedBox(
-                          height: 160,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: promoOrders.length,
-                            separatorBuilder: (context, index) => const SizedBox(width: 14),
-                            itemBuilder: (context, index) {
-                              final promo = promoOrders[index];
-                              return _buildOrderCard(
-                                  promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
-                            },
+                    const SizedBox(height: 4),
+                    isLoadingUser
+                        ? const CustomLoadingIndicator(
+                            size: 30.0,
+                            message: 'Loading data...',
+                          )
+                        : Text(
+                            displayName,
+                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                           ),
-                        ),
-              const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-              _buildCategorySection(),
-              const SizedBox(height: 20),
+                    // --- Conditional "Get Membership" Card ---
+                    _isLoadingMembership
+                        ? const CustomLoadingIndicator(
+                            size: 30.0,
+                            message: 'Loading membership status...',
+                          )
+                        : !_isActiveMembership
+                            ? _buildGetMembershipCard(context)
+                            : const SizedBox.shrink(),
 
-              _buildNewArrivals(),
-              const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                            // --- Coupon Card Widget directly in Home Page ---
-              _buildCouponCard(
-                imageUrl: 'assets/images/kpsa_logo.png',
-                discountText: '20% discount',
-                descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
-                onShowDiscountCode: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Discount code will be shown here!')),
-                  );
-                },
+                    // Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    // const SizedBox(height: 12),
+                    isLoadingPromos
+                        ? const CustomLoadingIndicator(
+                            size: 30.0,
+                            message: 'Loading promotions...',
+                          )
+                        : promoOrders.isEmpty
+                            ? const Center(child: Text("No promotions available."))
+                            : SizedBox(
+                                height: 160,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: promoOrders.length,
+                                  separatorBuilder: (context, index) => const SizedBox(width: 14),
+                                  itemBuilder: (context, index) {
+                                    final promo = promoOrders[index];
+                                    return _buildOrderCard(
+                                        promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
+                                  },
+                                ),
+                              ),
+                    const SizedBox(height: 24),
+
+                    _buildCategorySection(),
+                    const SizedBox(height: 20),
+
+                    _buildNewArrivals(),
+                    const SizedBox(height: 24),
+
+                    // --- Coupon Card Widget directly in Home Page ---
+                    _buildCouponCard(
+                      imageUrl: 'assets/images/kpsa_logo.png',
+                      discountText: '20% discount',
+                      descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
+                      onShowDiscountCode: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Discount code will be shown here!')),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    _buildPartnersSection(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-
-              _buildPartnersSection(),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -744,14 +695,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Spacer(),
           Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Category: $category",
-            style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ],
       ),
@@ -765,7 +712,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
         const Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         isLoadingCategories
-            ? const Center(child: CircularProgressIndicator.adaptive())
+            ? const CustomLoadingIndicator(
+                size: 30.0,
+                message: 'Loading categories...',
+              )
             : _categories.isEmpty
                 ? const Text("No categories available.")
                 : SizedBox(
@@ -799,10 +749,13 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("New Arrivals", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const Text("Newest Orders", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         isLoadingNewArrivals
-            ? const Center(child: CircularProgressIndicator.adaptive())
+            ? const CustomLoadingIndicator(
+                size: 30.0,
+                message: 'Loading data...',
+              )
             : _newArrivalsOrders.isEmpty
                 ? const Text("No new orders in this category.")
                 : SizedBox(
@@ -820,14 +773,24 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
                         return InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SingleOrderPageScreen(
-                                  order: fullOrder,
+                            if (_isActiveMembership) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SingleOrderPageScreen(
+                                    order: fullOrder,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (context) => MembershipRequiredDialog(
+                                  context: context,
+                                  message: 'A membership is required to view order details. Get a membership to access all order information.',
+                                ),
+                              );
+                            }
                           },
                           child: Container(
                             width: 160,
@@ -907,30 +870,38 @@ class _HomePageScreenState extends State<HomePageScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.workspace_premium,
-            color: Colors.amberAccent,
-            size: 48,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Unlock Premium Features!',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+            Row(
+            children: [
+              const Icon(
+              Icons.workspace_premium,
+              color: Colors.amberAccent,
+              size: 42,
+              ),
+              const SizedBox(width: 16),
+              const Text(
+              'Unlock Premium Features!',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+              ),
+            ],
             ),
-          ),
+            const SizedBox(height: 16),
           const SizedBox(height: 8),
-          Text(
-            _membershipStatusMessage.isEmpty
+            Center(
+            child: Text(
+              _membershipStatusMessage.isEmpty
                 ? 'Your current membership is not active. Get a membership to access exclusive benefits and advanced tools.'
                 : _membershipStatusMessage,
-            style: TextStyle(
+              textAlign: TextAlign.center,
+              style: TextStyle(
               color: Colors.white.withOpacity(0.8),
               fontSize: 14,
+              ),
             ),
-          ),
+            ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -946,7 +917,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color.fromARGB(255, 85, 21, 1),
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -955,7 +926,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
               child: const Text(
                 'Get Membership Now',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -975,69 +946,71 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(12),
       ),
       color: const Color(0xFFF5F5F5),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // <-- Center vertically
+        children: [
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.25,
+          child: Center(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+            imageUrl,
+            fit: BoxFit.contain,
+            ),
+          ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.25,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                ),
-              ),
+            Text(
+            discountText,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    discountText,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    descriptionText,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[700],
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: onShowDiscountCode,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 185, 33, 33),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 3,
-                    ),
-                    child: const Text(
-                      'Show discount code',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+            descriptionText,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[700],
+              height: 1.4,
+            ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+            onPressed: onShowDiscountCode,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 185, 33, 33),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
               ),
+              elevation: 3,
+            ),
+            child: const Text(
+              'Show discount code',
+              style: TextStyle(fontSize: 14),
+            ),
             ),
           ],
+          ),
         ),
+        ],
+      ),
       ),
     );
   }
@@ -1049,9 +1022,12 @@ class _HomePageScreenState extends State<HomePageScreen> {
         const Text("Our Partners", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         _isLoadingPartners
-            ? const Center(child: CircularProgressIndicator.adaptive()) // Show loading for partners
+            ? const CustomLoadingIndicator(
+                size: 30.0,
+                message: 'Loading partners...',
+              )
             : _partners.isEmpty
-                ? const Center(child: Text("No partners available at the moment."))
+                ? const Text("No partners available at the moment.")
                 : SizedBox(
                     height: 180,
                     child: ListView.separated(

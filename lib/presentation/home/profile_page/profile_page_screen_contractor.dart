@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/edit_profile_form_contractor.dart'; // Make sure this path is correct
+import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
 
 class ProfilePageScreenContractor extends StatefulWidget {
   const ProfilePageScreenContractor({super.key});
@@ -18,8 +19,8 @@ class ProfilePageScreenContractor extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePageScreenContractor> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-  File? _pickedImage; // To hold the locally picked image
-  final ImagePicker _picker = ImagePicker(); // Image picker instance
+  // File? _pickedImage; // Removed: No longer needed for static profile picture
+  final ImagePicker _picker = ImagePicker(); // Keep if other image picking is needed
   final String apiKey = '1234567890abcdef'; // Your actual API key.
 
   String? _authToken; // Store auth token
@@ -48,17 +49,17 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       return;
     }
 
-    // Load local image path first
-    final prefs = await SharedPreferences.getInstance(); // Re-get prefs if needed
-    final localImagePath = prefs.getString('local_profile_image_path');
-    if (localImagePath != null && localImagePath.isNotEmpty) {
-      final localImageFile = File(localImagePath);
-      if (await localImageFile.exists()) {
-        setState(() {
-          _pickedImage = localImageFile;
-        });
-      }
-    }
+    // Removed: No longer loading local image path for profile picture
+    // final prefs = await SharedPreferences.getInstance();
+    // final localImagePath = prefs.getString('local_profile_image_path');
+    // if (localImagePath != null && localImagePath.isNotEmpty) {
+    //   final localImageFile = File(localImagePath);
+    //   if (await localImageFile.exists()) {
+    //     setState(() {
+    //       _pickedImage = localImageFile;
+    //     });
+    //   }
+    // }
 
     final url =
         'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$_userId';
@@ -78,13 +79,12 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        // If no local image was picked and the network data has a profile picture,
-        // use the network picture for display.
-        if (_pickedImage == null &&
-            data['meta_data']?['profile-picture'] != null &&
-            (data['meta_data']['profile-picture'] as List).isNotEmpty) {
-          // You could optionally cache the network image locally here if desired.
-        }
+        // Removed: No longer checking for network profile picture to use
+        // if (_pickedImage == null &&
+        //     data['meta_data']?['profile-picture'] != null &&
+        //     (data['meta_data']['profile-picture'] as List).isNotEmpty) {
+        //   // You could optionally cache the network image locally here if desired.
+        // }
 
         setState(() {
           _userData = data;
@@ -101,7 +101,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- UPDATED _pickImage function for single image and autosave ---
+  // --- _pickImage function (still here but its use for profile pic is commented out in UI) ---
   Future<void> _pickImage() async {
     final source = await showModalBottomSheet<ImageSource?>(
       context: context,
@@ -124,7 +124,6 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
     if (source == null) return; // User cancelled selection
 
-    // --- Only pick a single image ---
     final XFile? pickedFile = await _picker.pickImage(source: source);
 
     if (pickedFile != null && pickedFile.path.isNotEmpty) {
@@ -135,12 +134,14 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         await prefs.setString('local_profile_image_path', imageFile.path); // Persist local path
 
         if (!mounted) return;
-        setState(() {
-          _pickedImage = imageFile; // Immediately show the picked image locally
-        });
+        // setState(() {
+        //   _pickedImage = imageFile; // This line is commented out as we use static image
+        // });
 
-        // --- AUTOSAVE: Directly trigger upload and link ---
-        await _uploadAndLinkProfileImage(imageFile); // Auto-save
+        // If you still want to upload the picked image to server even if not displayed
+        // await _uploadAndLinkProfileImage(imageFile);
+        if (!mounted) return;
+        _showError("Profile picture is static. Image was not uploaded.");
       } else {
         if (!mounted) return;
         _showError("Selected image does not exist.");
@@ -148,7 +149,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- _uploadAndLinkProfileImage (orchestrates upload to media library and linking) ---
+  // --- _uploadAndLinkProfileImage (will not be called for profile picture display) ---
   Future<void> _uploadAndLinkProfileImage(File imageFile) async {
     if (!mounted) return;
     setState(() {
@@ -160,7 +161,6 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     if (mediaId != null) {
       await _linkProfileImageToUser(mediaId);
     } else {
-      // Error message already shown by _uploadImageToMediaLibrary if it failed
       if (mounted) {
         setState(() {
           _isLoading = false; // Ensure loading state is reset if upload fails
@@ -169,51 +169,48 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- _uploadImageToMediaLibrary (uploads to wp/v2/media) ---
-Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
-  
-  try {
-    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media');
-    final request = http.MultipartRequest('POST', url)
-      ..headers.addAll({
-        'Authorization': 'Bearer $_authToken',
-        'X-API-Key': apiKey,
-        'Content-Disposition': 'attachment; filename="${path.basename(imageFile.path)}"',
-      })
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+  // --- _uploadImageToMediaLibrary (will not be called for profile picture display) ---
+  Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
+    try {
+      final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media');
+      final request = http.MultipartRequest('POST', url)
+        ..headers.addAll({
+          'Authorization': 'Bearer $_authToken',
+          'X-API-Key': apiKey,
+          'Content-Disposition': 'attachment; filename="${path.basename(imageFile.path)}"',
+        })
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
 
-    if (response.statusCode == 201) {
-      final data = jsonDecode(responseBody);
-      final mediaId = data['id'] as int? ?? 0;// Ensure media ID is an int
-      if (mediaId > 0) {
-        debugPrint('Image uploaded successfully with ID: $mediaId');
-        return mediaId; // Return the media ID for linking
+      if (response.statusCode == 201) {
+        final data = jsonDecode(responseBody);
+        final mediaId = data['id'] as int? ?? 0;
+        if (mediaId > 0) {
+          debugPrint('Image uploaded successfully with ID: $mediaId');
+          return mediaId;
+        } else {
+          debugPrint('Image upload returned no valid media ID: $responseBody');
+          _showError('Image upload failed: No valid media ID returned.');
+          return null;
+        }
       } else {
-        debugPrint('Image upload returned no valid media ID: $responseBody');
-        _showError('Image upload failed: No valid media ID returned.');
+        debugPrint('Image upload failed with status ${response.statusCode}: $responseBody');
+        _showError('Image upload failed: $responseBody');
         return null;
       }
-    } else {
-      debugPrint('Image upload failed with status ${response.statusCode}: $responseBody');
-      _showError('Image upload failed: $responseBody');
+    } catch (e) {
+      debugPrint('Exception during image upload: $e');
+      _showError('Exception during image upload: $e');
       return null;
     }
-  } catch (e) {
-    debugPrint('Exception during image upload: $e');
-    _showError('Exception during image upload: $e');
-    return null;
-  } // Return the upload ID if needed
+  }
 
-}
-
-  // --- _linkProfileImageToUser (links media ID to user meta) ---
+  // --- _linkProfileImageToUser (will not be called for profile picture display) ---
   Future<void> _linkProfileImageToUser(int mediaId) async {
     if (_userId == null || _authToken == null) {
       if (mounted) _showError('Missing user ID or token. Cannot update profile.');
-      // setState(() => _isLoading = false); // Will be handled by _uploadAndLinkProfileImage
       return;
     }
 
@@ -226,11 +223,11 @@ Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_authToken',
-          'X-API-Key': apiKey, 
+          'X-API-Key': apiKey,
         },
         body: json.encode({
           'meta_input': {
-            'profile-picture': [mediaId.toString()], // Ensure it's a LIST of string IDs
+            'profile-picture': [mediaId.toString()],
           },
         }),
       );
@@ -239,17 +236,16 @@ Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
 
       if (response.statusCode == 200) {
         print('Profile picture meta updated successfully!');
-        // Reload user data to get the updated profile-picture URL from the server
-        await _loadUserData(); // This will also set _isLoading to false upon completion
+        await _loadUserData();
       } else {
         print('Failed to update user meta. Status: ${response.statusCode}, Body: ${response.body}');
         _showError('Failed to update profile picture: ${response.body}');
-        setState(() => _isLoading = false); // Stop loading on failure
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       if (!mounted) return;
       _showError('Error linking image to profile: $e');
-      setState(() => _isLoading = false); // Stop loading on exception
+      setState(() => _isLoading = false);
     }
   }
 
@@ -298,38 +294,29 @@ Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
                                     ),
                                   ],
                                 ),
-                                child: CircleAvatar(
+                                child: const CircleAvatar( // Changed to const
                                   radius: 55,
                                   backgroundColor: Colors.white,
-                                  backgroundImage: _pickedImage != null
-                                      ? FileImage(_pickedImage!) // Display local image if picked
-                                      : (_userData?['meta_data']?['profile-picture'] != null &&
-                                              (_userData!['meta_data']['profile-picture'] as List).isNotEmpty)
-                                          ? NetworkImage(_userData!['meta_data']['profile-picture'][0]) // Otherwise network image
-                                          : null,
-                                  child: _pickedImage == null &&
-                                          (_userData?['meta_data']?['profile-picture'] == null ||
-                                              (_userData!['meta_data']['profile-picture'] as List).isEmpty)
-                                      ? const Icon(Icons.person, size: 50) // Default icon
-                                      : null,
+                                  backgroundImage: AssetImage('assets/images/profile.png'), // STATIC IMAGE
+                                  child: null, // No child needed as we have a background image
                                 ),
                               ),
-                              Positioned(
-                                bottom: 4,
-                                right: 4,
-                                child: GestureDetector(
-                                  onTap: _pickImage, // This triggers local image picking and then autosave
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                    child: const Icon(Icons.camera_alt,
-                                        size: 18, color: Colors.white),
-                                  ),
-                                ),
-                              ),
+                              // Positioned(
+                              //   bottom: 4,
+                              //   right: 4,
+                              //   child: GestureDetector(
+                              //     onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
+                              //     child: Container(
+                              //       padding: const EdgeInsets.all(6),
+                              //       decoration: BoxDecoration(
+                              //         shape: BoxShape.circle,
+                              //         color: Theme.of(context).primaryColor,
+                              //       ),
+                              //       child: const Icon(Icons.camera_alt,
+                              //           size: 18, color: Colors.white),
+                              //     ),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
@@ -409,7 +396,7 @@ Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
     );
   }
 
-  // --- Helper Widgets (unchanged, just included for completeness) ---
+  // --- Helper Widgets (unchanged) ---
   Widget _buildSectionTitle(String title, {VoidCallback? onEditTap}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -495,6 +482,13 @@ Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
       onTap: () {
         if (title == 'Logout') {
           _handleLogout(context);
+        } else if (title == 'Help & Support') { 
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SupportAndHelpPageScreen(),
+            ),
+          );
         }
       },
       child: Card(

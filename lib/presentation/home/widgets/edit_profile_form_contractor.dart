@@ -169,17 +169,15 @@ Widget build(BuildContext context) {
                   const SizedBox(height: 16),
 
                   // Email
+                   // Email (readonly)
                   TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
+                    initialValue: widget.userData['user_email'] ?? '',
+                    readOnly: true,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Email (not editable)',
                       prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) => value == null || !value.contains('@')
-                        ? 'Enter a valid email'
-                        : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -255,7 +253,7 @@ Widget build(BuildContext context) {
                       label: const Text('Save Changes'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: const Color.fromARGB(255, 61, 2, 2),
+                        backgroundColor: const Color.fromARGB(255, 121, 3, 3),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),

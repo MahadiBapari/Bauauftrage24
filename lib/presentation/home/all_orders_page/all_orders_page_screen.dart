@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async'; // Added for Future.wait
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:cached_network_image/cached_network_image.dart'; // Ensure this is imported if used for images
 import 'single_order_page_screen.dart'; // Ensure this is imported
+import '../../../widgets/membership_required_dialog.dart';
+import '../../../widgets/custom_loading_indicator.dart';
 
 class AllOrdersPageScreen extends StatefulWidget {
   const AllOrdersPageScreen({super.key});
@@ -42,11 +45,17 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   final String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
   final String apiKey = '1234567890abcdef'; // Assuming API key needed for user data
 
+  // Add membership state
+  bool _isActiveMembership = false;
+  bool _isLoadingMembership = true;
+  final String _membershipEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user-membership';
+
   @override
   void initState() {
     super.initState();
     _loadAllData(); // Start fetching initial data
     _scrollController.addListener(_scrollListener); // Add listener for pagination
+    _fetchMembershipStatus(); // Add membership check
   }
 
   @override
@@ -249,6 +258,66 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     }
   }
 
+  // Add membership status fetch
+  Future<void> _fetchMembershipStatus() async {
+    if (!mounted) return;
+    setState(() => _isLoadingMembership = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = prefs.getString('auth_token');
+
+      if (authToken == null) {
+        if (mounted) {
+          setState(() {
+            _isActiveMembership = false;
+            _isLoadingMembership = false;
+          });
+        }
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(_membershipEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+          'Authorization': 'Bearer $authToken',
+        },
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final bool active = data['success'] == true && data['active'] == true;
+
+        if (mounted) {
+          setState(() {
+            _isActiveMembership = active;
+            _isLoadingMembership = false;
+          });
+        }
+      } else {
+        debugPrint('Failed to load membership status: ${response.statusCode} - ${response.body}');
+        if (mounted) {
+          setState(() {
+            _isActiveMembership = false;
+            _isLoadingMembership = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching membership status: $e');
+      if (mounted) {
+        setState(() {
+          _isActiveMembership = false;
+          _isLoadingMembership = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -372,7 +441,9 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
               // Orders List
               Expanded(
                 child: _isLoadingOrders
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const CustomLoadingIndicator(
+                        message: 'Loading orders...',
+                      )
                     : _filteredOrders.isEmpty
                         ? const Center(child: Text("No orders found matching your criteria."))
                         : ListView.builder(
@@ -381,9 +452,9 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                             itemBuilder: (context, index) {
                               if (index == _filteredOrders.length) {
                                 return _isFetchingMore
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: Center(child: CircularProgressIndicator()),
+                                    ? const CustomLoadingIndicator(
+                                        size: 30.0,
+                                        message: 'Loading more...',
                                       )
                                     : const SizedBox.shrink();
                               }
@@ -395,13 +466,23 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
                               return GestureDetector(
                                 onTap: () {
-                                  FocusScope.of(context).unfocus(); // Dismiss keyboard on card tap
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => SingleOrderPageScreen(order: order),
-                                    ),
-                                  );
+                                  FocusScope.of(context).unfocus();
+                                  if (_isActiveMembership) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => SingleOrderPageScreen(order: order),
+                                      ),
+                                    );
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => MembershipRequiredDialog(
+                                        context: context,
+                                        message: 'A membership is required to view order details. Get a membership to access all order information.',
+                                      ),
+                                    );
+                                  }
                                 },
                                 child: Container(
                                   margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
