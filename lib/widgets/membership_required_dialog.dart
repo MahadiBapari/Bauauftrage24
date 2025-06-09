@@ -6,10 +6,10 @@ class MembershipRequiredDialog extends StatelessWidget {
   final String message;
 
   const MembershipRequiredDialog({
-    Key? key,
+    super.key,
     required this.context,
     this.message = 'A membership is required to access this feature.',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

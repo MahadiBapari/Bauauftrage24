@@ -136,7 +136,7 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
       }
     }
 
-Future<void> _launchPhone(String phoneNumber) async {
+Future<void> launchPhone(String phoneNumber) async {
   if (phoneNumber.isEmpty || phoneNumber == 'N/A') {
     print("Invalid phone number: $phoneNumber");
     return;
@@ -150,7 +150,7 @@ Future<void> _launchPhone(String phoneNumber) async {
   }
 }
 
-Future<void> _launchEmail(String email) async {
+Future<void> launchEmail(String email) async {
   if (email.isEmpty || email == 'N/A') {
     print("Invalid email: $email");
     return;
@@ -278,7 +278,7 @@ return Scaffold(
                                         elevation: 0,
                                         // shadowColor: Colors.black38,
                                         ),
-                                        onPressed: () => _launchEmail(userEmail),
+                                        onPressed: () => launchEmail(userEmail),
                                         child: const Icon(Icons.email, color: Color.fromARGB(255, 58, 0, 0), size: 32),
                                       ),
 
@@ -378,7 +378,7 @@ return Scaffold(
                                         elevation: 0,
                                         //shadowColor: Colors.black38,
                                         ),
-                                        onPressed: () => _launchPhone(userPhone),
+                                        onPressed: () => launchPhone(userPhone),
                                         child: const Icon(Icons.phone, color: Color.fromARGB(255, 59, 0, 0), size: 32),
                                        )
                                       ],
@@ -394,26 +394,11 @@ return Scaffold(
                               fontSize: 22, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),  
 
-                        // const SizedBox(height: 8),
-                        // const Text('Order Details',
-                        //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
 
                         const SizedBox(height: 12),
                         Text(content, style: const TextStyle(fontSize: 16)),
 
-                      // const SizedBox(height: 8),
-                      // Text('Name: $userName'),
-                      // Text('Email: $userEmail'),
-                      // Text('Phone: $userPhone'),
-
-                      // const SizedBox(height: 16),
-                      // const Divider(),
-                      // const Text('Order Details',
-                      //     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      // const SizedBox(height: 8),
-                      // Text('Street Address: ${meta['address_1'] ?? 'N/A'}'),
-                      // Text('Postal Code: ${meta['address_2'] ?? 'N/A'}'),
-                      // Text('City: ${meta['address_3'] ?? 'N/A'}'),
+                     
                     ],
                   ),
                 ),
@@ -428,11 +413,8 @@ return Scaffold(
                   ),
                 ),
             ),
-            // --- Floating Contact Buttons at Bottom ---
+                 
 
-        
-
-    
           ],
         ),
 );

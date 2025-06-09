@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Replace these with your actual imports
 import 'home_page/home_page_screen.dart';
+import 'home_page/home_page_screen_client.dart';
 import '../home/profile_page/profile_page_screen_contractor.dart';
 import '../home/profile_page/profile_page_screen_client.dart';
 import '../home/my_favourite_page/my_favourite_page_screen.dart';
@@ -42,7 +43,7 @@ class _MainScreenState extends State<MainScreen> {
 void _initializeScreens() {
   if (widget.role == 'um_client') {
     _screens = [
-      const HomePageScreen(key: ValueKey('home_page')),
+      const HomePageScreenClient(key: ValueKey('home_page')),
       const ProfilePageScreenClient(key: ValueKey('profile_page')),
       const AddNewOrderPageScreen(key: ValueKey('add_new_order_page')),
     ];
@@ -183,9 +184,9 @@ Future<void> _fetchUser() async {
               backgroundColor: const Color.fromARGB(255, 77, 2, 2),
               elevation: 6,
               onPressed: () => _onItemTapped(2),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
               tooltip: 'Add New Order',
               shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
             )
           : null,
       floatingActionButtonLocation:

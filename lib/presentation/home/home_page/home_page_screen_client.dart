@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class HomePageScreenContractor extends StatelessWidget {
-  const HomePageScreenContractor({super.key});
+class HomePageScreenClient extends StatelessWidget {
+  const HomePageScreenClient({super.key});
 
   @override
   Widget build(BuildContext context) {

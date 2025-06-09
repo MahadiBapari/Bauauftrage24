@@ -20,7 +20,7 @@ class AppRoutes {
   static const String supportAndHelp = '/support_and_help';
   static const String myContractor = '/my_contractor';
   static const String myMembership = '/my_membership';
-  static const String partners = '/partners'; //  Added route
+  static const String partners = '/partners'; 
 }
 
 final Map<String, WidgetBuilder> appRoutes = {
@@ -37,5 +37,5 @@ final Map<String, WidgetBuilder> appRoutes = {
   AppRoutes.supportAndHelp: (context) => const SupportAndHelpPageScreen(),
   AppRoutes.myContractor: (context) => const MyFavouritePageScreen(),
   AppRoutes.myMembership: (context) => const MyMembershipPageScreen(),
-  AppRoutes.partners: (context) => const PartnerScreen(), // ✅ Mapped route
+  AppRoutes.partners: (context) => const PartnerScreen(), 
 };

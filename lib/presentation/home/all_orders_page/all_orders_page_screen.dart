@@ -4,10 +4,11 @@ import 'dart:convert';
 import 'dart:async'; // Added for Future.wait
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:cached_network_image/cached_network_image.dart'; // Ensure this is imported if used for images
+// Ensure this is imported if used for images
 import 'single_order_page_screen.dart'; // Ensure this is imported
 import '../../../widgets/membership_required_dialog.dart';
 import '../../../widgets/custom_loading_indicator.dart';
+import '../../../utils/cache_manager.dart';
 
 class AllOrdersPageScreen extends StatefulWidget {
   const AllOrdersPageScreen({super.key});
@@ -50,6 +51,9 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   bool _isLoadingMembership = true;
   final String _membershipEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user-membership';
 
+  // Add CacheManager instance
+  final CacheManager _cacheManager = CacheManager();
+
   @override
   void initState() {
     super.initState();
@@ -82,10 +86,38 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     }
 
     try {
-      await Future.wait([
-        _fetchOrders(page: 1, perPage: _perPage, append: false), // Initial fetch, do not append
-        _fetchCategories(),
+      // Load from cache first
+      final cachedData = await Future.wait([
+        _cacheManager.loadFromCache('all_orders'),
+        _cacheManager.loadFromCache('categories'),
       ]);
+
+      if (mounted) {
+        setState(() {
+          if (cachedData[0] != null) {
+            _orders = List<Map<String, dynamic>>.from(cachedData[0] as List);
+            _filterOrders();
+          }
+          if (cachedData[1] != null) {
+            _categories = List<Map<String, dynamic>>.from(cachedData[1] as List);
+            _isLoadingCategories = false;
+          }
+        });
+      }
+
+      // Check if cache is expired
+      final needsRefresh = await Future.wait([
+        _cacheManager.isCacheExpired('all_orders'),
+        _cacheManager.isCacheExpired('categories'),
+      ]);
+
+      // Refresh only if cache is expired
+      if (needsRefresh.any((needs) => needs)) {
+        await Future.wait([
+          _fetchOrders(page: 1, perPage: _perPage, append: false),
+          _fetchCategories(),
+        ]);
+      }
     } catch (e) {
       debugPrint('Error loading all data: $e');
     } finally {
@@ -94,7 +126,6 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
           _isLoadingOrders = false;
           _isLoadingCategories = false;
         });
-        _filterOrders(); // Apply initial filter after all data is loaded
       }
     }
   }
@@ -177,6 +208,8 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
               _orders.addAll(currentFetchedOrders); // Append for pagination
             } else {
               _orders = currentFetchedOrders; // Overwrite for initial load
+              // Save to cache when fetching fresh data
+              _cacheManager.saveToCache('all_orders', currentFetchedOrders);
             }
             _hasMoreOrders = data.length == _perPage; // Check if the number of fetched items equals perPage
           });
@@ -219,6 +252,8 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
           setState(() {
             _categories = fetchedCategories;
           });
+          // Save to cache
+          await _cacheManager.saveToCache('categories', fetchedCategories);
         }
       } else {
         debugPrint('Failed to load categories: ${response.statusCode}');
@@ -318,6 +353,15 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     }
   }
 
+  // Add refresh method
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      _fetchOrders(page: 1, perPage: _perPage, append: false),
+      _fetchCategories(),
+      _fetchMembershipStatus(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -394,7 +438,13 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                   children: [
                     const SizedBox(height: 12),
                     _isLoadingCategories
-                        ? const Center(child: CircularProgressIndicator())
+                        ? const CustomLoadingIndicator(
+                            message: 'Loading categories...',
+                            isHorizontal: true,
+                            itemCount: 5,
+                            itemHeight: 40,
+                            itemWidth: 100,
+                          )
                         : _categories.isEmpty
                             ? const Text("No categories available.")
                             : SizedBox(
@@ -440,107 +490,114 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
               // Orders List
               Expanded(
-                child: _isLoadingOrders
-                    ? const CustomLoadingIndicator(
-                        message: 'Loading orders...',
-                      )
-                    : _filteredOrders.isEmpty
-                        ? const Center(child: Text("No orders found matching your criteria."))
-                        : ListView.builder(
-                            controller: _scrollController,
-                            itemCount: _filteredOrders.length + (_hasMoreOrders ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index == _filteredOrders.length) {
-                                return _isFetchingMore
-                                    ? const CustomLoadingIndicator(
-                                        size: 30.0,
-                                        message: 'Loading more...',
-                                      )
-                                    : const SizedBox.shrink();
-                              }
+                child: RefreshIndicator(
+                  onRefresh: _onRefresh,
+                  child: _isLoadingOrders
+                      ? const CustomLoadingIndicator(
+                          message: 'Loading orders...',
+                          itemCount: 5,
+                          itemHeight: 120,
+                          itemWidth: double.infinity,
+                          isScrollable: true,
+                        )
+                      : _filteredOrders.isEmpty
+                          ? const Center(child: Text("No orders found matching your criteria."))
+                          : ListView.builder(
+                              controller: _scrollController,
+                              itemCount: _filteredOrders.length + (_hasMoreOrders ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == _filteredOrders.length) {
+                                  return _isFetchingMore
+                                      ? const CustomLoadingIndicator(
+                                          size: 30.0,
+                                          message: 'Loading more...',
+                                        )
+                                      : const SizedBox.shrink();
+                                }
 
-                              final order = _filteredOrders[index];
-                              final imageUrl = order['imageUrl'] ?? '';
-                              final title = order['title']['rendered'] ?? 'Untitled';
-                              final categoryName = order['acf']?['category'] ?? 'N/A';
+                                final order = _filteredOrders[index];
+                                final imageUrl = order['imageUrl'] ?? '';
+                                final title = order['title']['rendered'] ?? 'Untitled';
+                                final categoryName = order['acf']?['category'] ?? 'N/A';
 
-                              return GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                  if (_isActiveMembership) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => SingleOrderPageScreen(order: order),
-                                      ),
-                                    );
-                                  } else {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => MembershipRequiredDialog(
+                                return GestureDetector(
+                                  onTap: () {
+                                    FocusScope.of(context).unfocus();
+                                    if (_isActiveMembership) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => SingleOrderPageScreen(order: order),
+                                        ),
+                                      );
+                                    } else {
+                                      showDialog(
                                         context: context,
-                                        message: 'A membership is required to view order details. Get a membership to access all order information.',
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  height: 180,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    image: imageUrl.isNotEmpty
-                                        ? DecorationImage(
-                                            image: NetworkImage(imageUrl),
-                                            fit: BoxFit.cover,
-                                            colorFilter: ColorFilter.mode(
-                                              Colors.black.withOpacity(0.4),
-                                              BlendMode.darken,
+                                        builder: (context) => MembershipRequiredDialog(
+                                          context: context,
+                                          message: 'A membership is required to view order details. Get a membership to access all order information.',
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    height: 180,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      image: imageUrl.isNotEmpty
+                                          ? DecorationImage(
+                                              image: NetworkImage(imageUrl),
+                                              fit: BoxFit.cover,
+                                              colorFilter: ColorFilter.mode(
+                                                Colors.black.withOpacity(0.4),
+                                                BlendMode.darken,
+                                              ),
+                                              onError: (exception, stackTrace) {
+                                                debugPrint('Failed to load image: $imageUrl');
+                                              },
+                                            )
+                                          : null,
+                                      gradient: imageUrl.isEmpty
+                                          ? const LinearGradient(
+                                              colors: [
+                                                Color.fromARGB(255, 85, 21, 1),
+                                                Color.fromARGB(255, 121, 26, 3),
+                                              ],
+                                            )
+                                          : null,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            title,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
                                             ),
-                                            onError: (exception, stackTrace) {
-                                              debugPrint('Failed to load image: $imageUrl');
-                                            },
-                                          )
-                                        : null,
-                                    gradient: imageUrl.isEmpty
-                                        ? const LinearGradient(
-                                            colors: [
-                                              Color.fromARGB(255, 85, 21, 1),
-                                              Color.fromARGB(255, 121, 26, 3),
-                                            ],
-                                          )
-                                        : null,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          title,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
                                           ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          categoryName,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.white70,
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            categoryName,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.white70,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
+                                );
+                              },
+                            ),
+                ),
               ),
             ],
           ),

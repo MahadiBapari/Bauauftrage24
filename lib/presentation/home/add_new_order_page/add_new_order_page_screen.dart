@@ -26,7 +26,7 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
   final _picker = ImagePicker();
   final String _apiKey = '1234567890abcdef';
   String? _authToken;
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   List<String> _selectedCategories = [];
   bool _isSubmitting = false;
 
@@ -86,7 +86,7 @@ Future<void> _pickImages() async {
   );
 
   if (source == ImageSource.gallery) {
-    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+    final List<XFile> pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles != null) {
       setState(() {
         _selectedImages.addAll(pickedFiles.map((xfile) => File(xfile.path)));
@@ -246,106 +246,127 @@ final Map<String, dynamic> postData = {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      //appBar: AppBar(title: const Text('Add New Order')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color.fromARGB(255, 255, 254, 254), // Light background
+
+    body: SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromARGB(255, 155, 155, 155).withOpacity(0.30), // Stronger shadow
+              blurRadius: 12, // More blur for a softer, larger shadow
+              spreadRadius: 4, // Slightly larger spread
+              offset: const Offset(0, 0), // Even shadow on all sides
+            ),
+          ],
+        ),
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
             child: Column(
               children: [
-                _buildTextField(_titleController, 'Order Title *', true),
+                _buildTextField(_titleController, 'Order Title *', true, icon: Icons.title),
                 const SizedBox(height: 20),
+
                 FutureBuilder<List<Map<String, dynamic>>>(
                   future: _categoriesFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator(); // Show loading indicator
+                      return const CircularProgressIndicator();
                     } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}'); // Show error
+                      return Text('Error: ${snapshot.error}');
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No categories found'); //no data
+                      return const Text('No categories found');
                     } else {
-                      // Build the MultiSelectDialogField with fetched categories
                       final categories = snapshot.data!;
-                      return MultiSelectDialogField(
-                        items: categories
-                            .map((category) => MultiSelectItem(
-                                category['id'].toString(), category['name']))
-                            .toList(),
-                        title: const Text("Categories"),
-                        selectedColor: Theme.of(context).primaryColor,
-                        cancelText: const Text("Cancel"),
-                        confirmText: const Text("OK"),
-                        onConfirm: (values) {
-                          setState(() => _selectedCategories = values.cast<String>());
-                        },
-                        chipDisplay: MultiSelectChipDisplay.none(),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Please select at least one category'
-                            : null,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Select Categories", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 8),
+                          MultiSelectDialogField(
+                            items: categories.map((category) => MultiSelectItem(
+                                category['id'].toString(), category['name'])).toList(),
+                            title: const Text("Categories"),
+                            selectedColor: Theme.of(context).primaryColor,
+                            cancelText: const Text("Cancel"),
+                            confirmText: const Text("OK"),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            buttonText: const Text("Select Categories"),
+                            onConfirm: (values) {
+                              setState(() => _selectedCategories = values.cast<String>());
+                            },
+                            chipDisplay: MultiSelectChipDisplay.none(),
+                            validator: (value) =>
+                                value == null || value.isEmpty ? 'Please select at least one category' : null,
+                          ),
+                        ],
                       );
                     }
                   },
                 ),
+
                 const SizedBox(height: 10),
                 if (_selectedCategories.isNotEmpty) _buildSelectedChips(),
                 const SizedBox(height: 20),
-               _buildImagePicker(),
-                if (_selectedImages.isNotEmpty) // Check if the list exists and is not empty
-                  SizedBox( // Use SizedBox to give the ListView a constrained height
-                    height: 100, // Adjust this height as needed for your image previews
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal, // Makes the list scroll horizontally
-                      itemCount: _selectedImages.length,
-                      itemBuilder: (context, index) {
-                        final imageFile = _selectedImages[index]; // Get the individual File object
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0), // Add horizontal spacing between images
-                          child: Image.file(
-                            imageFile, // Pass the single File object
-                            height: 90, // Adjust individual image height (slightly less than SizedBox height)
-                            width: 90, // Maintain aspect ratio or adjust as needed
-                            fit: BoxFit.cover, // Or BoxFit.contain, etc., depending on desired scaling
-                          ),
-                        );
-                      },
+
+                _buildImagePicker(),
+
+                const SizedBox(height: 20),
+                _buildTextField(_streetController, 'Street & House Number', true, icon: Icons.location_on),
+                const SizedBox(height: 20),
+                _buildTextField(_postalCodeController, 'Postal Code', true, icon: Icons.local_post_office),
+                const SizedBox(height: 20),
+                _buildTextField(_cityController, 'City', true, icon: Icons.location_city),
+                const SizedBox(height: 20),
+                _buildTextField(_descriptionController, 'Order Description *', true, maxLines: 5, icon: Icons.description),
+
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: _isSubmitting ? null : _submitForm,
+                    label: _isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Submit Order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: const Color.fromARGB(255, 180, 16, 16), // Maroon color
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
-               
-                const SizedBox(height: 20),
-                _buildTextField(_streetController, 'Street & House Number', true),
-                const SizedBox(height: 20),
-                _buildTextField(_postalCodeController, 'Postal Code', true),
-                const SizedBox(height: 20),
-                _buildTextField(_cityController, 'City', true),
-                const SizedBox(height: 20),
-                _buildTextField(_descriptionController, 'Order Description *', true, maxLines: 5),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitForm,
-                  child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Submit Order'),
                 ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField(TextEditingController controller, String label, bool required,
-      {int maxLines = 1}) {
+      {int maxLines = 1, IconData? icon}) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon != null ? Icon(icon) : null,
+      ),
       validator: (value) =>
           required && (value == null || value.trim().isEmpty) ? 'Required field' : null,
     );
@@ -388,7 +409,11 @@ final Map<String, dynamic> postData = {
           children: [
             ElevatedButton(
               onPressed: _pickImages,
-              child: const Text('Choose Images'),
+              child: const Text('Choose Images', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 180, 16, 16), // Maroon color
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -416,7 +441,7 @@ final Map<String, dynamic> postData = {
                       top: 0,
                       right: 0,
                       child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
+                        icon: const Icon(Icons.close, color: Color.fromARGB(255, 255, 255, 255)),
                         onPressed: () {
                           setState(() {
                             _selectedImages.removeAt(index);

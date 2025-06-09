@@ -573,6 +573,18 @@ class _HomePageScreenState extends State<HomePageScreen> {
     }
   }
 
+  // Add refresh method
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      _fetchUser(),
+      _fetchPromoOrders(),
+      _fetchCategories(),
+      _fetchNewArrivalsOrders(categoryId: _selectedCategoryId),
+      _fetchMembershipStatus(),
+      _fetchPartners(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -580,86 +592,193 @@ class _HomePageScreenState extends State<HomePageScreen> {
       body: _isLoading
           ? const CustomLoadingIndicator(
               message: 'Loading data...',
+              itemCount: 5,
+              itemHeight: 120,
+              itemWidth: double.infinity,
+              isScrollable: true,
             )
           : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: ListView(
-                  children: [
-                    Text(
-                      'Welcome back,',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                    ),
-                    const SizedBox(height: 4),
-                    isLoadingUser
-                        ? const CustomLoadingIndicator(
-                            size: 30.0,
-                            message: 'Loading data...',
-                          )
-                        : Text(
-                            displayName,
-                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                          ),
-                    const SizedBox(height: 24),
+              child: RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: ListView(
+                    children: [
+                      Text(
+                        'Welcome back,',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                      ),
+                      const SizedBox(height: 4),
+                      isLoadingUser
+                          ? const CustomLoadingIndicator(
+                              size: 30.0,
+                              message: 'Loading user data...',
+                              itemCount: 1,
+                              itemHeight: 40,
+                              itemWidth: 200,
+                            )
+                          : Text(
+                              displayName,
+                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                            ),
+                      const SizedBox(height: 24),
 
-                    // --- Conditional "Get Membership" Card ---
-                    _isLoadingMembership
-                        ? const CustomLoadingIndicator(
-                            size: 30.0,
-                            message: 'Loading membership status...',
-                          )
-                        : !_isActiveMembership
-                            ? _buildGetMembershipCard(context)
-                            : const SizedBox.shrink(),
+                      // --- Conditional "Get Membership" Card ---
+                      _isLoadingMembership
+                          ? const CustomLoadingIndicator(
+                              size: 30.0,
+                              message: 'Loading membership status...',
+                              itemCount: 1,
+                              itemHeight: 120,
+                              itemWidth: double.infinity,
+                            )
+                          : !_isActiveMembership
+                              ? _buildGetMembershipCard(context)
+                              : const SizedBox.shrink(),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                    // const SizedBox(height: 12),
-                    isLoadingPromos
-                        ? const CustomLoadingIndicator(
-                            size: 30.0,
-                            message: 'Loading promotions...',
-                          )
-                        : promoOrders.isEmpty
-                            ? const Center(child: Text("No promotions available."))
-                            : SizedBox(
-                                height: 160,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: promoOrders.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 14),
-                                  itemBuilder: (context, index) {
-                                    final promo = promoOrders[index];
-                                    return _buildOrderCard(
-                                        promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
-                                  },
+                      // Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      // const SizedBox(height: 12),
+                      isLoadingPromos
+                          ? const CustomLoadingIndicator(
+                              size: 30.0,
+                              message: 'Loading promotions...',
+                              isHorizontal: true,
+                              itemCount: 3,
+                              itemHeight: 160,
+                              itemWidth: 280,
+                            )
+                          : promoOrders.isEmpty
+                              ? const Center(child: Text("No promotions available."))
+                              : SizedBox(
+                                  height: 160,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: promoOrders.length,
+                                    separatorBuilder: (context, index) => const SizedBox(width: 14),
+                                    itemBuilder: (context, index) {
+                                      final promo = promoOrders[index];
+                                      return _buildOrderCard(
+                                          promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
+                                    },
+                                  ),
                                 ),
-                              ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    _buildCategorySection(),
-                    const SizedBox(height: 20),
+                      _buildCategorySection(),
+                      const SizedBox(height: 20),
 
-                    _buildNewArrivals(),
-                    const SizedBox(height: 24),
+                      isLoadingNewArrivals
+                          ? const CustomLoadingIndicator(
+                              size: 30.0,
+                              message: 'Loading new arrivals...',
+                              isHorizontal: true,
+                              itemCount: 3,
+                              itemHeight: 220,
+                              itemWidth: 160,
+                            )
+                          : _newArrivalsOrders.isEmpty
+                              ? const Text("No new orders in this category.")
+                              : SizedBox(
+                                  height: 220,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _newArrivalsOrders.length,
+                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                    itemBuilder: (context, index) {
+                                      final orderData = _newArrivalsOrders[index];
+                                      final String title = orderData["displayTitle"]!;
+                                      final String category = orderData["displayCategory"]!;
+                                      final String? imageUrl = orderData["displayImageUrl"];
+                                      final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
 
-                    // --- Coupon Card Widget directly in Home Page ---
-                    _buildCouponCard(
-                      imageUrl: 'assets/images/kpsa_logo.png',
-                      discountText: '20% discount',
-                      descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
-                      onShowDiscountCode: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Discount code will be shown here!')),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
+                                      return InkWell(
+                                        onTap: () {
+                                          if (_isActiveMembership) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => SingleOrderPageScreen(
+                                                  order: fullOrder,
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => MembershipRequiredDialog(
+                                                context: context,
+                                                message: 'A membership is required to view order details. Get a membership to access all order information.',
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          width: 160,
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(16),
+                                            image: imageUrl != null && imageUrl.isNotEmpty
+                                                ? DecorationImage(
+                                                    image: NetworkImage(imageUrl),
+                                                    fit: BoxFit.cover,
+                                                    colorFilter: ColorFilter.mode(
+                                                      Colors.black.withOpacity(0.3),
+                                                      BlendMode.darken,
+                                                    ),
+                                                    onError: (exception, stackTrace) {
+                                                      debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
+                                                    },
+                                                  )
+                                                : null,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Spacer(),
+                                              Text(
+                                                title,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
+                                                ),
+                                              ),
+                                              if (category.isNotEmpty && category != 'No Category')
+                                                Text(
+                                                  category,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                      const SizedBox(height: 24),
 
-                    _buildPartnersSection(),
-                    const SizedBox(height: 24),
-                  ],
+                      // --- Coupon Card Widget directly in Home Page ---
+                      _buildCouponCard(
+                        imageUrl: 'assets/images/kpsa_logo.png',
+                        discountText: '20% discount',
+                        descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
+                        onShowDiscountCode: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Discount code will be shown here!')),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      _buildPartnersSection(),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -709,7 +828,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const Text("Newest Orders", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         isLoadingCategories
             ? const CustomLoadingIndicator(
@@ -737,103 +856,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
                             });
                             _fetchNewArrivalsOrders(categoryId: _selectedCategoryId);
                           },
-                        );
-                      },
-                    ),
-                  ),
-      ],
-    );
-  }
-
-  Widget _buildNewArrivals() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Newest Orders", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 12),
-        isLoadingNewArrivals
-            ? const CustomLoadingIndicator(
-                size: 30.0,
-                message: 'Loading data...',
-              )
-            : _newArrivalsOrders.isEmpty
-                ? const Text("No new orders in this category.")
-                : SizedBox(
-                    height: 220,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _newArrivalsOrders.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 14),
-                      itemBuilder: (context, index) {
-                        final orderData = _newArrivalsOrders[index];
-                        final String title = orderData["displayTitle"]!;
-                        final String category = orderData["displayCategory"]!;
-                        final String? imageUrl = orderData["displayImageUrl"];
-                        final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
-
-                        return InkWell(
-                          onTap: () {
-                            if (_isActiveMembership) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SingleOrderPageScreen(
-                                    order: fullOrder,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (context) => MembershipRequiredDialog(
-                                  context: context,
-                                  message: 'A membership is required to view order details. Get a membership to access all order information.',
-                                ),
-                              );
-                            }
-                          },
-                          child: Container(
-                            width: 160,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(16),
-                              image: imageUrl != null && imageUrl.isNotEmpty
-                                  ? DecorationImage(
-                                      image: NetworkImage(imageUrl),
-                                      fit: BoxFit.cover,
-                                      colorFilter: ColorFilter.mode(
-                                        Colors.black.withOpacity(0.3),
-                                        BlendMode.darken,
-                                      ),
-                                      onError: (exception, stackTrace) {
-                                        debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
-                                      },
-                                    )
-                                  : null,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Spacer(),
-                                Text(
-                                  title,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                                if (category.isNotEmpty && category != 'No Category')
-                                  Text(
-                                    category,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
                         );
                       },
                     ),
@@ -1025,6 +1047,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
             ? const CustomLoadingIndicator(
                 size: 30.0,
                 message: 'Loading partners...',
+                isHorizontal: true,
+                itemCount: 4,
+                itemHeight: 180,
+                itemWidth: 150,
               )
             : _partners.isEmpty
                 ? const Text("No partners available at the moment.")
