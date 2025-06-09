@@ -129,87 +129,92 @@ Future<void> _fetchUser() async {
   Widget build(BuildContext context) {
     bool isClient = widget.role == 'um_client';
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        viewInsets: MediaQuery.of(context).viewInsets,
+      ),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 8),
-                const Text(
-                  'BAUAUFTRÄGE24',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 24, 2, 0),
-                  ),
-                ),
-              ],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu, color: Colors.black),
+              onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
-        ],
-      ),
-
-      
-      drawer: AppDrawer(
-        role: widget.role,
-        onItemTap: _onItemTapped,
-        onNavigateToSupport: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SupportAndHelpPageScreen()),
-          );
-        },
-        onNavigateToMyMembership: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MyMembershipPageScreen()),
-          );
-        },
-      ),
-      body: _screens[_selectedIndex],
-      floatingActionButton: isClient
-          ? FloatingActionButton(
-              backgroundColor: const Color.fromARGB(255, 77, 2, 2),
-              elevation: 6,
-              onPressed: () => _onItemTapped(2),
-              tooltip: 'Add New Order',
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
-            )
-          : null,
-      floatingActionButtonLocation:
-          isClient ? FloatingActionButtonLocation.centerDocked : null,
-      bottomNavigationBar: BottomAppBar(
-        color: const Color.fromARGB(255, 255, 250, 250),
-        shape: isClient ? const CircularNotchedRectangle() : null,
-        notchMargin: 8.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_icons.length, (index) {
-            return IconButton(
-              icon: Icon(
-                _icons[index],
-                color: _selectedIndex == index
-                    ? const Color.fromARGB(255, 61, 14, 10)
-                    : const Color.fromARGB(255, 133, 13, 9),
-                size: 32,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 8),
+                  const Text(
+                    'BAUAUFTRÄGE24',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 24, 2, 0),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () => _onItemTapped(index),
-              tooltip: _labels[index],
+            ),
+          ],
+        ),
+
+        drawer: AppDrawer(
+          role: widget.role,
+          onItemTap: _onItemTapped,
+          onNavigateToSupport: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SupportAndHelpPageScreen()),
             );
-          }),
+          },
+          onNavigateToMyMembership: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyMembershipPageScreen()),
+            );
+          },
+        ),
+        body: _screens[_selectedIndex],
+        floatingActionButton: isClient
+            ? FloatingActionButton(
+                backgroundColor: const Color.fromARGB(255, 77, 2, 2),
+                elevation: 6,
+                onPressed: () => _onItemTapped(2),
+                tooltip: 'Add New Order',
+                shape: const CircleBorder(),
+                child: const Icon(Icons.add, color: Colors.white, size: 32),
+              )
+            : null,
+        floatingActionButtonLocation:
+            isClient ? FloatingActionButtonLocation.centerDocked : null,
+        bottomNavigationBar: BottomAppBar(
+          color: const Color.fromARGB(255, 255, 250, 250),
+          shape: isClient ? const CircularNotchedRectangle() : null,
+          notchMargin: 8.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_icons.length, (index) {
+              return IconButton(
+                icon: Icon(
+                  _icons[index],
+                  color: _selectedIndex == index
+                      ? const Color.fromARGB(255, 61, 14, 10)
+                      : const Color.fromARGB(255, 133, 13, 9),
+                  size: 32,
+                ),
+                onPressed: () => _onItemTapped(index),
+                tooltip: _labels[index],
+              );
+            }),
+          ),
         ),
       ),
     );
