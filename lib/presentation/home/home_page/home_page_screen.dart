@@ -974,7 +974,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                         final isSelected = _selectedCategoryId == category['id'];
                         return ActionChip(
                           label: Text(category['name']!),
-                          backgroundColor: isSelected ? const Color.fromARGB(255, 85, 21, 1) : Colors.grey[200],
+                          backgroundColor: isSelected ? Color.fromARGB(255, 179, 21, 21) : Colors.grey[200],
                           labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
                           onPressed: () {
                             setState(() {
