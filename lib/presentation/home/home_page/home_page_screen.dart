@@ -600,184 +600,187 @@ class _HomePageScreenState extends State<HomePageScreen> {
           : SafeArea(
               child: RefreshIndicator(
                 onRefresh: _onRefresh,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: ListView(
-                    children: [
-                      Text(
-                        'Welcome back,',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                      ),
-                      const SizedBox(height: 4),
-                      isLoadingUser
-                          ? const CustomLoadingIndicator(
-                              size: 30.0,
-                              message: 'Loading user data...',
-                              itemCount: 1,
-                              itemHeight: 40,
-                              itemWidth: 200,
-                            )
-                          : Text(
-                              displayName,
-                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                            ),
-                      const SizedBox(height: 24),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height - 200, // Account for app bar and bottom navigation
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    child: ListView(
+                      children: [
+                        Text(
+                          'Welcome back,',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                        ),
+                        const SizedBox(height: 4),
+                        isLoadingUser
+                            ? const CustomLoadingIndicator(
+                                size: 30.0,
+                                message: 'Loading user data...',
+                                itemCount: 1,
+                                itemHeight: 40,
+                                itemWidth: 200,
+                              )
+                            : Text(
+                                displayName,
+                                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                              ),
+                        const SizedBox(height: 24),
 
-                      // --- Conditional "Get Membership" Card ---
-                      _isLoadingMembership
-                          ? const CustomLoadingIndicator(
-                              size: 30.0,
-                              message: 'Loading membership status...',
-                              itemCount: 1,
-                              itemHeight: 120,
-                              itemWidth: double.infinity,
-                            )
-                          : !_isActiveMembership
-                              ? _buildGetMembershipCard(context)
-                              : const SizedBox.shrink(),
+                        // --- Conditional "Get Membership" Card ---
+                        _isLoadingMembership
+                            ? const CustomLoadingIndicator(
+                                size: 30.0,
+                                message: 'Loading membership status...',
+                                itemCount: 1,
+                                itemHeight: 120,
+                                itemWidth: double.infinity,
+                              )
+                            : !_isActiveMembership
+                                ? _buildGetMembershipCard(context)
+                                : const SizedBox.shrink(),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                      // const SizedBox(height: 12),
-                      isLoadingPromos
-                          ? const CustomLoadingIndicator(
-                              size: 30.0,
-                              message: 'Loading promotions...',
-                              isHorizontal: true,
-                              itemCount: 3,
-                              itemHeight: 160,
-                              itemWidth: 280,
-                            )
-                          : promoOrders.isEmpty
-                              ? const Center(child: Text("No promotions available."))
-                              : SizedBox(
-                                  height: 160,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: promoOrders.length,
-                                    separatorBuilder: (context, index) => const SizedBox(width: 14),
-                                    itemBuilder: (context, index) {
-                                      final promo = promoOrders[index];
-                                      return _buildOrderCard(
-                                          promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
-                                    },
+                        // Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        // const SizedBox(height: 12),
+                        isLoadingPromos
+                            ? const CustomLoadingIndicator(
+                                size: 30.0,
+                                message: 'Loading promotions...',
+                                isHorizontal: true,
+                                itemCount: 3,
+                                itemHeight: 160,
+                                itemWidth: 280,
+                              )
+                            : promoOrders.isEmpty
+                                ? const Center(child: Text("No promotions available."))
+                                : SizedBox(
+                                    height: 160,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: promoOrders.length,
+                                      separatorBuilder: (context, index) => const SizedBox(width: 14),
+                                      itemBuilder: (context, index) {
+                                        final promo = promoOrders[index];
+                                        return _buildOrderCard(
+                                            promo["displayTitle"]!, promo["displayCategory"]!, promo["displayImageUrl"]);
+                                      },
+                                    ),
                                   ),
-                                ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      _buildCategorySection(),
-                      const SizedBox(height: 20),
+                        _buildCategorySection(),
+                        const SizedBox(height: 20),
 
-                      isLoadingNewArrivals
-                          ? const CustomLoadingIndicator(
-                              size: 30.0,
-                              message: 'Loading new arrivals...',
-                              isHorizontal: true,
-                              itemCount: 3,
-                              itemHeight: 220,
-                              itemWidth: 160,
-                            )
-                          : _newArrivalsOrders.isEmpty
-                              ? const Text("No new orders in this category.")
-                              : SizedBox(
-                                  height: 220,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: _newArrivalsOrders.length,
-                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
-                                    itemBuilder: (context, index) {
-                                      final orderData = _newArrivalsOrders[index];
-                                      final String title = orderData["displayTitle"]!;
-                                      final String category = orderData["displayCategory"]!;
-                                      final String? imageUrl = orderData["displayImageUrl"];
-                                      final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
+                        isLoadingNewArrivals
+                            ? const CustomLoadingIndicator(
+                                size: 30.0,
+                                message: 'Loading new arrivals...',
+                                isHorizontal: true,
+                                itemCount: 3,
+                                itemHeight: 220,
+                                itemWidth: 160,
+                              )
+                            : _newArrivalsOrders.isEmpty
+                                ? const Text("No new orders in this category.")
+                                : SizedBox(
+                                    height: 220,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: _newArrivalsOrders.length,
+                                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                      itemBuilder: (context, index) {
+                                        final orderData = _newArrivalsOrders[index];
+                                        final String title = orderData["displayTitle"]!;
+                                        final String category = orderData["displayCategory"]!;
+                                        final String? imageUrl = orderData["displayImageUrl"];
+                                        final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
 
-                                      return InkWell(
-                                        onTap: () {
-                                          if (_isActiveMembership) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => SingleOrderPageScreen(
-                                                  order: fullOrder,
-                                                ),
-                                              ),
-                                            );
-                                          } else {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => MembershipRequiredDialog(
-                                                context: context,
-                                                message: 'A membership is required to view order details. Get a membership to access all order information.',
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        child: Container(
-                                          width: 160,
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius: BorderRadius.circular(16),
-                                            image: imageUrl != null && imageUrl.isNotEmpty
-                                                ? DecorationImage(
-                                                    image: NetworkImage(imageUrl),
-                                                    fit: BoxFit.cover,
-                                                    colorFilter: ColorFilter.mode(
-                                                      Colors.black.withOpacity(0.3),
-                                                      BlendMode.darken,
-                                                    ),
-                                                    onError: (exception, stackTrace) {
-                                                      debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
-                                                    },
-                                                  )
-                                                : null,
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const Spacer(),
-                                              Text(
-                                                title,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
-                                                ),
-                                              ),
-                                              if (category.isNotEmpty && category != 'No Category')
-                                                Text(
-                                                  category,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
+                                        return InkWell(
+                                          onTap: () {
+                                            if (_isActiveMembership) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => SingleOrderPageScreen(
+                                                    order: fullOrder,
                                                   ),
                                                 ),
-                                            ],
+                                              );
+                                            } else {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => MembershipRequiredDialog(
+                                                  context: context,
+                                                  message: 'A membership is required to view order details. Get a membership to access all order information.',
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          child: Container(
+                                            width: 160,
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[100],
+                                              borderRadius: BorderRadius.circular(16),
+                                              image: imageUrl != null && imageUrl.isNotEmpty
+                                                  ? DecorationImage(
+                                                      image: NetworkImage(imageUrl),
+                                                      fit: BoxFit.cover,
+                                                      colorFilter: ColorFilter.mode(
+                                                        Colors.black.withOpacity(0.3),
+                                                        BlendMode.darken,
+                                                      ),
+                                                      onError: (exception, stackTrace) {
+                                                        debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
+                                                      },
+                                                    )
+                                                  : null,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                const Spacer(),
+                                                Text(
+                                                  title,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
+                                                  ),
+                                                ),
+                                                if (category.isNotEmpty && category != 'No Category')
+                                                  Text(
+                                                    category,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // --- Coupon Card Widget directly in Home Page ---
-                      _buildCouponCard(
-                        imageUrl: 'assets/images/kpsa_logo.png',
-                        discountText: '20% discount',
-                        descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
-                        onShowDiscountCode: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Discount code will be shown here!')),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
+                        // --- Coupon Card Widget directly in Home Page ---
+                        _buildCouponCard(
+                          imageUrl: 'assets/images/kpsa_logo.png',
+                          discountText: '20% discount',
+                          descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
+                          onShowDiscountCode: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Discount code will be shown here!')),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
 
-                      _buildPartnersSection(),
-                      const SizedBox(height: 24),
-                    ],
+                        _buildPartnersSection(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -968,71 +971,75 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12),
       ),
       color: const Color(0xFFF5F5F5),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // <-- Center vertically
-        children: [
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.25,
-          child: Center(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-            imageUrl,
-            fit: BoxFit.contain,
-            ),
-          ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-            discountText,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-            descriptionText,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[700],
-              height: 1.4,
-            ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-            onPressed: onShowDiscountCode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 185, 33, 33),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.25,
+              height: 80, // Add fixed height
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
               ),
-              elevation: 3,
             ),
-            child: const Text(
-              'Show discount code',
-              style: TextStyle(fontSize: 14),
-            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    discountText,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    descriptionText,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[700],
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: onShowDiscountCode,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 185, 33, 33),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 3,
+                    ),
+                    child: const Text(
+                      'Show discount code',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-          ),
         ),
-        ],
-      ),
       ),
     );
   }

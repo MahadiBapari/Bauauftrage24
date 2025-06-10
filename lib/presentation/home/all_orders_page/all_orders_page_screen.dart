@@ -96,7 +96,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
         setState(() {
           if (cachedData[0] != null) {
             _orders = List<Map<String, dynamic>>.from(cachedData[0] as List);
-            _filterOrders();
+            _filterOrders(); // <--- Call filterOrders immediately after loading from cache
           }
           if (cachedData[1] != null) {
             _categories = List<Map<String, dynamic>>.from(cachedData[1] as List);
@@ -111,20 +111,28 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
         _cacheManager.isCacheExpired('categories'),
       ]);
 
-      // Refresh only if cache is expired
-      if (needsRefresh.any((needs) => needs)) {
-        await Future.wait([
-          _fetchOrders(page: 1, perPage: _perPage, append: false),
-          _fetchCategories(),
-        ]);
+      // Refresh only if cache is expired or if data was not loaded from cache
+      bool shouldFetchOrders = needsRefresh[0] || _orders.isEmpty;
+      bool shouldFetchCategories = needsRefresh[1] || _categories.isEmpty;
+
+      List<Future<void>> fetchFutures = [];
+      if (shouldFetchOrders) {
+        fetchFutures.add(_fetchOrders(page: 1, perPage: _perPage, append: false));
       }
+      if (shouldFetchCategories) {
+        fetchFutures.add(_fetchCategories());
+      }
+      
+      await Future.wait(fetchFutures); // Await only the necessary fetches
+
     } catch (e) {
       debugPrint('Error loading all data: $e');
+      // Potentially show a global error dialog if initial load fails completely
     } finally {
       if (mounted) {
         setState(() {
-          _isLoadingOrders = false;
-          _isLoadingCategories = false;
+          _isLoadingOrders = false; // Ensure loading is false after all attempts
+          _isLoadingCategories = false; // Ensure loading is false after all attempts
         });
       }
     }
@@ -132,6 +140,11 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
   // New method to load more orders for pagination
   Future<void> _loadMoreOrders() async {
+    if (_isFetchingMore || !_hasMoreOrders) { // No need for _userId here as it's not a user-specific order list
+      debugPrint("Skipping loadMoreOrders. isFetchingMore: $_isFetchingMore, hasMoreOrders: $_hasMoreOrders");
+      return;
+    }
+
     if (mounted) {
       setState(() {
         _isFetchingMore = true;
@@ -149,52 +162,72 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
   Future<void> _fetchOrders({required int page, required int perPage, required bool append}) async {
     List<Map<String, dynamic>> currentFetchedOrders = [];
+    debugPrint('AllOrdersPageScreen: Fetching orders for page $page, append: $append');
     try {
       final headers = <String, String>{};
-      // You might need an Authorization header here if orders are protected
-      // if (_authToken != null) {
-      //   headers['Authorization'] = 'Bearer $_authToken';
-      // }
-
       final response = await http.get(
         Uri.parse('$ordersEndpoint?page=$page&per_page=$perPage'),
         headers: headers,
       );
 
-      if (!mounted) return; // Crucial check after await
+      if (!mounted) {
+        debugPrint('AllOrdersPageScreen: Widget unmounted during orders API call.');
+        return;
+      }
 
+      debugPrint('AllOrdersPageScreen: Orders API response status: ${response.statusCode}');
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
+        debugPrint('AllOrdersPageScreen: Raw data length: ${data.length}');
 
         for (var order in data) {
           String imageUrl = '';
-          List<dynamic> galleryDynamic = order['meta']?['order_gallery'] ?? [];
+          dynamic galleryDynamic = order['meta']?['order_gallery']; // Can be List or String
 
-          if (galleryDynamic.isNotEmpty) {
-            dynamic firstItem = galleryDynamic[0];
+          List<dynamic> galleryList = [];
+          if (galleryDynamic is List) {
+            galleryList = galleryDynamic;
+          } else if (galleryDynamic is String) {
+            try {
+              final decodedContent = jsonDecode(galleryDynamic);
+              if (decodedContent is List) {
+                galleryList = decodedContent;
+              }
+            } catch (e) {
+              debugPrint('AllOrdersPageScreen: Could not parse gallery string: $e');
+            }
+          }
+
+          if (galleryList.isNotEmpty) {
+            dynamic firstItem = galleryList[0];
             int? firstImageId;
 
             if (firstItem is Map && firstItem.containsKey('id') && firstItem['id'] is int) {
               firstImageId = firstItem['id'];
             } else if (firstItem is int) {
               firstImageId = firstItem;
+            } else if (firstItem is String) {
+              firstImageId = int.tryParse(firstItem);
             }
 
             if (firstImageId != null) {
               final mediaUrl = '$mediaEndpointBase$firstImageId';
               final mediaResponse = await http.get(Uri.parse(mediaUrl));
 
-              if (!mounted) return; // Crucial check after inner await
+              if (!mounted) {
+                debugPrint('AllOrdersPageScreen: Widget unmounted during media API call.');
+                return;
+              }
 
               if (mediaResponse.statusCode == 200) {
                 try {
                   final mediaData = jsonDecode(mediaResponse.body);
                   imageUrl = mediaData['source_url'] ?? mediaData['media_details']?['sizes']?['full']?['source_url'] ?? '';
                 } catch (e) {
-                  debugPrint('Error decoding media data for ID $firstImageId: $e');
+                  debugPrint('AllOrdersPageScreen: Error decoding media data for ID $firstImageId: $e');
                 }
               } else {
-                debugPrint('Failed to fetch media for ID $firstImageId: ${mediaResponse.statusCode}');
+                debugPrint('AllOrdersPageScreen: Failed to fetch media for ID $firstImageId: ${mediaResponse.statusCode}');
               }
             }
           }
@@ -207,26 +240,38 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
             if (append) {
               _orders.addAll(currentFetchedOrders); // Append for pagination
             } else {
-              _orders = currentFetchedOrders; // Overwrite for initial load
-              // Save to cache when fetching fresh data
-              _cacheManager.saveToCache('all_orders', currentFetchedOrders);
+              _orders = currentFetchedOrders; // Overwrite for initial load/refresh
+              _currentPage = 1; // Reset current page for fresh fetch
+              _cacheManager.saveToCache('all_orders', currentFetchedOrders); // Save to cache
+              debugPrint('AllOrdersPageScreen: Orders cached.');
             }
-            _hasMoreOrders = data.length == _perPage; // Check if the number of fetched items equals perPage
+            _hasMoreOrders = data.length == _perPage; // Check if more pages exist
+            _filterOrders(); // <--- Call filterOrders after _orders is updated
           });
         }
       } else {
-        debugPrint('Failed to load orders: ${response.statusCode}');
+        debugPrint('AllOrdersPageScreen: Failed to load orders: ${response.statusCode} - ${response.body}');
         if (mounted) {
           setState(() {
-            _hasMoreOrders = false; // No more orders if fetch failed
+            _hasMoreOrders = false;
+            // Clear orders if API call failed completely, preventing old data from showing
+            if (!append) {
+              _orders.clear();
+              _filteredOrders.clear();
+            }
           });
         }
       }
     } catch (e) {
-      debugPrint('Error fetching orders: $e');
+      debugPrint('AllOrdersPageScreen: Error fetching orders: $e');
       if (mounted) {
         setState(() {
-          _hasMoreOrders = false; // No more orders on error
+          _hasMoreOrders = false;
+          // Clear orders on network error
+          if (!append) {
+            _orders.clear();
+            _filteredOrders.clear();
+          }
         });
       }
     }
@@ -236,10 +281,14 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     List<Map<String, dynamic>> fetchedCategories = [
       {'id': null, 'name': 'All Categories'} // Add an "All Categories" option
     ];
+    debugPrint('AllOrdersPageScreen: Fetching categories...');
     try {
       final response = await http.get(Uri.parse(categoriesEndpoint));
 
-      if (!mounted) return;
+      if (!mounted) {
+        debugPrint('AllOrdersPageScreen: Widget unmounted during categories API call.');
+        return;
+      }
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -252,18 +301,19 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
           setState(() {
             _categories = fetchedCategories;
           });
-          // Save to cache
-          await _cacheManager.saveToCache('categories', fetchedCategories);
+          _cacheManager.saveToCache('categories', fetchedCategories); // Save to cache
+          debugPrint('AllOrdersPageScreen: Categories cached.');
         }
       } else {
-        debugPrint('Failed to load categories: ${response.statusCode}');
+        debugPrint('AllOrdersPageScreen: Failed to load categories: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error fetching categories: $e');
+      debugPrint('AllOrdersPageScreen: Error fetching categories: $e');
     } finally {
       if (mounted) {
         setState(() {
           _isLoadingCategories = false;
+          debugPrint('AllOrdersPageScreen: Categories loading finished.');
         });
       }
     }
@@ -281,14 +331,17 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
           final matchesSearch = title.contains(search);
 
           if (_selectedCategoryId == null) {
-            return matchesSearch;
+            return matchesSearch; // If "All Categories" is selected, only apply search filter
           }
 
-          final orderCategoryIds = order['order-categories'] ?? [];
+          // Ensure 'order-categories' is a List
+          final orderCategoryIds = (order['order-categories'] is List) ? order['order-categories'] : [];
+          // Check if any of the order's category IDs match the selected category
           final matchesCategory = orderCategoryIds.contains(_selectedCategoryId);
 
           return matchesSearch && matchesCategory;
         }).toList();
+        debugPrint('AllOrdersPageScreen: Filtered orders count: ${_filteredOrders.length}');
       });
     }
   }
@@ -355,18 +408,42 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
   // Add refresh method
   Future<void> _onRefresh() async {
-    await Future.wait([
-      _fetchOrders(page: 1, perPage: _perPage, append: false),
-      _fetchCategories(),
-      _fetchMembershipStatus(),
-    ]);
+    debugPrint('AllOrdersPageScreen: Performing refresh...');
+    setState(() {
+      _orders.clear();
+      _filteredOrders.clear();
+      _currentPage = 1;
+      _hasMoreOrders = true;
+      _isLoadingOrders = true;
+      _isLoadingCategories = true;
+      _isLoadingMembership = true;
+    });
+
+    try {
+      await Future.wait([
+        _fetchOrders(page: 1, perPage: _perPage, append: false),
+        _fetchCategories(),
+        _fetchMembershipStatus(),
+      ]);
+      debugPrint('AllOrdersPageScreen: All refresh futures completed.');
+    } catch (e) {
+      debugPrint('AllOrdersPageScreen: Error during _onRefresh: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingOrders = false;
+          _isLoadingCategories = false;
+          _isLoadingMembership = false;
+          debugPrint('AllOrdersPageScreen: _onRefresh finished, loading states set to false.');
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-     
       body: GestureDetector( // Main GestureDetector for the body
         behavior: HitTestBehavior.opaque, // Ensures taps are registered outside widgets
         onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard
@@ -392,7 +469,6 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                       ],
                     ),
                     child: TextField(
-                      // controller: _searchController, // Uncomment and declare if you need to clear programmatically
                       decoration: InputDecoration(
                         hintText: 'Search by title...',
                         hintStyle: TextStyle(color: Colors.grey.shade500),
@@ -404,7 +480,6 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                                   if (mounted) {
                                     setState(() {
                                       _searchText = '';
-                                      // _searchController?.clear(); // If using controller
                                     });
                                   }
                                   _filterOrders();
@@ -439,18 +514,19 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                     const SizedBox(height: 12),
                     _isLoadingCategories
                         ? const CustomLoadingIndicator(
-                            message: 'Loading categories...',
-                            isHorizontal: true,
-                            itemCount: 5,
-                            itemHeight: 40,
-                            itemWidth: 100,
-                          )
+                              message: 'Loading categories...',
+                              isHorizontal: true,
+                              itemCount: 5,
+                              itemHeight: 40,
+                              itemWidth: 100,
+                            )
                         : _categories.isEmpty
                             ? const Text("No categories available.")
                             : SizedBox(
                                 height: 40,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
+                                  physics: const AlwaysScrollableScrollPhysics(), // Ensure it's always scrollable
                                   itemCount: _categories.length,
                                   separatorBuilder: (_, __) => const SizedBox(width: 10),
                                   itemBuilder: (context, index) {
@@ -469,14 +545,19 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                       onPressed: () {
-                                        // Dismiss keyboard when a category chip is tapped
                                         FocusScope.of(context).unfocus();
                                         if (mounted) {
                                           setState(() {
+                                            // Toggle selected category: if already selected, deselect (set to null)
                                             _selectedCategoryId = isSelected ? null : id;
+                                            // Reset current page to 1 whenever category filter changes
+                                            _currentPage = 1;
+                                            _hasMoreOrders = true; // Assume there might be more orders with new filter
+                                            _orders.clear(); // Clear existing orders to load fresh for new filter
                                           });
+                                          // Fetch orders again with the new category filter
+                                          _fetchOrders(page: _currentPage, perPage: _perPage, append: false);
                                         }
-                                        _filterOrders();
                                       },
                                     );
                                   },
@@ -492,33 +573,38 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _onRefresh,
-                  child: _isLoadingOrders
+                  child: _isLoadingOrders || _isLoadingMembership // Show loading if orders or membership is loading
                       ? const CustomLoadingIndicator(
-                          message: 'Loading orders...',
-                          itemCount: 5,
-                          itemHeight: 120,
-                          itemWidth: double.infinity,
-                          isScrollable: true,
-                        )
+                              message: 'Loading orders...',
+                              itemCount: 5,
+                              itemHeight: 120,
+                              itemWidth: double.infinity,
+                              isScrollable: true,
+                            )
                       : _filteredOrders.isEmpty
-                          ? const Center(child: Text("No orders found matching your criteria."))
+                          ? Center(child: Text(
+                              _isActiveMembership ?
+                              "No orders found matching your criteria." :
+                              "A membership is required to view orders. Get a membership to access all order information."
+                            ))
                           : ListView.builder(
                               controller: _scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(), // Always allow pull to refresh
                               itemCount: _filteredOrders.length + (_hasMoreOrders ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index == _filteredOrders.length) {
                                   return _isFetchingMore
                                       ? const CustomLoadingIndicator(
-                                          size: 30.0,
-                                          message: 'Loading more...',
-                                        )
-                                      : const SizedBox.shrink();
+                                              size: 30.0,
+                                              message: 'Loading more...',
+                                            )
+                                          : const SizedBox.shrink();
                                 }
 
                                 final order = _filteredOrders[index];
                                 final imageUrl = order['imageUrl'] ?? '';
                                 final title = order['title']['rendered'] ?? 'Untitled';
-                                final categoryName = order['acf']?['category'] ?? 'N/A';
+                                //final categoryName = order['acf']?['category'] ?? 'N/A'; // Assuming 'acf' for single category name
 
                                 return GestureDetector(
                                   onTap: () {
@@ -583,13 +669,13 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                                             ),
                                           ),
                                           const SizedBox(height: 6),
-                                          Text(
-                                            categoryName,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.white70,
-                                            ),
-                                          ),
+                                          // Text(
+                                          //   categoryName,
+                                          //   style: const TextStyle(
+                                          //     fontSize: 14,
+                                          //     color: Colors.white70,
+                                          //   ),
+                                          // ),
                                         ],
                                       ),
                                     ),

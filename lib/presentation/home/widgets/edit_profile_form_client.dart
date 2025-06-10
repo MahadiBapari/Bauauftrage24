@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfileFormClient extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -23,6 +24,9 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
 
+  // No need for _emailController as it's readOnly and initialValue is used.
+  // The email will be passed directly from widget.userData.
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +36,14 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
   }
 
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _updateProfile() async {
     if (_formKey.currentState!.validate()) {
       final updatedData = {
@@ -39,6 +51,8 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
         'user_phone_': _phoneController.text,
+        // *** FIX: Include the email from userData here ***
+        'user_email': widget.userData['user_email'] ?? '',
       };
 
       const apiKey = '1234567890abcdef';
@@ -54,14 +68,17 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
           body: updatedData,
         );
 
+        // Ensure widget is still mounted before accessing context
+        if (!mounted) return;
+
         final responseData = json.decode(response.body);
 
         if (response.statusCode == 200 && responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated successfully!')),
           );
-          widget.onProfileUpdated();
-          Navigator.of(context).pop();
+          widget.onProfileUpdated(); // Callback to refresh parent data
+          Navigator.of(context).pop(); // Close the dialog
         } else {
           _showError(responseData['message'] ?? 'Failed to update profile.');
         }
@@ -72,6 +89,9 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
   }
 
   void _showError(String message) {
+    // Ensure widget is still mounted before accessing context
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -116,76 +136,87 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
             ),
           ),
           const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  // First Name
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
 
-                  // Last Name
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Email (readonly)
-                  TextFormField(
-                    initialValue: widget.userData['user_email'] ?? '',
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Email (not editable)',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Phone
-                  TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone',
-                      prefixIcon: Icon(Icons.phone_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _updateProfile,
-                      icon: const Icon(Icons.save),
-                      label: const Text('Save Changes'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: const Color.fromARGB(255, 122, 0, 0),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+          // Flexible content area for the form fields
+          Flexible(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // First Name
+                      TextFormField(
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'First Name',
+                          prefixIcon: Icon(Icons.person_outline),
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+
+                      // Last Name
+                      TextFormField(
+                        controller: _lastNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Last Name',
+                          prefixIcon: Icon(Icons.person_outline),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Email (readonly)
+                      TextFormField(
+                        initialValue: widget.userData['user_email'] ?? '',
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Email (not editable)',
+                          prefixIcon: Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Phone
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone',
+                          prefixIcon: Icon(Icons.phone_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                ],
+                ),
+              ),
+            ),
+          ),
+
+          // Save Button - positioned outside the scrollable area
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _updateProfile,
+                icon: const Icon(Icons.save),
+                label: const Text('Save Changes'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: const Color.fromARGB(255, 122, 0, 0),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
               ),
             ),
           ),

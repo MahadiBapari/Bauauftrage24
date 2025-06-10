@@ -59,9 +59,12 @@ class CustomLoadingIndicator extends StatelessWidget {
               ),
             )
           : isScrollable
-              ? ListView.builder(
-                  itemCount: itemCount,
-                  itemBuilder: (context, index) => _buildShimmerItem(),
+              ? SizedBox(
+                  height: itemHeight * itemCount + (16 * itemCount), // Account for padding
+                  child: ListView.builder(
+                    itemCount: itemCount,
+                    itemBuilder: (context, index) => _buildShimmerItem(),
+                  ),
                 )
               : Column(
                   children: List.generate(

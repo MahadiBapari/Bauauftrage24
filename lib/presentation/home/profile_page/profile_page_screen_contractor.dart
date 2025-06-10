@@ -275,121 +275,124 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
           : _userData == null
               ? const Center(child: Text('No user data available'))
               : SafeArea(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Center(
-                          child: Stack(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    const BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 6,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height - 200, // Account for app bar and bottom navigation
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      const BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const CircleAvatar( // Changed to const
+                                    radius: 55,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage: AssetImage('assets/images/profile.png'), // STATIC IMAGE
+                                    child: null, // No child needed as we have a background image
+                                  ),
                                 ),
-                                child: const CircleAvatar( // Changed to const
-                                  radius: 55,
-                                  backgroundColor: Colors.white,
-                                  backgroundImage: AssetImage('assets/images/profile.png'), // STATIC IMAGE
-                                  child: null, // No child needed as we have a background image
-                                ),
-                              ),
-                              // Positioned(
-                              //   bottom: 4,
-                              //   right: 4,
-                              //   child: GestureDetector(
-                              //     onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
-                              //     child: Container(
-                              //       padding: const EdgeInsets.all(6),
-                              //       decoration: BoxDecoration(
-                              //         shape: BoxShape.circle,
-                              //         color: Theme.of(context).primaryColor,
-                              //       ),
-                              //       child: const Icon(Icons.camera_alt,
-                              //           size: 18, color: Colors.white),
-                              //     ),
-                              //   ),
-                              // ),
-                            ],
+                                // Positioned(
+                                //   bottom: 4,
+                                //   right: 4,
+                                //   child: GestureDetector(
+                                //     onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
+                                //     child: Container(
+                                //       padding: const EdgeInsets.all(6),
+                                //       decoration: BoxDecoration(
+                                //         shape: BoxShape.circle,
+                                //         color: Theme.of(context).primaryColor,
+                                //       ),
+                                //       child: const Icon(Icons.camera_alt,
+                                //           size: 18, color: Colors.white),
+                                //     ),
+                                //   ),
+                                // ),
+                              ],
+                            ),
                           ),
-                        ),
-                        // Removed the "Save Profile Image" button as it's now autosave
-                        const SizedBox(height: 12),
-                        Text(
-                          '${_userData!['meta_data']?['first_name']?[0] ?? ''} ${_userData!['meta_data']?['last_name']?[0] ?? ''}',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                          // Removed the "Save Profile Image" button as it's now autosave
+                          const SizedBox(height: 12),
+                          Text(
+                            '${_userData!['meta_data']?['first_name']?[0] ?? ''} ${_userData!['meta_data']?['last_name']?[0] ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 30),
-                        _buildSectionTitle(
-                          'Personal Information',
-                          onEditTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => EditProfileFormContractor(
-                                userData: _userData!,
-                                onProfileUpdated: _loadUserData,
-                              ),
-                            );
-                          },
-                        ),
-                        _buildInfoRow(
-                          context,
-                          'Email',
-                          _userData!['user_email'] ?? 'No email',
-                          Icons.email,
-                        ),
-                        _buildInfoRow(
-                          context,
-                          'Phone',
-                          _userData!['meta_data']?['user_phone_']?[0] ??
-                              'No phone number',
-                          Icons.phone,
-                        ),
-                        _buildInfoRow(
-                          context,
-                          'Firm Name',
-                          _userData!['meta_data']?['firmenname_']?[0] ??
-                              'No firm name',
-                          Icons.business,
-                        ),
-                        _buildInfoRow(
-                          context,
-                          'UID Number',
-                          _userData!['meta_data']?['uid_nummer']?[0] ??
-                              'No UID number',
-                          Icons.badge,
-                        ),
-                        _buildInfoRow(
-                          context,
-                          'Available Time',
-                          _userData!['meta_data']?['available_time']?[0] ??
-                              'No Available time',
-                          Icons.access_time,
-                        ),
-                        const SizedBox(height: 30),
-                        _buildSectionTitle('Utilities'),
-                        _buildProfileOption(
-                          context,
-                          'Help & Support',
-                          Icons.question_mark,
-                        ),
-                        _buildProfileOption(
-                          context,
-                          'Logout',
-                          Icons.logout,
-                        ),
-                      ],
+                          const SizedBox(height: 30),
+                          _buildSectionTitle(
+                            'Personal Information',
+                            onEditTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => EditProfileFormContractor(
+                                  userData: _userData!,
+                                  onProfileUpdated: _loadUserData,
+                                ),
+                              );
+                            },
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Email',
+                            _userData!['user_email'] ?? 'No email',
+                            Icons.email,
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Phone',
+                            _userData!['meta_data']?['user_phone_']?[0] ??
+                                'No phone number',
+                            Icons.phone,
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Firm Name',
+                            _userData!['meta_data']?['firmenname_']?[0] ??
+                                'No firm name',
+                            Icons.business,
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'UID Number',
+                            _userData!['meta_data']?['uid_nummer']?[0] ??
+                                'No UID number',
+                            Icons.badge,
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Available Time',
+                            _userData!['meta_data']?['available_time']?[0] ??
+                                'No Available time',
+                            Icons.access_time,
+                          ),
+                          const SizedBox(height: 30),
+                          _buildSectionTitle('Utilities'),
+                          _buildProfileOption(
+                            context,
+                            'Help & Support',
+                            Icons.question_mark,
+                          ),
+                          _buildProfileOption(
+                            context,
+                            'Logout',
+                            Icons.logout,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
