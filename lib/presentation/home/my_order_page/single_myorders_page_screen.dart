@@ -1,0 +1,483 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'edit_order_page_screen.dart';
+
+class SingleMyOrderPageScreen extends StatefulWidget {
+  final Map<String, dynamic> order;
+
+  const SingleMyOrderPageScreen({super.key, required this.order});
+
+  @override
+  State<SingleMyOrderPageScreen> createState() => _SingleMyOrderPageScreenState();
+}
+
+class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
+  Map<String, dynamic>? _user;
+  List<String> _imageUrls = [];
+  List<String> _orderCategories = [];
+  bool _isLoading = true;
+
+  Map<String, dynamic> _currentOrderData = {};
+
+  final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order/';
+  final String mediaUrlBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
+  final String usersApiBaseUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/';
+  final String categoriesUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
+  final String apiKey = '1234567890abcdef';
+
+  String? _authToken;
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentOrderData = Map<String, dynamic>.from(widget.order);
+    _loadAuthTokenAndUserId().then((_) => fetchDetails());
+  }
+
+  Future<void> _loadAuthTokenAndUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    _authToken = prefs.getString('auth_token');
+    _userId = prefs.getString('user_id');
+  }
+
+  Future<void> fetchDetails() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    final orderId = _currentOrderData['id'];
+
+    try {
+      debugPrint('SingleMyOrderPageScreen: Fetching latest order data for ID: $orderId');
+      final orderResponse = await http.get(
+        Uri.parse('$ordersEndpoint$orderId'),
+        headers: {'X-API-KEY': apiKey},
+      );
+
+      if (!mounted) return;
+
+      if (orderResponse.statusCode == 200) {
+        _currentOrderData = jsonDecode(orderResponse.body);
+        debugPrint('SingleMyOrderPageScreen: Successfully fetched latest order data.');
+      } else {
+        debugPrint('SingleMyOrderPageScreen: Failed to fetch latest order data: ${orderResponse.statusCode} ${orderResponse.body}');
+        if (orderResponse.statusCode == 404) {
+          _showInfoDialog('Order Not Found', 'This order might have been deleted. Returning to orders list.')
+              .then((_) => Navigator.of(context).pop(true));
+          return;
+        }
+        _showErrorDialog('Error', 'Failed to load latest order details. Status: ${orderResponse.statusCode}');
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final authorId = _currentOrderData['author'];
+      final dynamic galleryDynamic = _currentOrderData['meta']?['order_gallery'];
+      final List<dynamic> rawCategoryIds = _currentOrderData['order-categories'] ?? [];
+
+      // Parse gallery image IDs
+      List<int> galleryImageIds = [];
+      if (galleryDynamic is List) {
+        galleryImageIds = galleryDynamic
+            .whereType<Map>()
+            .map((item) => item['id'])
+            .whereType<int>()
+            .toList();
+      } else if (galleryDynamic is String) {
+        try {
+          final decodedContent = jsonDecode(galleryDynamic);
+          if (decodedContent is List) {
+            galleryImageIds = decodedContent
+                .whereType<Map>()
+                .map((item) => item['id'])
+                .whereType<int>()
+                .toList();
+          } else {
+            debugPrint('SingleMyOrderPageScreen: galleryDynamic is a String, but not a JSON list: $galleryDynamic');
+          }
+        } catch (e) {
+          debugPrint('SingleMyOrderPageScreen: Could not parse gallery string as JSON: $e, original string: $galleryDynamic');
+        }
+      } else {
+        debugPrint('SingleMyOrderPageScreen: order_gallery is neither List nor String type: ${galleryDynamic.runtimeType}');
+      }
+
+      // Prepare requests
+      List<Future<dynamic>> futures = [
+        http.get(Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
+        http.get(Uri.parse(categoriesUrl)),
+      ];
+      for (int mediaId in galleryImageIds) {
+        futures.add(http.get(Uri.parse('$mediaUrlBase$mediaId'), headers: {'X-API-KEY': apiKey}));
+      }
+
+      List<dynamic> responses = await Future.wait(futures);
+
+      // Parse user
+      final http.Response userResponse = responses[0];
+      Map<String, dynamic>? user;
+      if (userResponse.statusCode == 200) {
+        user = jsonDecode(userResponse.body);
+      } else {
+        debugPrint('SingleMyOrderPageScreen: Failed to fetch user: ${userResponse.statusCode} ${userResponse.body}');
+      }
+
+      // Parse categories
+      final http.Response categoriesResponse = responses[1];
+      Map<int, String> categoryMap = {};
+      if (categoriesResponse.statusCode == 200) {
+        List<dynamic> categories = jsonDecode(categoriesResponse.body);
+        for (var cat in categories) {
+          if (cat['id'] is int && cat['name'] is String) {
+            categoryMap[cat['id']] = cat['name'];
+          }
+        }
+      } else {
+        debugPrint('SingleMyOrderPageScreen: Failed to fetch categories: ${categoriesResponse.statusCode} ${categoriesResponse.body}');
+      }
+
+      // Parse images
+      List<String> imageUrls = [];
+      for (int i = 2; i < responses.length; i++) {
+        final mediaResponse = responses[i];
+        if (mediaResponse.statusCode == 200) {
+          final mediaData = jsonDecode(mediaResponse.body);
+          final imageUrl = mediaData['source_url'];
+          if (imageUrl != null) imageUrls.add(imageUrl);
+        } else {
+          debugPrint('SingleMyOrderPageScreen: Failed to fetch media for ID ${galleryImageIds[i - 2]}: ${mediaResponse.statusCode}');
+        }
+      }
+
+      // Parse order categories
+      List<String> orderCategories = [];
+      for (var id in rawCategoryIds) {
+        if (id is int) {
+          orderCategories.add(categoryMap[id] ?? 'Unknown Category');
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _imageUrls = imageUrls;
+          _orderCategories = orderCategories;
+          _isLoading = false;
+        });
+        debugPrint('SingleMyOrderPageScreen: Details fetched and state updated.');
+      }
+    } catch (e) {
+      debugPrint('SingleMyOrderPageScreen: Error fetching details: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      _showErrorDialog('Error', 'Failed to load order details. Please check your internet connection.');
+    }
+  }
+
+  void _editOrder(BuildContext context) async {
+    if (_authToken == null) {
+      _showErrorDialog('Authentication Required', 'Please log in to edit orders.');
+      return;
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditOrderPageScreen(order: _currentOrderData),
+      ),
+    );
+
+    if (result == true) {
+      debugPrint('SingleMyOrderPageScreen: EditOrderPageScreen returned true. Re-fetching details and popping to MyOrdersPageScreen.');
+      await fetchDetails();
+      Navigator.of(context).pop(true);
+    } else {
+      debugPrint('SingleMyOrderPageScreen: EditOrderPageScreen returned null or false.');
+    }
+  }
+
+  Future<void> _deleteOrder(BuildContext context, int orderId) async {
+    final bool? confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete this order? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmDelete == true) {
+      if (_authToken == null || _userId == null) {
+        _showErrorDialog('Authentication Error', 'You are not authenticated to delete orders.');
+        return;
+      }
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final response = await http.delete(
+          Uri.parse('$ordersEndpoint$orderId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_authToken',
+            'X-API-KEY': apiKey,
+          },
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response.statusCode == 200) {
+          debugPrint('SingleMyOrderPageScreen: Order $orderId deleted successfully!');
+          _showInfoDialog('Success', 'Order has been deleted successfully.').then((_) {
+            debugPrint('SingleMyOrderPageScreen: Popping with true after successful deletion.');
+            Navigator.of(context).pop(true);
+          });
+        } else {
+          debugPrint('SingleMyOrderPageScreen: Failed to delete order $orderId: ${response.statusCode} ${response.body}');
+          _showErrorDialog('Deletion Failed', 'Failed to delete order. Status: ${response.statusCode} - ${response.body}');
+        }
+      } catch (e) {
+        debugPrint('SingleMyOrderPageScreen: Error deleting order $orderId: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+        _showErrorDialog('Error', 'An error occurred during deletion: $e');
+      }
+    }
+  }
+
+  Future<void> _showErrorDialog(String title, String message) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showInfoDialog(String title, String message) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _stripHtml(String html) {
+    return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = _currentOrderData['meta'] ?? {};
+    final title = _currentOrderData['title']?['rendered'] ?? 'No title';
+    final content = _stripHtml(_currentOrderData['content']?['rendered'] ?? '');
+    final userName = _user?['display_name'] ?? 'N/A';
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                Container(color: Colors.white),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  width: double.infinity,
+                  child: _imageUrls.isNotEmpty
+                      ? PageView.builder(
+                          itemCount: _imageUrls.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => FullScreenGallery(
+                                      images: _imageUrls,
+                                      initialIndex: index,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Hero(
+                                tag: _imageUrls[index],
+                                child: CachedNetworkImage(
+                                  imageUrl: _imageUrls[index],
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+                                  errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 40),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          color: Colors.grey[300],
+                          child: const Center(child: Text('No images available')),
+                        ),
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.43,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8F8F8),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (_orderCategories.isNotEmpty)
+                                Text(
+                                  _orderCategories.join(', '),
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                ),
+                              const Spacer(),
+                              Text(
+                                userName,
+                                style: const TextStyle(
+                                  color: Color.fromARGB(255, 59, 59, 59),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Divider(),
+                          const SizedBox(height: 12),
+                          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text(content, style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Color.fromARGB(255, 75, 1, 1), size: 32),
+                                  onPressed: () => _editOrder(context),
+                                  tooltip: 'Edit Order',
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Color.fromARGB(255, 176, 2, 2), size: 32),
+                                  onPressed: () => _deleteOrder(context, _currentOrderData['id']),
+                                  tooltip: 'Delete Order',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, left: 16.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class FullScreenGallery extends StatelessWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const FullScreenGallery({super.key, required this.images, required this.initialIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PhotoViewGallery.builder(
+            itemCount: images.length,
+            pageController: PageController(initialPage: initialIndex),
+            builder: (context, index) {
+              return PhotoViewGalleryPageOptions(
+                imageProvider: NetworkImage(images[index]),
+                heroAttributes: PhotoViewHeroAttributes(tag: images[index]),
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.covered * 2,
+              );
+            },
+            scrollPhysics: const BouncingScrollPhysics(),
+            backgroundDecoration: const BoxDecoration(color: Colors.black),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

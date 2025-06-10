@@ -87,12 +87,10 @@ Future<void> _pickImages() async {
 
   if (source == ImageSource.gallery) {
     final List<XFile> pickedFiles = await _picker.pickMultiImage();
-    if (pickedFiles != null) {
-      setState(() {
-        _selectedImages.addAll(pickedFiles.map((xfile) => File(xfile.path)));
-      });
-    }
-  } else if (source == ImageSource.camera) {
+    setState(() {
+      _selectedImages.addAll(pickedFiles.map((xfile) => File(xfile.path)));
+    });
+    } else if (source == ImageSource.camera) {
     if (source == null) return;
 
     final XFile? picked = await _picker.pickImage(source: source);
