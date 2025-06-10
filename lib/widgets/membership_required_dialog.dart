@@ -14,6 +14,7 @@ class MembershipRequiredDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -21,7 +22,7 @@ class MembershipRequiredDialog extends StatelessWidget {
         children: [
           const Icon(
             Icons.workspace_premium,
-            color: Color.fromARGB(255, 85, 21, 1),
+            color: Color.fromARGB(255, 179, 21, 21),
             size: 28,
           ),
           const SizedBox(width: 12),
@@ -44,7 +45,7 @@ class MembershipRequiredDialog extends StatelessWidget {
           child: const Text(
             'Cancel',
             style: TextStyle(
-              color: Colors.grey,
+              color: Color.fromARGB(255, 121, 121, 121),
               fontSize: 16,
             ),
           ),
@@ -60,7 +61,7 @@ class MembershipRequiredDialog extends StatelessWidget {
             );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 85, 21, 1),
+            backgroundColor: const Color.fromARGB(255, 179, 21, 21),
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

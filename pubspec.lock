@@ -42,7 +42,7 @@ packages:
     source: hosted
     version: "1.2.0"
   carousel_slider:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: carousel_slider
       sha256: "9c695cc963bf1d04a47bd6021f68befce8970bcd61d24938e1fb0918cf5d9c42"
@@ -417,7 +417,7 @@ packages:
     source: hosted
     version: "2.0.0"
   multi_select_flutter:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: multi_select_flutter
       sha256: "503857b415d390d29159df8a9d92d83c6aac17aaf1c307fb7bcfc77d097d20ed"
@@ -441,7 +441,7 @@ packages:
     source: hosted
     version: "1.9.1"
   path_provider:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
@@ -529,7 +529,7 @@ packages:
     source: hosted
     version: "2.1.0"
   shared_preferences:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: shared_preferences
       sha256: "6e8bf70b7fef813df4e9a36f658ac46d107db4b4cfe1048b477d4e453a8159f5"

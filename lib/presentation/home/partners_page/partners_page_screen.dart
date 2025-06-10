@@ -103,11 +103,11 @@ class _PartnerScreenState extends State<PartnerScreen> {
           final partners = snapshot.data!;
           return GridView.builder(
             padding: const EdgeInsets.all(10),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: 1,
+              childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.2 : 0.9,
             ),
             itemCount: partners.length,
             itemBuilder: (context, index) {
@@ -122,72 +122,73 @@ class _PartnerScreenState extends State<PartnerScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // MODIFIED: Logo loading now hides the loading icon
-                      partner.logoId != null
-                          ? FutureBuilder<String?>(
-                              future: fetchLogoUrl(partner.logoId!),
-                              builder: (context, logoSnapshot) {
-                                // If still waiting for the URL or an error, show an empty SizedBox
-                                if (logoSnapshot.connectionState == ConnectionState.waiting ||
-                                    logoSnapshot.hasError ||
-                                    logoSnapshot.data == null) {
-                                  return const SizedBox(
-                                    width: 100,
-                                    height: 100,
-                                    
+                      Expanded(
+                        flex: 3,
+                        child: partner.logoId != null
+                            ? FutureBuilder<String?>(
+                                future: fetchLogoUrl(partner.logoId!),
+                                builder: (context, logoSnapshot) {
+                                  if (logoSnapshot.connectionState == ConnectionState.waiting ||
+                                      logoSnapshot.hasError ||
+                                      logoSnapshot.data == null) {
+                                    return const SizedBox(
+                                      width: 80,
+                                      height: 80,
+                                    );
+                                  }
+                                  
+                                  return SizedBox(
+                                    width: 80,
+                                    height: 80,
+                                    child: Image.network(
+                                      logoSnapshot.data!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(
+                                          Icons.broken_image,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return child;
+                                      },
+                                    ),
                                   );
-                                }
-                                
-                                return SizedBox(
-                                  width: 100,
-                                  height: 100,
-                                  child: Image.network(
-                                    logoSnapshot.data!,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      
-                                      return const Icon(
-                                        Icons.broken_image,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      );
-                                    },
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                     
-                                      if (loadingProgress == null) return child;
-                                      // Or, if you want a subtle loading indicator for the bytes:
-                                      // return Center(
-                                      //   child: CircularProgressIndicator(
-                                      //     value: loadingProgress.expectedTotalBytes != null
-                                      //         ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                      //         : null,
-                                      //     strokeWidth: 2,
-                                      //   ),
-                                      // );
-                                      return child; 
-                                    },
-                                  ),
-                                );
-                              },
-                            )
-                          : const Icon(Icons.image_not_supported, size: 80, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      // Title
-                      Text(
-                        partner.title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                                },
+                              )
+                            : const Icon(Icons.image_not_supported, size: 60, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
-                      // Address
-                      Text(
-                        partner.address,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12, color: Color.fromARGB(255, 129, 129, 129)),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              partner.title,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: MediaQuery.of(context).size.width > 600 ? 18 : 14,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              partner.address,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: MediaQuery.of(context).size.width > 600 ? 14 : 12,
+                                color: const Color.fromARGB(255, 129, 129, 129),
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

@@ -9,6 +9,7 @@ import '../../../widgets/custom_loading_indicator.dart';
 import '../../../widgets/membership_required_dialog.dart';
 import '../all_orders_page/single_order_page_screen.dart'; // Ensure this is correctly imported
 import '../my_membership_page/membership_form_page_screen.dart'; // Import for the form page
+import 'package:shimmer/shimmer.dart';
 
 class HomePageScreen extends StatefulWidget {
   const HomePageScreen({super.key});
@@ -56,10 +57,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-    _refreshTimer = Timer.periodic(const Duration(minutes: 15), (_) {
-      _refreshDataInBackground();
-    });
+    _clearCacheAndLoad();
   }
 
   @override
@@ -69,99 +67,292 @@ class _HomePageScreenState extends State<HomePageScreen> {
     super.dispose();
   }
 
+  Future<void> _clearCacheAndLoad() async {
+    // Clear the cache first
+    await _cacheManager.clearCache('partners');
+    debugPrint('Cleared partners cache'); // Debug log
+    
+    // Then load data
+    _loadInitialData();
+  }
+
   Future<void> _loadInitialData() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      if (mounted) {
-        setState(() {
-          _authToken = prefs.getString('auth_token');
-        });
-      }
-
-      // Load all data from cache first
-      final cachedData = await Future.wait([
-        _cacheManager.loadFromCache('user_data'),
-        _cacheManager.loadFromCache('promo_orders'),
-        _cacheManager.loadFromCache('categories'),
-        _cacheManager.loadFromCache('new_arrivals'),
-        _cacheManager.loadFromCache('membership_status'),
-        _cacheManager.loadFromCache('partners'),
-      ]);
-
-      if (mounted) {
-        setState(() {
-          // Update state with cached data
-          if (cachedData[0] != null) {
-            displayName = cachedData[0] as String;
-            isLoadingUser = false;
-          }
-          if (cachedData[1] != null) {
-            promoOrders = List<Map<String, dynamic>>.from(cachedData[1] as List);
-            isLoadingPromos = false;
-          }
-          if (cachedData[2] != null) {
-            _categories = List<Map<String, dynamic>>.from(cachedData[2] as List);
-            isLoadingCategories = false;
-          }
-          if (cachedData[3] != null) {
-            _newArrivalsOrders = List<Map<String, dynamic>>.from(cachedData[3] as List);
-            isLoadingNewArrivals = false;
-          }
-          if (cachedData[4] != null) {
-            final membershipData = cachedData[4] as Map<String, dynamic>;
-            _isActiveMembership = membershipData['active'] as bool;
-            _membershipStatusMessage = membershipData['message'] as String;
-            _isLoadingMembership = false;
-          }
-          if (cachedData[5] != null) {
-            _partners = (cachedData[5] as List)
-                .map((item) => Partner.fromJson(item as Map<String, dynamic>))
-                .toList();
+      // Load cached data first
+      final cachedPartners = await _cacheManager.loadFromCache('partners');
+      debugPrint('Cached partners: $cachedPartners'); // Debug log
+      
+      if (cachedPartners != null && cachedPartners is List && cachedPartners.isNotEmpty) {
+        final partners = cachedPartners.map((p) => Partner.fromJson(p)).toList();
+        debugPrint('Loaded ${partners.length} partners from cache'); // Debug log
+        
+        if (mounted) {
+          setState(() {
+            _partners = partners;
             _isLoadingPartners = false;
-          }
-        });
+          });
+        }
       }
 
-      // Check which data needs refreshing
-      final needsRefresh = await Future.wait([
-        _cacheManager.isCacheExpired('user_data'),
-        _cacheManager.isCacheExpired('promo_orders'),
-        _cacheManager.isCacheExpired('categories'),
-        _cacheManager.isCacheExpired('new_arrivals'),
-        _cacheManager.isCacheExpired('membership_status'),
-        _cacheManager.isCacheExpired('partners'),
-      ]);
-
-      // Refresh only expired data
-      if (needsRefresh.any((needs) => needs)) {
-        await _refreshDataInBackground();
-      }
-    } catch (e) {
-      debugPrint('Error loading initial data: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _refreshDataInBackground() async {
-    if (!mounted) return;
-    
-    try {
+      // Load all data in parallel
       await Future.wait([
         _fetchUser(),
         _fetchPromoOrders(),
         _fetchCategories(),
         _fetchNewArrivalsOrders(categoryId: _selectedCategoryId),
         _fetchMembershipStatus(),
-        _fetchPartners(),
+        _loadPartners(),
       ]);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     } catch (e) {
-      debugPrint('Background refresh failed: $e');
+      debugPrint('Error loading initial data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loadUserData() async {
+    final cachedData = await _cacheManager.loadFromCache('user_data');
+    if (cachedData != null) {
+      if (mounted) {
+        setState(() {
+          displayName = cachedData as String;
+          isLoadingUser = false;
+        });
+      }
+    }
+    await _fetchUser();
+  }
+
+  Future<void> _loadPromoOrders() async {
+    final cachedData = await _cacheManager.loadFromCache('promo_orders');
+    if (cachedData != null) {
+      if (mounted) {
+        setState(() {
+          promoOrders = List<Map<String, dynamic>>.from(cachedData as List);
+          isLoadingPromos = false;
+        });
+      }
+    }
+    await _fetchPromoOrders();
+  }
+
+  Future<void> _loadCategories() async {
+    final cachedData = await _cacheManager.loadFromCache('categories');
+    if (cachedData != null) {
+      if (mounted) {
+        setState(() {
+          _categories = List<Map<String, dynamic>>.from(cachedData as List);
+          isLoadingCategories = false;
+        });
+      }
+    }
+    await _fetchCategories();
+  }
+
+  Future<void> _loadNewArrivals() async {
+    final cachedData = await _cacheManager.loadFromCache('new_arrivals');
+    if (cachedData != null) {
+      if (mounted) {
+        setState(() {
+          _newArrivalsOrders = List<Map<String, dynamic>>.from(cachedData as List);
+          isLoadingNewArrivals = false;
+        });
+      }
+    }
+    await _fetchNewArrivalsOrders(categoryId: _selectedCategoryId);
+  }
+
+  Future<void> _loadMembershipStatus() async {
+    final cachedData = await _cacheManager.loadFromCache('membership_status');
+    if (cachedData != null) {
+      if (mounted) {
+        final membershipData = cachedData as Map<String, dynamic>;
+        setState(() {
+          _isActiveMembership = membershipData['active'] as bool;
+          _membershipStatusMessage = membershipData['message'] as String;
+          _isLoadingMembership = false;
+        });
+      }
+    }
+    await _fetchMembershipStatus();
+  }
+
+  Future<void> _loadPartners() async {
+    if (!mounted) return;
+    
+    try {
+      // Check if cache is expired
+      final isExpired = await _cacheManager.isCacheExpired('partners');
+      debugPrint('Partners cache expired: $isExpired'); // Debug log
+      
+      if (!isExpired) {
+        // Try to load from cache first
+        final cachedPartners = await _cacheManager.loadFromCache('partners');
+        debugPrint('Loading partners from cache: $cachedPartners'); // Debug log
+        
+        if (cachedPartners != null && cachedPartners is List && cachedPartners.isNotEmpty) {
+          final partners = cachedPartners.map((p) => Partner.fromJson(p)).toList();
+          debugPrint('Loaded ${partners.length} partners from cache'); // Debug log
+          
+          if (mounted) {
+            setState(() {
+              _partners = partners;
+              _isLoadingPartners = false;
+            });
+          }
+          // Fetch fresh data in background
+          _fetchPartners();
+          return;
+        }
+      }
+
+      // If no cache or expired, fetch fresh data
+      await _fetchPartners();
+    } catch (e) {
+      debugPrint('Error loading partners: $e');
+      if (mounted) {
+        setState(() => _isLoadingPartners = false);
+      }
+    }
+  }
+
+  Future<void> _fetchPartners() async {
+    if (!mounted) return;
+    setState(() => _isLoadingPartners = true);
+
+    try {
+      final response = await http.get(Uri.parse(_partnersEndpoint));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        List<dynamic> partnersData = json.decode(response.body);
+        List<Partner> fetchedPartners = [];
+
+        // First, create partners with basic data
+        for (var item in partnersData) {
+          final title = item['title']?['rendered'] ?? 'No Title';
+          final address = (item['meta']?['adresse'] is List && item['meta']['adresse'].isNotEmpty)
+              ? item['meta']['adresse'][0]
+              : 'No Address';
+
+          int? logoId;
+          final dynamic rawLogoData = item['meta']?['logo'];
+
+          if (rawLogoData != null) {
+            if (rawLogoData is int) {
+              logoId = rawLogoData;
+            } else if (rawLogoData is String) {
+              logoId = int.tryParse(rawLogoData);
+            } else if (rawLogoData is List && rawLogoData.isNotEmpty) {
+              final dynamic firstElement = rawLogoData[0];
+              if (firstElement is int) {
+                logoId = firstElement;
+              } else if (firstElement is String) {
+                logoId = int.tryParse(firstElement);
+              } else if (firstElement is Map && firstElement.containsKey('id')) {
+                logoId = firstElement['id'] as int?;
+              }
+            } else if (rawLogoData is Map && rawLogoData.containsKey('id')) {
+              logoId = rawLogoData['id'] as int?;
+            }
+          }
+
+          if (logoId == null && item['featured_media'] != null && item['featured_media'] is int) {
+            logoId = item['featured_media'] as int?;
+          }
+          
+          fetchedPartners.add(Partner(
+            title: title,
+            address: address,
+            logoId: logoId,
+          ));
+        }
+
+        debugPrint('Fetched ${fetchedPartners.length} partners from API'); // Debug log
+
+        // Update UI with basic partner data first
+        if (mounted) {
+          setState(() {
+            _partners = fetchedPartners;
+            _isLoadingPartners = false;
+          });
+        }
+
+        // Save basic partner data to cache
+        final partnersJson = fetchedPartners.map((p) => p.toJson()).toList();
+        debugPrint('Saving partners to cache: $partnersJson'); // Debug log
+        await _cacheManager.saveToCache('partners', partnersJson);
+
+        // Then fetch images in the background
+        _fetchPartnerImages(fetchedPartners);
+      } else {
+        debugPrint('Failed to load partners: ${response.statusCode} - ${response.body}');
+        if (mounted) {
+          setState(() => _isLoadingPartners = false);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching partners: $e');
+      if (mounted) {
+        setState(() => _isLoadingPartners = false);
+      }
+    }
+  }
+
+  Future<void> _fetchPartnerImages(List<Partner> partners) async {
+    const String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
+    List<Partner> updatedPartners = List.from(partners);
+
+    for (int i = 0; i < partners.length; i++) {
+      final partner = partners[i];
+      if (partner.logoId != null && partner.logoId != 0) {
+        try {
+          final mediaUrl = Uri.parse('$mediaEndpointBase${partner.logoId}');
+          final mediaResponse = await http.get(mediaUrl);
+          
+          if (!mounted) return;
+
+          if (mediaResponse.statusCode == 200) {
+            try {
+              final mediaData = json.decode(mediaResponse.body);
+              final imageUrl = mediaData['source_url'] ?? '';
+              
+              // Update partner with image URL
+              updatedPartners[i] = Partner(
+                title: partner.title,
+                address: partner.address,
+                logoId: partner.logoId,
+                logoUrl: imageUrl,
+              );
+
+              // Update UI with new partner data
+              if (mounted) {
+                setState(() {
+                  _partners = List.from(updatedPartners);
+                });
+              }
+            } catch (e) {
+              debugPrint('Error decoding media data for partner logo ID ${partner.logoId}: $e');
+            }
+          }
+        } catch (e) {
+          debugPrint('Error fetching image for partner ${partner.title}: $e');
+        }
+      }
+    }
+
+    // Save complete partner data to cache
+    if (mounted) {
+      await _cacheManager.saveToCache('partners', updatedPartners.map((p) => p.toJson()).toList());
     }
   }
 
@@ -486,103 +677,38 @@ class _HomePageScreenState extends State<HomePageScreen> {
     }
   }
 
-  Future<void> _fetchPartners() async {
+  Future<void> _refreshDataInBackground() async {
     if (!mounted) return;
-    setState(() => _isLoadingPartners = true);
-
-    const String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
-    List<Partner> fetchedPartners = [];
-
+    
     try {
-      final response = await http.get(Uri.parse(_partnersEndpoint));
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        List<dynamic> partnersData = json.decode(response.body);
-
-        for (var item in partnersData) {
-          final title = item['title']?['rendered'] ?? 'No Title';
-          final address = (item['meta']?['adresse'] is List && item['meta']['adresse'].isNotEmpty)
-              ? item['meta']['adresse'][0]
-              : 'No Address';
-
-          int? logoId;
-          final dynamic rawLogoData = item['meta']?['logo'];
-
-          if (rawLogoData != null) {
-            if (rawLogoData is int) {
-              logoId = rawLogoData;
-            } else if (rawLogoData is String) {
-              logoId = int.tryParse(rawLogoData);
-            } else if (rawLogoData is List && rawLogoData.isNotEmpty) {
-              final dynamic firstElement = rawLogoData[0];
-              if (firstElement is int) {
-                logoId = firstElement;
-              } else if (firstElement is String) {
-                logoId = int.tryParse(firstElement);
-              } else if (firstElement is Map && firstElement.containsKey('id')) {
-                logoId = firstElement['id'] as int?;
-              }
-            } else if (rawLogoData is Map && rawLogoData.containsKey('id')) {
-              logoId = rawLogoData['id'] as int?;
-            }
-          }
-
-          if (logoId == null && item['featured_media'] != null && item['featured_media'] is int) {
-            logoId = item['featured_media'] as int?;
-          }
-
-          String imageUrl = '';
-          if (logoId != null && logoId != 0) {
-            final mediaUrl = Uri.parse('$mediaEndpointBase$logoId');
-            final mediaResponse = await http.get(mediaUrl);
-            if (!mounted) return;
-            if (mediaResponse.statusCode == 200) {
-              try {
-                final mediaData = json.decode(mediaResponse.body);
-                imageUrl = mediaData['source_url'] ?? '';
-              } catch (e) {
-                debugPrint('Error decoding media data for partner logo ID $logoId: $e. Response body: ${mediaResponse.body}');
-              }
-            } else {
-              debugPrint('Failed to load media for partner logo ID $logoId: Status ${mediaResponse.statusCode} - ${mediaResponse.body}');
-            }
-          }
-          
-          fetchedPartners.add(Partner(
-            title: title,
-            address: address,
-            logoId: logoId,
-            logoUrl: imageUrl,
-          ));
-        }
-        if (mounted) {
-          setState(() {
-            _partners = fetchedPartners;
-          });
-        }
-        await _cacheManager.saveToCache('partners', fetchedPartners.map((p) => p.toJson()).toList());
-      } else {
-        debugPrint('Failed to load partners: ${response.statusCode} - ${response.body}');
-      }
+      await Future.wait([
+        _fetchUser(),
+        _fetchPromoOrders(),
+        _fetchCategories(),
+        _fetchNewArrivalsOrders(categoryId: _selectedCategoryId),
+        _fetchMembershipStatus(),
+        _loadPartners(),
+      ]);
     } catch (e) {
-      debugPrint('Error fetching partners: $e');
-    } finally {
-      if (mounted) setState(() => _isLoadingPartners = false);
+      debugPrint('Background refresh failed: $e');
     }
   }
 
-  // Add refresh method
   Future<void> _onRefresh() async {
-    await Future.wait([
-      _fetchUser(),
-      _fetchPromoOrders(),
-      _fetchCategories(),
-      _fetchNewArrivalsOrders(categoryId: _selectedCategoryId),
-      _fetchMembershipStatus(),
-      _fetchPartners(),
-    ]);
+    if (!mounted) return;
+    
+    try {
+      await Future.wait([
+        _fetchUser(),
+        _fetchPromoOrders(),
+        _fetchCategories(),
+        _fetchNewArrivalsOrders(categoryId: _selectedCategoryId),
+        _fetchMembershipStatus(),
+        _loadPartners(),
+      ]);
+    } catch (e) {
+      debugPrint('Refresh failed: $e');
+    }
   }
 
   @override
@@ -601,38 +727,61 @@ class _HomePageScreenState extends State<HomePageScreen> {
               child: RefreshIndicator(
                 onRefresh: _onRefresh,
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height - 200, // Account for app bar and bottom navigation
+                  height: MediaQuery.of(context).size.height - 200,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     child: ListView(
                       children: [
-                        Text(
-                          'Welcome back,',
-                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                        ),
-                        const SizedBox(height: 4),
+                        // Welcome Section with Shimmer
                         isLoadingUser
-                            ? const CustomLoadingIndicator(
-                                size: 30.0,
-                                message: 'Loading user data...',
-                                itemCount: 1,
-                                itemHeight: 40,
-                                itemWidth: 200,
+                            ? Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      height: 16,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      width: 200,
+                                      height: 26,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
                               )
-                            : Text(
-                                displayName,
-                                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Welcome back,',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    displayName,
+                                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
                               ),
                         const SizedBox(height: 24),
 
-                        // --- Conditional "Get Membership" Card ---
+                        // Membership Card with Shimmer
                         _isLoadingMembership
-                            ? const CustomLoadingIndicator(
-                                size: 30.0,
-                                message: 'Loading membership status...',
-                                itemCount: 1,
-                                itemHeight: 120,
-                                itemWidth: double.infinity,
+                            ? Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: Container(
+                                  height: 180,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
                               )
                             : !_isActiveMembership
                                 ? _buildGetMembershipCard(context)
@@ -640,16 +789,26 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
                         const SizedBox(height: 24),
 
-                        // Text("Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                        // const SizedBox(height: 12),
+                        // Promotions Section with Shimmer
                         isLoadingPromos
-                            ? const CustomLoadingIndicator(
-                                size: 30.0,
-                                message: 'Loading promotions...',
-                                isHorizontal: true,
-                                itemCount: 3,
-                                itemHeight: 160,
-                                itemWidth: 280,
+                            ? Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: SizedBox(
+                                  height: 160,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: 3,
+                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                    itemBuilder: (_, __) => Container(
+                                      width: 280,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               )
                             : promoOrders.isEmpty
                                 ? const Center(child: Text("No promotions available."))
@@ -671,14 +830,26 @@ class _HomePageScreenState extends State<HomePageScreen> {
                         _buildCategorySection(),
                         const SizedBox(height: 20),
 
+                        // New Arrivals Section with Shimmer
                         isLoadingNewArrivals
-                            ? const CustomLoadingIndicator(
-                                size: 30.0,
-                                message: 'Loading new arrivals...',
-                                isHorizontal: true,
-                                itemCount: 3,
-                                itemHeight: 220,
-                                itemWidth: 160,
+                            ? Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: SizedBox(
+                                  height: 220,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: 3,
+                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                    itemBuilder: (_, __) => Container(
+                                      width: 160,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               )
                             : _newArrivalsOrders.isEmpty
                                 ? const Text("No new orders in this category.")
@@ -690,81 +861,12 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                       separatorBuilder: (_, __) => const SizedBox(width: 14),
                                       itemBuilder: (context, index) {
                                         final orderData = _newArrivalsOrders[index];
-                                        final String title = orderData["displayTitle"]!;
-                                        final String category = orderData["displayCategory"]!;
-                                        final String? imageUrl = orderData["displayImageUrl"];
-                                        final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
-
-                                        return InkWell(
-                                          onTap: () {
-                                            if (_isActiveMembership) {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => SingleOrderPageScreen(
-                                                    order: fullOrder,
-                                                  ),
-                                                ),
-                                              );
-                                            } else {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => MembershipRequiredDialog(
-                                                  context: context,
-                                                  message: 'A membership is required to view order details. Get a membership to access all order information.',
-                                                ),
-                                              );
-                                            }
-                                          },
-                                          child: Container(
-                                            width: 160,
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[100],
-                                              borderRadius: BorderRadius.circular(16),
-                                              image: imageUrl != null && imageUrl.isNotEmpty
-                                                  ? DecorationImage(
-                                                      image: NetworkImage(imageUrl),
-                                                      fit: BoxFit.cover,
-                                                      colorFilter: ColorFilter.mode(
-                                                        Colors.black.withOpacity(0.3),
-                                                        BlendMode.darken,
-                                                      ),
-                                                      onError: (exception, stackTrace) {
-                                                        debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
-                                                      },
-                                                    )
-                                                  : null,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Spacer(),
-                                                Text(
-                                                  title,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
-                                                  ),
-                                                ),
-                                                if (category.isNotEmpty && category != 'No Category')
-                                                  Text(
-                                                    category,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
+                                        return _buildNewArrivalCard(orderData);
                                       },
                                     ),
                                   ),
                         const SizedBox(height: 24),
 
-                        // --- Coupon Card Widget directly in Home Page ---
                         _buildCouponCard(
                           imageUrl: 'assets/images/kpsa_logo.png',
                           discountText: '20% discount',
@@ -777,7 +879,28 @@ class _HomePageScreenState extends State<HomePageScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        _buildPartnersSection(),
+                        // Partners Section with Shimmer
+                        _isLoadingPartners
+                            ? Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: SizedBox(
+                                  height: 180,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: 4,
+                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                    itemBuilder: (_, __) => Container(
+                                      width: 150,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : _buildPartnersSection(),
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -1149,17 +1272,78 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              partner.address,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey[600],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNewArrivalCard(Map<String, dynamic> orderData) {
+    final String title = orderData["displayTitle"]!;
+    final String category = orderData["displayCategory"]!;
+    final String? imageUrl = orderData["displayImageUrl"];
+    final Map<String, dynamic> fullOrder = orderData["fullOrder"]!;
+
+    return InkWell(
+      onTap: () {
+        if (_isActiveMembership) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SingleOrderPageScreen(
+                order: fullOrder,
               ),
             ),
+          );
+        } else {
+          showDialog(
+            context: context,
+            builder: (context) => MembershipRequiredDialog(
+              context: context,
+              message: 'A membership is required to view order details. Get a membership to access all order information.',
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: 160,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(16),
+          image: imageUrl != null && imageUrl.isNotEmpty
+              ? DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withOpacity(0.3),
+                    BlendMode.darken,
+                  ),
+                  onError: (exception, stackTrace) {
+                    debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
+                  },
+                )
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
+              ),
+            ),
+            if (category.isNotEmpty && category != 'No Category')
+              Text(
+                category,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
+                ),
+              ),
           ],
         ),
       ),

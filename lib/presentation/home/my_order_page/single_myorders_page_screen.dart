@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'edit_order_page_screen.dart';
 
 class SingleMyOrderPageScreen extends StatefulWidget {
@@ -423,11 +422,11 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          const Divider(),
+                          const SizedBox(height: 32),
+                          // const Divider(),
                           Center(
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Color.fromARGB(255, 75, 1, 1), size: 32),

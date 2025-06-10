@@ -45,13 +45,17 @@ class CacheManager {
       } else if (data is List<String>) {
         await prefs.setStringList(key, data);
       } else if (data is List || data is Map) {
-        await prefs.setString(key, json.encode(data));
+        final jsonString = json.encode(data);
+        debugPrint('Saving to cache - Key: $key, Data: $jsonString'); // Debug log
+        await prefs.setString(key, jsonString);
       } else {
         debugPrint('Warning: Attempting to save unsupported type for key $key: ${data.runtimeType}');
       }
       
       // Save timestamp
-      await prefs.setInt('${key}_timestamp', DateTime.now().millisecondsSinceEpoch);
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      debugPrint('Saving timestamp for $key: $timestamp'); // Debug log
+      await prefs.setInt('${key}_timestamp', timestamp);
     } catch (e) {
       debugPrint('Error saving to cache: $e');
     }
@@ -61,12 +65,17 @@ class CacheManager {
     final prefs = await SharedPreferences.getInstance();
     try {
       final data = prefs.get(key);
+      debugPrint('Loading from cache - Key: $key, Data: $data'); // Debug log
+      
       if (data == null) return null;
 
       if (data is String) {
         try {
-          return json.decode(data);
+          final decoded = json.decode(data);
+          debugPrint('Decoded cache data: $decoded'); // Debug log
+          return decoded;
         } catch (e) {
+          debugPrint('Error decoding cache data: $e'); // Debug log
           return data;
         }
       }
@@ -81,10 +90,12 @@ class CacheManager {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(key);
     await prefs.remove('${key}_timestamp');
+    debugPrint('Cleared cache for key: $key'); // Debug log
   }
 
   Future<void> clearAllCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    debugPrint('Cleared all cache'); // Debug log
   }
 } 
