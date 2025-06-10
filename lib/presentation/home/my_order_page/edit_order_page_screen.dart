@@ -295,9 +295,9 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Order', style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color.fromARGB(255, 180, 16, 16),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Edit Order', style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        iconTheme: const IconThemeData(color: Color.fromARGB(255, 0, 0, 0)),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 254, 254),
       body: SingleChildScrollView(

@@ -382,9 +382,14 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("My Orders"),
-        backgroundColor: const Color.fromARGB(255, 85, 21, 1),
-        foregroundColor: Colors.white,
+        title: const Text("My Orders",
+          style: TextStyle(
+            fontSize: 20,
+            color: Color.fromARGB(255, 0, 0, 0),
+          ),
+        ),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        foregroundColor: const Color.fromARGB(255, 0, 0, 0),
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -476,7 +481,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
                                 final order = _filteredOrders[index];
                                 final imageUrl = order['imageUrl'] ?? '';
                                 final title = order['title']['rendered'] ?? 'Untitled';
-                                final categoryName = order['acf']?['category'] ?? 'N/A';
+                                //final categoryName = order['acf']?['category'] ?? 'N/A';
 
                                 return GestureDetector(
                                   onTap: () async {
@@ -536,13 +541,13 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
                                             ),
                                           ),
                                           const SizedBox(height: 6),
-                                          Text(
-                                            categoryName,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.white70,
-                                            ),
-                                          ),
+                                          // Text(
+                                          //   categoryName,
+                                          //   style: const TextStyle(
+                                          //     fontSize: 14,
+                                          //     color: Colors.white70,
+                                          //   ),
+                                          // ),
                                         ],
                                       ),
                                     ),

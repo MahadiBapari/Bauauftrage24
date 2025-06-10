@@ -1,9 +1,8 @@
-import 'dart:async';
 import 'dart:convert';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,7 +24,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
   List<String> _orderCategories = [];
   bool _isLoading = true;
 
-  Map<String, dynamic> _currentOrderData = {};
+  Map<String, dynamic> _currentOrderData = {}; // Store a mutable copy of the order data
 
   final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order/';
   final String mediaUrlBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
@@ -39,8 +38,10 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
   @override
   void initState() {
     super.initState();
-    _currentOrderData = Map<String, dynamic>.from(widget.order);
-    _loadAuthTokenAndUserId().then((_) => fetchDetails());
+    _currentOrderData = Map<String, dynamic>.from(widget.order); // Initialize with widget data
+    _loadAuthTokenAndUserId().then((_) {
+      fetchDetails();
+    });
   }
 
   Future<void> _loadAuthTokenAndUserId() async {
@@ -51,7 +52,10 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
 
   Future<void> fetchDetails() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+
+    setState(() {
+      _isLoading = true;
+    });
 
     final orderId = _currentOrderData['id'];
 
@@ -65,13 +69,14 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
       if (!mounted) return;
 
       if (orderResponse.statusCode == 200) {
-        _currentOrderData = jsonDecode(orderResponse.body);
+        _currentOrderData = jsonDecode(orderResponse.body); // Update _currentOrderData
         debugPrint('SingleMyOrderPageScreen: Successfully fetched latest order data.');
       } else {
         debugPrint('SingleMyOrderPageScreen: Failed to fetch latest order data: ${orderResponse.statusCode} ${orderResponse.body}');
+        // If the order no longer exists (e.g., was deleted by another user), pop back
         if (orderResponse.statusCode == 404) {
-          _showInfoDialog('Order Not Found', 'This order might have been deleted. Returning to orders list.')
-              .then((_) => Navigator.of(context).pop(true));
+          _showInfoDialog('Order Not Found', 'This order might have been deleted. Returning to orders list.');
+          Navigator.of(context).pop(true); // Pop back and refresh list
           return;
         }
         _showErrorDialog('Error', 'Failed to load latest order details. Status: ${orderResponse.statusCode}');
@@ -79,11 +84,11 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         return;
       }
 
+      // Now use the updated _currentOrderData for subsequent fetches
       final authorId = _currentOrderData['author'];
       final dynamic galleryDynamic = _currentOrderData['meta']?['order_gallery'];
       final List<dynamic> rawCategoryIds = _currentOrderData['order-categories'] ?? [];
 
-      // Parse gallery image IDs
       List<int> galleryImageIds = [];
       if (galleryDynamic is List) {
         galleryImageIds = galleryDynamic
@@ -110,18 +115,18 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         debugPrint('SingleMyOrderPageScreen: order_gallery is neither List nor String type: ${galleryDynamic.runtimeType}');
       }
 
-      // Prepare requests
+
       List<Future<dynamic>> futures = [
         http.get(Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
         http.get(Uri.parse(categoriesUrl)),
       ];
+
       for (int mediaId in galleryImageIds) {
         futures.add(http.get(Uri.parse('$mediaUrlBase$mediaId'), headers: {'X-API-KEY': apiKey}));
       }
 
       List<dynamic> responses = await Future.wait(futures);
 
-      // Parse user
       final http.Response userResponse = responses[0];
       Map<String, dynamic>? user;
       if (userResponse.statusCode == 200) {
@@ -130,7 +135,6 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         debugPrint('SingleMyOrderPageScreen: Failed to fetch user: ${userResponse.statusCode} ${userResponse.body}');
       }
 
-      // Parse categories
       final http.Response categoriesResponse = responses[1];
       Map<int, String> categoryMap = {};
       if (categoriesResponse.statusCode == 200) {
@@ -144,7 +148,6 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         debugPrint('SingleMyOrderPageScreen: Failed to fetch categories: ${categoriesResponse.statusCode} ${categoriesResponse.body}');
       }
 
-      // Parse images
       List<String> imageUrls = [];
       for (int i = 2; i < responses.length; i++) {
         final mediaResponse = responses[i];
@@ -157,7 +160,6 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         }
       }
 
-      // Parse order categories
       List<String> orderCategories = [];
       for (var id in rawCategoryIds) {
         if (id is int) {
@@ -254,10 +256,21 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
 
         if (response.statusCode == 200) {
           debugPrint('SingleMyOrderPageScreen: Order $orderId deleted successfully!');
-          _showInfoDialog('Success', 'Order has been deleted successfully.').then((_) {
-            debugPrint('SingleMyOrderPageScreen: Popping with true after successful deletion.');
-            Navigator.of(context).pop(true);
-          });
+          await showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Order has been deleted successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          debugPrint('SingleMyOrderPageScreen: Popping with true after successful deletion.');
+          Navigator.of(context).pop(true);
         } else {
           debugPrint('SingleMyOrderPageScreen: Failed to delete order $orderId: ${response.statusCode} ${response.body}');
           _showErrorDialog('Deletion Failed', 'Failed to delete order. Status: ${response.statusCode} - ${response.body}');
@@ -274,9 +287,9 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
     }
   }
 
-  Future<void> _showErrorDialog(String title, String message) async {
+  void _showErrorDialog(String title, String message) {
     if (!mounted) return;
-    await showDialog(
+    showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(title),
@@ -291,9 +304,9 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
     );
   }
 
-  Future<void> _showInfoDialog(String title, String message) async {
+  void _showInfoDialog(String title, String message) {
     if (!mounted) return;
-    await showDialog(
+    showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(title),
@@ -306,10 +319,6 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         ],
       ),
     );
-  }
-
-  String _stripHtml(String html) {
-    return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
   }
 
   @override
@@ -317,6 +326,19 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
     final meta = _currentOrderData['meta'] ?? {};
     final title = _currentOrderData['title']?['rendered'] ?? 'No title';
     final content = _stripHtml(_currentOrderData['content']?['rendered'] ?? '');
+
+    // Construct the full address string
+    final String address1 = meta['address_1'] ?? '';
+    final String address2 = meta['address_2'] ?? ''; // Postal Code
+    final String address3 = meta['address_3'] ?? ''; // City
+
+    List<String> addressParts = [];
+    if (address1.isNotEmpty) addressParts.add(address1);
+    if (address2.isNotEmpty) addressParts.add(address2);
+    if (address3.isNotEmpty) addressParts.add(address3);
+
+    final String fullAddress = addressParts.join(', ');
+
     final userName = _user?['display_name'] ?? 'N/A';
 
     return Scaffold(
@@ -325,7 +347,9 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
-                Container(color: Colors.white),
+                Container(
+                  color: Colors.white,
+                ),
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.5,
                   width: double.infinity,
@@ -350,8 +374,10 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                                 child: CachedNetworkImage(
                                   imageUrl: _imageUrls[index],
                                   fit: BoxFit.cover,
-                                  placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
-                                  errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 40),
+                                  placeholder: (_, __) =>
+                                      const Center(child: CircularProgressIndicator()),
+                                  errorWidget: (_, __, ___) =>
+                                      const Icon(Icons.broken_image, size: 40),
                                 ),
                               ),
                             );
@@ -399,11 +425,6 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                           ),
                           const SizedBox(height: 12),
                           const Divider(),
-                          const SizedBox(height: 12),
-                          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          Text(content, style: const TextStyle(fontSize: 16)),
-                          const SizedBox(height: 20),
                           Center(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -421,7 +442,26 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                               ],
                             ),
                           ),
+                          const Divider(),
+                          
+                          const SizedBox(height: 12),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                                fontSize: 22, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4), // Small spacing
+                          if (fullAddress.isNotEmpty) // Display address if available
+                            Text(
+                              fullAddress,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Text(content, style: const TextStyle(fontSize: 16, color: Color.fromARGB(221, 34, 34, 34))),
                           const SizedBox(height: 20),
+
                         ],
                       ),
                     ),
@@ -439,6 +479,10 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
               ],
             ),
     );
+  }
+
+  String _stripHtml(String html) {
+    return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
   }
 }
 
