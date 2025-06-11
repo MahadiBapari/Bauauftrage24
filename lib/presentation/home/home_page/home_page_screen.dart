@@ -1019,8 +1019,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
         ],
         gradient: const LinearGradient(
           colors: [
-            Color.fromARGB(255, 131, 10, 10),
-            Color.fromARGB(255, 185, 33, 33),
+            Color.fromARGB(255, 105, 12, 12),
+            Color.fromARGB(255, 197, 24, 24),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1318,13 +1318,14 @@ class _HomePageScreenState extends State<HomePageScreen> {
       },
       child: Container(
         width: 150,
+        margin: const EdgeInsets.symmetric(vertical: 12), 
         padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
+              color: const Color.fromARGB(255, 85, 85, 85).withOpacity(0.15),
               blurRadius: 8,
               spreadRadius: 2,
               offset: const Offset(0, 4),
