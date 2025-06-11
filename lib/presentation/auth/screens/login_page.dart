@@ -58,9 +58,12 @@ class _LoginPageState extends State<LoginPage> {
           await prefs.setString('auth_token', token);
 
           print('Login successful! Token: $token'); //debugging
-          Navigator.pushReplacementNamed(context, '/home', arguments: {
-            'role': role,
-          });
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (Route<dynamic> route) => false,
+            arguments: {'role': role},
+          );
         } else if (responseData['error'] != null) {
           _showError('Login failed: ${responseData['error']}');
         } else {

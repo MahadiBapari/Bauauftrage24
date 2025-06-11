@@ -518,7 +518,13 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
   void _handleLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_id');
+    await prefs.remove('user_role');
+    await prefs.remove('username');
+    await prefs.remove('user_email');
+    await prefs.remove('displayName');
+    // Add any other user/session keys you use, but DO NOT remove 'has_seen_onboarding'
 
     if (!mounted) return;
 

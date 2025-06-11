@@ -3,6 +3,7 @@ import '../models/onboarding_page_models.dart';
 import '../widgets/onboarding_button.dart';
 import '../widgets/onboarding_page_indicator.dart';
 import '../widgets/onboarding_skip_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // Import LoginPage
 // Import Client Register Screen
 // Import Contractor Register Screen
@@ -225,7 +226,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: 150,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('has_seen_onboarding', true);
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade800,
                           shape: RoundedRectangleBorder(
@@ -240,7 +245,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: 150,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _navigateToRegister,
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('has_seen_onboarding', true);
+                          _navigateToRegister();
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade800,
                           shape: RoundedRectangleBorder(

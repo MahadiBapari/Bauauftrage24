@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../routing/routes.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../routing/routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,9 +36,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _navigateToNext();
   }
 
-  _navigateToNext() async {
+  Future<void> _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 5)); // Slightly longer to let animation finish
-    Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    final String? token = prefs.getString('auth_token');
+
+    if (!mounted) return;
+
+    if (!hasSeenOnboarding) {
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+    } else if (token != null && token.isNotEmpty) {
+      final String? role = prefs.getString('user_role');
+      Navigator.pushReplacementNamed(context, AppRoutes.home, arguments: {'role': role});
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   @override
@@ -62,8 +76,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   'assets/images/logo.png',
                   height: 140,
                 ),
-                //const SizedBox(height: 20),
-                //const CircularProgressIndicator(color: Colors.red),
               ],
             ),
           ),
