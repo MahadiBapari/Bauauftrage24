@@ -10,6 +10,7 @@ import '../../../widgets/membership_required_dialog.dart';
 import '../all_orders_page/single_order_page_screen.dart'; // Ensure this is correctly imported
 import '../my_membership_page/membership_form_page_screen.dart'; // Import for the form page
 import 'package:shimmer/shimmer.dart';
+import 'package:extended_image/extended_image.dart';
 
 class HomePageScreen extends StatefulWidget {
   const HomePageScreen({super.key});
@@ -729,7 +730,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 child: SizedBox(
                   height: MediaQuery.of(context).size.height - 200,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.only(left: 20, right: 20, top: 12),
                     child: ListView(
                       children: [
                         // Welcome Section with Shimmer
@@ -915,37 +916,47 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Container(
       width: 280,
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        image: imageUrl != null && imageUrl.isNotEmpty
-            ? DecorationImage(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.4),
-                  BlendMode.darken,
-                ),
-                onError: (exception, stackTrace) {
-                  debugPrint('NetworkImage failed to load: $imageUrl\nException: $exception');
-                },
-              )
-            : null,
-        gradient: (imageUrl == null || imageUrl.isEmpty)
-            ? const LinearGradient(
-                colors: [Color.fromARGB(255, 85, 21, 1), Color.fromARGB(255, 121, 26, 3)],
-              )
-            : null,
+        color: Colors.grey[100],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Spacer(),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            if (imageUrl != null && imageUrl.isNotEmpty)
+              Positioned.fill(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(color: const Color.fromARGB(255, 153, 153, 153)),
+                ),
+              ),
+            // Full overlay across the whole card
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(172, 0, 0, 0).withOpacity(0.4),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1109,12 +1120,31 @@ class _HomePageScreenState extends State<HomePageScreen> {
               child: Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    imageUrl,
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
+                  child: imageUrl.startsWith('http')
+                      ? ExtendedImage.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          cache: true,
+                          enableLoadState: true,
+                          loadStateChanged: (state) {
+                            if (state.extendedImageLoadState == LoadState.completed) {
+                              return ExtendedRawImage(
+                                image: state.extendedImageInfo?.image,
+                                fit: BoxFit.contain,
+                              );
+                            } else if (state.extendedImageLoadState == LoadState.failed) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                              );
+                            }
+                            return null;
+                          },
+                        )
+                      : ExtendedImage.asset(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                        ),
                 ),
               ),
             ),
@@ -1179,7 +1209,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 message: 'Loading partners...',
                 isHorizontal: true,
                 itemCount: 4,
-                itemHeight: 180,
+                itemHeight: 240,
                 itemWidth: 150,
               )
             : _partners.isEmpty
@@ -1209,7 +1239,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
       },
       child: Container(
         width: 150,
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -1222,57 +1252,60 @@ class _HomePageScreenState extends State<HomePageScreen> {
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (partner.logoUrl != null && partner.logoUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  partner.logoUrl!,
-                  height: 80,
-                  width: 120,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    debugPrint('Error loading partner image ${partner.logoUrl}: $error');
-                    return const Icon(
-                      Icons.business,
-                      size: 60,
-                      color: Colors.grey,
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.expectedTotalBytes! > 0
-                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                : null
-                            : null,
-                        strokeWidth: 2,
-                        color: Colors.grey[400],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (partner.logoUrl != null && partner.logoUrl!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0, left: 8, right: 8),
+                  child: AspectRatio(
+                    aspectRatio: 1.5,
+                    child: Image.network(
+                      partner.logoUrl!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, size: 48, color: Colors.grey),
                       ),
-                    );
-                  },
+                    ),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(top: 24.0),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.business, size: 48, color: Colors.grey),
+                      Text(
+                        'No Logo',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              )
-            else
-              const Icon(Icons.business, size: 60, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(
-              partner.title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.black87,
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  partner.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -1307,44 +1340,60 @@ class _HomePageScreenState extends State<HomePageScreen> {
       },
       child: Container(
         width: 160,
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: Colors.grey[100],
           borderRadius: BorderRadius.circular(16),
-          image: imageUrl != null && imageUrl.isNotEmpty
-              ? DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.3),
-                    BlendMode.darken,
-                  ),
-                  onError: (exception, stackTrace) {
-                    debugPrint('NetworkImage failed to load in New Arrivals: $imageUrl\nException: $exception');
-                  },
-                )
-              : null,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(),
-            Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white : Colors.black87,
-              ),
-            ),
-            if (category.isNotEmpty && category != 'No Category')
-              Text(
-                category,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: imageUrl != null && imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                Positioned.fill(
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300]),
+                  ),
+                ),
+              // Full overlay across the whole card
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(172, 0, 0, 0).withOpacity(0.4),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (category.isNotEmpty && category != 'No Category')
+                            Text(
+                              category,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white70,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

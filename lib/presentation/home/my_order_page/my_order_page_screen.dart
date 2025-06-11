@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async'; // Added for Future.wait
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:extended_image/extended_image.dart';
 
 import '../my_order_page/single_myorders_page_screen.dart'; // Ensure this is imported
 import '../../../widgets/custom_loading_indicator.dart';
@@ -504,50 +505,56 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),
-                                      image: imageUrl.isNotEmpty
-                                          ? DecorationImage(
-                                              image: NetworkImage(imageUrl),
-                                              fit: BoxFit.cover,
-                                              colorFilter: ColorFilter.mode(
-                                                Colors.black.withOpacity(0.4),
-                                                BlendMode.darken,
-                                              ),
-                                              onError: (exception, stackTrace) {
-                                                debugPrint('MyOrdersPageScreen: Failed to load image: $imageUrl');
-                                              },
-                                            )
-                                          : null,
-                                      gradient: imageUrl.isEmpty
-                                          ? const LinearGradient(
-                                              colors: [
-                                                Color.fromARGB(255, 85, 21, 1),
-                                                Color.fromARGB(255, 121, 26, 3),
-                                              ],
-                                            )
-                                          : null,
+                                      color: Colors.grey[100],
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Stack(
                                         children: [
-                                          Text(
-                                            title,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                          if (imageUrl.isNotEmpty)
+                                            Positioned.fill(
+                                              child: Image.network(
+                                                imageUrl,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300]),
+                                              ),
+                                            ),
+                                          // Full overlay across the whole card
+                                          Positioned.fill(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: const Color.fromARGB(172, 0, 0, 0).withOpacity(0.4),
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(16),
+                                                child: Align(
+                                                  alignment: Alignment.bottomLeft,
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.end,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        title,
+                                                        style: const TextStyle(
+                                                          fontSize: 18,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        order['date'] ?? '',
+                                                        style: TextStyle(
+                                                          color: Colors.white.withOpacity(0.9),
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                          const SizedBox(height: 6),
-                                          // Text(
-                                          //   categoryName,
-                                          //   style: const TextStyle(
-                                          //     fontSize: 14,
-                                          //     color: Colors.white70,
-                                          //   ),
-                                          // ),
                                         ],
                                       ),
                                     ),

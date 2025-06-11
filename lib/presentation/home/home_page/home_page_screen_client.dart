@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bauauftrage/utils/cache_manager.dart';
 import '../my_order_page/single_myorders_page_screen.dart';
 import 'package:bauauftrage/widgets/custom_loading_indicator.dart';
+import 'package:extended_image/extended_image.dart';
 
 class HomePageScreenClient extends StatefulWidget {
   const HomePageScreenClient({Key? key}) : super(key: key);
@@ -533,10 +534,10 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                           'Categories',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 6),
                         _isLoadingCategories
                             ? _buildCategoryShimmer()
                             : _categories.isEmpty
@@ -560,10 +561,10 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                           'Our Partners',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 6),
                         _isLoadingPartners
                             ? _buildPartnerShimmer()
                             : _partners.isEmpty
@@ -587,10 +588,10 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                           'My Orders',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 6),
                         _isLoadingOrders
                             ? _buildOrderShimmer()
                             : _orders.isEmpty
@@ -615,66 +616,84 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   }
 
   Widget _buildCategoryCard(Category category) {
-    return InkWell(
-      onTap: () {
-        // TODO: Navigate to category details
-      },
-      child: Container(
-        width: 100,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              spreadRadius: 2,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: InkWell(
+        onTap: () {
+          // TODO: Navigate to category details
+        },
+        child: Material(
+          elevation: 0,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 100,
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 255, 253, 250),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 59, 59, 59).withOpacity(0.15),
+                blurRadius: 8,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (category.imageUrl != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  category.imageUrl!,
-                  height: 60,
-                  width: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (category.imageUrl != null)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: ExtendedImage.network(
+                      category.imageUrl!,
                       height: 60,
                       width: 100,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.category, color: Colors.grey),
-                    );
-                  },
+                      fit: BoxFit.cover,
+                      cache: true,
+                      enableLoadState: true,
+                      loadStateChanged: (state) {
+                        if (state.extendedImageLoadState == LoadState.completed) {
+                          return ExtendedRawImage(
+                            image: state.extendedImageInfo?.image,
+                            fit: BoxFit.cover,
+                          );
+                        } else if (state.extendedImageLoadState == LoadState.failed) {
+                          return Container(
+                            height: 60,
+                            width: 100,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.category, color: Colors.grey),
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                  )
+                else
+                  Container(
+                    height: 60,
+                    width: 100,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.category, color: Colors.grey),
+                  ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    category.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              )
-            else
-              Container(
-                height: 60,
-                width: 100,
-                color: Colors.grey[200],
-                child: const Icon(Icons.category, color: Colors.grey),
-              ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                category.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -685,93 +704,81 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
     debugPrint('Partner logo URL: ${partner.logoUrl}');
     debugPrint('Logo URL is empty: ${partner.logoUrl?.isEmpty ?? true}');
     
-    return InkWell(
-      onTap: () {
-        // TODO: Navigate to partner details
-      },
-      child: Container(
-        width: 150,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              blurRadius: 8,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (partner.logoUrl != null && partner.logoUrl!.isNotEmpty)
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: InkWell(
+        onTap: () {
+          // TODO: Navigate to partner details
+        },
+        child: Container(
+          width: 150,
+          padding: const EdgeInsets.all(0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 59, 59, 59).withOpacity(0.15),
+                blurRadius: 8,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  partner.logoUrl!,
-                  height: 80,
-                  width: 120,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) {
-                      debugPrint('Successfully loaded partner logo: ${partner.logoUrl}');
-                      return child;
-                    }
-                    debugPrint('Loading partner logo: ${partner.logoUrl}');
-                    return Container(
-                      height: 80,
-                      width: 120,
-                      alignment: Alignment.center,
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: partner.logoUrl != null && partner.logoUrl!.isNotEmpty
+                      ? ExtendedImage.network(
+                        partner.logoUrl!,
+                        height: 80,
+                        width: 100,
+                        fit: BoxFit.contain,
+                        cache: true,
+                        enableLoadState: true,
+                        loadStateChanged: (state) {
+                        if (state.extendedImageLoadState == LoadState.completed) {
+                          return ExtendedRawImage(
+                          image: state.extendedImageInfo?.image,
+                          fit: BoxFit.contain,
+                          );
+                        } else if (state.extendedImageLoadState == LoadState.failed) {
+                          return Container(
+                          height: 110,
+                          width: 150,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.business, size: 60, color: Colors.grey),
+                          );
+                        }
+                        return null;
+                        },
+                      )
+                    : Container(
+                        height: 110,
+                        width: 150,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.business, size: 60, color: Colors.grey),
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    debugPrint('Failed to load partner logo: ${partner.logoUrl}');
-                    debugPrint('Error: $error');
-                    return const Icon(
-                      Icons.business,
-                      size: 60,
-                      color: Colors.grey,
-                    );
-                  },
-                ),
-              )
-            else
-              Container(
-                child: Column(
-                  children: [
-                    const Icon(Icons.business, size: 60, color: Colors.grey),
-                    Text(
-                      'No Logo',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  partner.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-            const SizedBox(height: 12),
-            Text(
-              partner.title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.black87,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -780,9 +787,9 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   Widget _buildOrderCard(Order order) {
     return InkWell(
       onTap: () {
-        debugPrint('Order card tapped. fullOrder: ${order.fullOrder}');
+        debugPrint('Order card tapped. fullOrder: \\${order.fullOrder}');
         if (order.fullOrder != null) {
-          debugPrint('Navigating to SingleMyOrderPageScreen with order: ${order.fullOrder}');
+          debugPrint('Navigating to SingleMyOrderPageScreen with order: \\${order.fullOrder}');
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -794,53 +801,59 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
         }
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
         height: 180,
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          image: order.imageUrl != null && order.imageUrl!.isNotEmpty
-              ? DecorationImage(
-                  image: NetworkImage(order.imageUrl!),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.4),
-                    BlendMode.darken,
-                  ),
-                  onError: (exception, stackTrace) {
-                    debugPrint('Failed to load order image: ${order.imageUrl}');
-                  },
-                )
-              : null,
-          gradient: order.imageUrl == null || order.imageUrl!.isEmpty
-              ? const LinearGradient(
-                  colors: [
-                    Color.fromARGB(255, 85, 21, 1),
-                    Color.fromARGB(255, 121, 26, 3),
-                  ],
-                )
-              : null,
+          color: Colors.grey[100],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
             children: [
-              Text(
-                order.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              if (order.imageUrl != null && order.imageUrl!.isNotEmpty)
+                Positioned.fill(
+                  child: Image.network(
+                    order.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300]),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                order.date,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 12,
+              // Full overlay across the whole card
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(172, 0, 0, 0).withOpacity(0.4),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            order.date,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

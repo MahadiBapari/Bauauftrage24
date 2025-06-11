@@ -211,7 +211,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                 label: const Text('Save Changes'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: const Color.fromARGB(255, 122, 0, 0),
+                  backgroundColor: const Color.fromARGB(255, 185, 7, 7),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),

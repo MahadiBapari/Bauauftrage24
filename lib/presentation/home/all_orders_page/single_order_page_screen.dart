@@ -259,12 +259,7 @@ return Scaffold(
 
                       
                       //icons  
-                                    Positioned(
-                                    bottom: 30,
-                                    left: 24,
-                                    right: 24,
-                                    // Add more top margin by wrapping with Padding
-                                    child: Padding(
+                                    Padding(
                                     padding: const EdgeInsets.only(top: 24.0), // Increase this value for more margin
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceAround, // more space between buttons
@@ -384,7 +379,6 @@ return Scaffold(
                                       ],
                                     ),
                                     ),
-                                  ),
 
                       const SizedBox(height: 12),
                       const Divider(),
