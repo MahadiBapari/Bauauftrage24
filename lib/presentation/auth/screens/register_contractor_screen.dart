@@ -118,7 +118,8 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        centerTitle: true,
+        automaticallyImplyLeading: false, 
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -127,109 +128,155 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const Text(
-                'Bauaufträge24',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 143, 23, 15),
-                ),
-                textAlign: TextAlign.left,
+              Image.asset(
+                'assets/images/logo.png',
+                height: 60,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               const Text(
-                'Contractor Registration',
+                'Create Contractor Account',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.left,
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
               TextFormField(
                 controller: _firmController,
-                decoration: const InputDecoration(
-                  labelText: 'Firm Name*',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Company Name*',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (value) =>
-                    value!.isEmpty ? 'Firm name required' : null,
+                    value!.isEmpty ? 'Company name is required' : null,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _uidController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'UID number*',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'UID Number*',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (value) =>
-                    value!.isEmpty ? 'UID number required' : null,
+                    value!.isEmpty ? 'UID number is required' : null,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'E-Mail-Adresse*',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Email Address*',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-                validator: (value) =>
-                    value!.isEmpty ? 'E-Mail erforderlich' : null,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email is required';
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Please enter a valid email address';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Vorname',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'First Name',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nachname',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Last Name',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Telefonnummer*',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Phone Number*',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (value) =>
-                    value!.isEmpty ? 'Telefonnummer erforderlich' : null,
+                    value!.isEmpty ? 'Phone number is required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Passwort*',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Password*',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (value) =>
-                    value!.length < 6 ? 'Mind. 6 Zeichen' : null,
+                    (value?.length ?? 0) < 6 ? 'Password must be at least 6 characters' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Passwort bestätigen*',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password*',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (value) => value != _passwordController.text
-                    ? 'Passwörter stimmen nicht überein'
+                    ? 'Passwords do not match'
                     : null,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Select Available time*',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Select Available Time*',
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                   items: _categories.map((String category) {
                     return DropdownMenuItem<String>(
@@ -245,24 +292,21 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
                   validator: (value) =>
                       value == null || value.isEmpty ? 'Category is required' : null,
                 ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Checkbox(
-                    value: _agreeToTerms,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _agreeToTerms = value ?? false;
-                      });
-                    },
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'Ich stimme zu Allgemeine Geschäftsbedingungen',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text(
+                  'I agree to the Terms and Conditions',
+                  style: TextStyle(fontSize: 14),
+                ),
+                value: _agreeToTerms,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _agreeToTerms = value ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                activeColor: Colors.red.shade800,
               ),
               const SizedBox(height: 24),
               _isLoading
@@ -273,11 +317,11 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
                         backgroundColor: Colors.red.shade800,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
                       ),
                       child: const Text(
-                        'Registrieren',
+                        'Register',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -286,12 +330,21 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
                       ),
                     ),
               const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: const Text(
-                  'Sie haben bereits ein Konto? Login',
-                  style: TextStyle(color: Colors.grey),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Already have an account?"),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                    child: Text(
+                      'Log In',
+                      style: TextStyle(
+                        color: Colors.red.shade800,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
