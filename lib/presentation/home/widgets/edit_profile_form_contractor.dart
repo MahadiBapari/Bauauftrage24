@@ -290,7 +290,7 @@ class _EditProfileFormContractorState
                 label: const Text('Save Changes'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: const Color.fromARGB(255, 121, 3, 3),
+                  backgroundColor: const Color.fromARGB(255, 185, 7, 7),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),

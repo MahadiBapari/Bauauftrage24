@@ -171,26 +171,68 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
   void _confirmCancelMembership() async {
     final bool? confirm = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) { 
-        return AlertDialog(
-          title: const Text('Cancel Membership?'),
-          content: const Text('Are you sure you want to cancel your membership? This action cannot be undone.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('No'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false); // User chose not to cancel
-              },
+      barrierDismissible: true,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+          child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cancel, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
+          const SizedBox(height: 16),
+          const Text(
+            'Cancel Membership',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Are you sure you want to cancel your membership? This action cannot be undone.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+          Expanded(
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            side: BorderSide(color: Colors.grey.shade300),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(
+            'No',
+            style: TextStyle(
+              fontSize: 16,
+              color: Color.fromARGB(255, 185, 7, 7),
             ),
-            TextButton(
-              child: const Text('Yes, Cancel'),
-              onPressed: () async {
-                Navigator.of(dialogContext).pop(true); // User confirmed cancellation
-              },
+              ),
             ),
-          ],
-        );
-      },
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 185, 7, 7),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+            'Yes, Cancel',
+            style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ),
+            ],
+          ),
+        ],
+          ),
+        ),
+      ),
     );
 
     if (confirm == true) {

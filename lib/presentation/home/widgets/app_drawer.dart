@@ -22,22 +22,67 @@ class AppDrawer extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+        child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.logout, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
+          const SizedBox(height: 16),
+          const Text(
+          'Logout',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext); // Close the dialog
+          const SizedBox(height: 10),
+          const Text(
+          'Are you sure you want to logout?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          const SizedBox(height: 24),
+          Row(
+          children: [
+            Expanded(
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              side: BorderSide(color: Colors.grey.shade300),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color.fromARGB(255, 185, 7, 7),
+                ),
+              ),
+            ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 185, 7, 7),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () {
+              Navigator.pop(context);
               Navigator.pushReplacementNamed(context, '/login');
-            },
-            child: const Text('Logout'),
+              },
+              child: const Text('Logout', style: TextStyle(fontSize: 16, color: Colors.white)),
+            ),
+            ),
+          ],
           ),
         ],
+        ),
+      ),
       ),
     );
   }

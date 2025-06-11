@@ -274,7 +274,7 @@ return Scaffold(
                                         // shadowColor: Colors.black38,
                                         ),
                                         onPressed: () => launchEmail(userEmail),
-                                        child: const Icon(Icons.email, color: Color.fromARGB(255, 58, 0, 0), size: 32),
+                                        child: const Icon(Icons.email, color: Color.fromARGB(255, 185, 7, 7), size: 32),
                                       ),
 
                                           // Address Popup Button
@@ -301,7 +301,7 @@ return Scaffold(
                                                 children: [
                                                   Row(
                                                     children: [
-                                                      const Icon(Icons.location_on, color: Color.fromARGB(255, 77, 0, 0), size: 28),
+                                                      const Icon(Icons.location_on, color: Color.fromARGB(255, 185, 7, 7), size: 28),
                                                       const SizedBox(width: 10),
                                                       const Text(
                                                         'Address',
@@ -361,7 +361,7 @@ return Scaffold(
                                           ),
                                         );
                                         },
-                                        child: const Icon(Icons.location_on, color: Color.fromARGB(255, 75, 1, 1), size: 32),
+                                        child: const Icon(Icons.location_on, color: Color.fromARGB(255, 185, 7, 7), size: 32),
                                       ),
 
                                       // Phone Button (now on the right)
@@ -374,7 +374,7 @@ return Scaffold(
                                         //shadowColor: Colors.black38,
                                         ),
                                         onPressed: () => launchPhone(userPhone),
-                                        child: const Icon(Icons.phone, color: Color.fromARGB(255, 59, 0, 0), size: 32),
+                                        child: const Icon(Icons.phone, color: Color.fromARGB(255, 185, 7, 7), size: 32),
                                        )
                                       ],
                                     ),
