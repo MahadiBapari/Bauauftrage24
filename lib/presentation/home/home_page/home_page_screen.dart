@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async'; // Added for Future.wait
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../utils/cache_manager.dart';
 import '../../../widgets/custom_loading_indicator.dart';
@@ -1018,8 +1019,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
         ],
         gradient: const LinearGradient(
           colors: [
-            Color.fromARGB(255, 85, 21, 1),
-            Color.fromARGB(255, 121, 26, 3),
+            Color.fromARGB(255, 131, 10, 10),
+            Color.fromARGB(255, 185, 33, 33),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1173,7 +1174,85 @@ class _HomePageScreenState extends State<HomePageScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: onShowDiscountCode,
+                    onPressed: () {
+                      if (_isActiveMembership) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => Dialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            backgroundColor: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(255, 185, 33, 33),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.all(16),
+                                    child: const Icon(Icons.discount, size: 48, color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    'KPSA bietet hochwertige Berufs- und Schutzkleidung für Handwerker und Bauprofis.\n\nGebt im Notizfeld bei eurer Bestellung auf',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: () async {
+                                      const url = 'https://www.kpsa.ch';
+                                      // ignore: deprecated_member_use
+                                      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                                    },
+                                    child: const Text(
+                                      'www.kpsa.ch',
+                                      style: TextStyle(
+                                        color: Color.fromARGB(255, 185, 33, 33),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    '„bauaufträge24“ ein, um 20% Rabatt zu erhalten. (Keine Passkarte erforderlich.)',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(255, 185, 33, 33),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                                    ),
+                                    child: const Text('OK', style: TextStyle(fontSize: 16)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (context) => MembershipRequiredDialog(
+                            context: context,
+                            message: 'A membership is required to view the discount code.',
+                          ),
+                        );
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 185, 33, 33),
                       foregroundColor: Colors.white,
