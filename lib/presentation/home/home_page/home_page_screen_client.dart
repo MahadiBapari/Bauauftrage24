@@ -36,14 +36,91 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   @override
   void initState() {
     super.initState();
-    _refreshAllData();
+    _loadFromCacheThenBackground();
+  }
+
+  Future<void> _loadFromCacheThenBackground() async {
+    // Load all sections from cache first (no loading spinner)
+    await Future.wait([
+      _loadUserFromCache(),
+      _loadCategoriesFromCache(),
+      _loadPartnersFromCache(),
+      _loadOrdersFromCache(),
+    ]);
+    // Then fetch fresh data in background (will update UI if new data)
+    _refreshAllDataInBackground();
+  }
+
+  Future<void> _loadUserFromCache() async {
+    final cachedData = await _cacheManager.loadFromCache('user_data');
+    if (cachedData != null) {
+      if (mounted) {
+        setState(() {
+          displayName = cachedData as String;
+          isLoadingUser = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCategoriesFromCache() async {
+    final cachedCategories = await _cacheManager.loadFromCache('categories');
+    if (cachedCategories != null && cachedCategories is List && cachedCategories.isNotEmpty) {
+      final categories = cachedCategories.map((c) => Category.fromJson(c)).toList();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _isLoadingCategories = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPartnersFromCache() async {
+    final cachedPartners = await _cacheManager.loadFromCache('partners');
+    if (cachedPartners != null && cachedPartners is List && cachedPartners.isNotEmpty) {
+      final partners = cachedPartners.map((p) => Partner.fromJson(p)).toList();
+      if (mounted) {
+        setState(() {
+          _partners = partners;
+          _isLoadingPartners = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadOrdersFromCache() async {
+    final cachedOrders = await _cacheManager.loadFromCache('orders');
+    if (cachedOrders != null && cachedOrders is List && cachedOrders.isNotEmpty) {
+      final orders = cachedOrders.map((o) => Order.fromJson(o)).where((order) {
+        if (order.fullOrder != null && currentUserId != null) {
+          return order.fullOrder!['author'] == currentUserId;
+        }
+        return false;
+      }).toList();
+      if (mounted) {
+        setState(() {
+          _orders = orders;
+          _isLoadingOrders = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshAllDataInBackground() async {
+    await _fetchUser();
+    await Future.wait([
+      _loadCategories(),
+      _loadPartners(),
+      _loadOrders(),
+    ]);
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // This will be called when returning to this screen
-    _refreshAllData();
+    // No auto-refresh on navigation; rely on manual refresh only
   }
 
   Future<void> _refreshAllData() async {
@@ -501,144 +578,136 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
     
     return Scaffold(
       backgroundColor: Colors.white,
-      body: _isLoading
-          ? const CustomLoadingIndicator(
-              message: 'Loading data...',
-              itemCount: 5,
-              itemHeight: 120,
-              itemWidth: double.infinity,
-              isScrollable: true,
-            )
-          : SafeArea(
-              child: RefreshIndicator(
-                onRefresh: _onRefresh,
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height - 200,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    child: ListView(
-                      children: [
-                        // Welcome Section with Shimmer
-                        isLoadingUser
-                            ? Shimmer.fromColors(
-                                baseColor: Colors.grey[300]!,
-                                highlightColor: Colors.grey[100]!,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 120,
-                                      height: 16,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      width: 200,
-                                      height: 26,
-                                      color: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Welcome back,',
-                                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    displayName,
-                                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: ListView(
+                children: [
+                  // Welcome Section with Shimmer
+                  isLoadingUser
+                      ? Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 120,
+                                height: 16,
+                                color: Colors.white,
                               ),
-                        const SizedBox(height: 24),
-
-                        // Categories Section
-                        const Text(
-                          'Categories',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
+                              const SizedBox(height: 4),
+                              Container(
+                                width: 200,
+                                height: 26,
+                                color: Colors.white,
+                              ),
+                            ],
                           ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back,',
+                              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              displayName,
+                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 6),
-                        _isLoadingCategories
-                            ? _buildCategoryShimmer()
-                            : _categories.isEmpty
-                                ? const Center(child: Text('No categories available or failed to load.'))
-                                : SizedBox(
-                                    height: 120,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: _categories.length,
-                                      separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                      itemBuilder: (context, index) {
-                                        final category = _categories[index];
-                                        return _buildCategoryCard(category);
-                                      },
-                                    ),
-                                  ),
-                        const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                        // Partners Section
-                        const Text(
-                          'Our Partners',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        _isLoadingPartners
-                            ? _buildPartnerShimmer()
-                            : _partners.isEmpty
-                                ? const Center(child: Text('No partners available'))
-                                : SizedBox(
-                                    height: 180,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: _partners.length,
-                                      separatorBuilder: (context, index) => const SizedBox(width: 14),
-                                      itemBuilder: (context, index) {
-                                        final partner = _partners[index];
-                                        return _buildPartnerCard(partner);
-                                      },
-                                    ),
-                                  ),
-                        const SizedBox(height: 24),
-
-                        // My Orders Section
-                        const Text(
-                          'My Orders',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        _isLoadingOrders
-                            ? _buildOrderShimmer()
-                            : _orders.isEmpty
-                                ? const Center(child: Text('No orders available'))
-                                : ListView.separated(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: _orders.length,
-                                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                                    itemBuilder: (context, index) {
-                                      final order = _orders[index];
-                                      return _buildOrderCard(order);
-                                    },
-                                  ),
-                      ],
+                  // Categories Section
+                  const Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  _isLoadingCategories
+                      ? _buildCategoryShimmer()
+                      : _categories.isEmpty
+                          ? const Center(child: Text('No categories available or failed to load.'))
+                          : SizedBox(
+                              height: 120,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _categories.length,
+                                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final category = _categories[index];
+                                  return _buildCategoryCard(category);
+                                },
+                              ),
+                            ),
+                  const SizedBox(height: 24),
+
+                  // Partners Section
+                  const Text(
+                    'Our Partners',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _isLoadingPartners
+                      ? _buildPartnerShimmer()
+                      : _partners.isEmpty
+                          ? const Center(child: Text('No partners available'))
+                          : SizedBox(
+                              height: 180,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _partners.length,
+                                separatorBuilder: (context, index) => const SizedBox(width: 14),
+                                itemBuilder: (context, index) {
+                                  final partner = _partners[index];
+                                  return _buildPartnerCard(partner);
+                                },
+                              ),
+                            ),
+                  const SizedBox(height: 24),
+
+                  // My Orders Section
+                  const Text(
+                    'My Orders',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _isLoadingOrders
+                      ? _buildOrderShimmer()
+                      : _orders.isEmpty
+                          ? const Center(child: Text('No orders available'))
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _orders.length,
+                              separatorBuilder: (context, index) => const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final order = _orders[index];
+                                return _buildOrderCard(order);
+                              },
+                            ),
+                ],
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 
