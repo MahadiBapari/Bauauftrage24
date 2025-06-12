@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../screens/email_verification_screen.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class RegisterContractorPage extends StatefulWidget {
   const RegisterContractorPage({super.key});
@@ -30,6 +31,24 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
   final String apiKey =
       '1234567890abcdef'; // Replace with your actual API key
 
+  List<String> _selectedServiceCategories = [];
+  late final Future<List<Map<String, dynamic>>> _serviceCategoriesFuture = _fetchServiceCategories();
+
+  Future<List<Map<String, dynamic>>> _fetchServiceCategories() async {
+    final response = await http.get(
+      Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
+    );
+    if (response.statusCode == 200) {
+      final List data = json.decode(response.body);
+      return data.map((item) => {
+        'id': item['id'].toString(),
+        'name': item['name'],
+      }).toList();
+    } else {
+      throw Exception('Failed to load categories');
+    }
+  }
+
   Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate() || !_agreeToTerms) return;
 
@@ -52,9 +71,10 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
           'user_phone_': _phoneController.text.trim(),
           'password': _passwordController.text,
           'available_time': _selectedCategory,
-          
-
-          'role': 'um_contractor', // contractor registration role
+          'role': 'um_contractor',
+          'meta_data': {
+            '_service_category_': _selectedServiceCategories,
+          },
         }),
       );
 
@@ -147,7 +167,7 @@ Die Nutzung der Plattform setzt eine Registrierung als Nutzerin oder Nutzer mit 
 Die Registrierung mit falschen oder fiktiven Angaben ist untersagt. Für jede natürliche oder juristische Person ist nur eine Registrierung erlaubt. Die Angaben von Nutzerinnen und Nutzern müssen auch nach erfolgter Registrierung jederzeit vollständig und zutreffend sein. Die Betreiberin ist – auch nachträglich – berechtigt, Angaben von Nutzerinnen und Nutzern zu prüfen und/oder durch Dritte prüfen zu lassen sowie von Nutzerinnen und Nutzern ergänzende Angaben zu fordern. Die Betreiberin ist berechtigt, die Registrierung jederzeit – auch nachträglich – und ohne Angabe von Gründen zu verweigern.
 
 2.3
-Registrierte Nutzerinnen und Nutzer dürfen ausschliesslich für ihren eigenen, auch gewerbsmässigen, Gebrauch auf die Plattform zugreifen. Registrierte Nutzerinnen und Nutzer verpflichten sich, ihre Zugangsdaten zur Plattform vertraulich zu behandeln und ausschliesslich selbst zu verwenden. Nutzerinnen und Nutzer sind nicht berechtigt, ihren Zugang zur Plattform direkt oder indirekt Dritten entgeltlich oder unentgeltlich zur Verfügung zu stellen. Die Betreiberin ist berechtigt, Nutzerinnen und Nutzern den Zugang zur Plattform jederzeit und ohne Angabe von Gründen zu verweigern. Sofern der Zugriff aufgrund einer Verletzung dieser AGB verweigert wird, bleiben allfällige Gebühren geschuldet. Nutzerinnen und Nutzer sind unabhängig davon verpflichtet, allfälligen untereinander und/oder gegenüber der Betreiberin bestehenden vertraglichen Verpflichtungen nachzukommen.
+Registrierte Nutzerinnen und Nutzer dürfen ausschliesslich für ihren eigenen, auch gewerbsmässigen, Gebrauch auf die Plattform zugreifen. Registrierte Nutzerinnen und Nutzer verpflichten sich, ihre Zugangsdaten zur Plattform vertraulich zu behandeln und ausschliesslich selbst zu verwenden. Nutzerinnen und Nutzer sind nicht berechtigt, ihren Zugang zur Plattform direkt oder indirekt Dritten entgeltlich oder unentgeltlich zur Verfügung zu stellen. Die Betreiberin ist berechtigt, Nutzerinnen und Nutzern den Zugang zur Plattform jederzeit und ohne Angabe von Gründen zu verweigern. Sofern der Zugriff aufgrund einer Verletzung dieser AGB verweigert wird, bleiben allfällige Gebühren geschuldet. Nutzerinnen und Nutzer sind unabhängig davon verpflichtet, allfälligen untereinander and/or gegenüber der Betreiberin bestehenden vertraglichen Verpflichtungen nachzukommen.
 
 2.4
 Registrierte Nutzerinnen und Nutzer können über die Plattform miteinander kommunizieren. Diese Kommunikation ist ausschliesslich im Zusammenhang mit Ausschreibungen zulässig und darf insbesondere keine unerwünschte Werbung umfassen.
@@ -382,6 +402,112 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   validator: (value) =>
                       value == null || value.isEmpty ? 'Category is required' : null,
                 ),
+              const SizedBox(height: 16),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: _serviceCategoriesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    // Show a modern shimmer or placeholder card instead of CircularProgressIndicator
+                    return Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 120,
+                            height: 16,
+                            color: Colors.grey[300],
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text('Error loading categories', style: TextStyle(color: Colors.red[800]))),
+                        ],
+                      ),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.yellow[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                          const SizedBox(width: 8),
+                          const Expanded(child: Text('No categories found', style: TextStyle(color: Colors.orange))),
+                        ],
+                      ),
+                    );
+                  } else {
+                    final categories = snapshot.data!;
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color.fromARGB(255, 255, 255, 255)!),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                      child: MultiSelectDialogField(
+                        backgroundColor: Colors.white,
+                        items: categories
+                            .map((category) => MultiSelectItem(
+                                category['id'].toString(), category['name']))
+                            .toList(),
+                        title: const Text("Service Categories"),
+                        selectedColor: const Color.fromARGB(255, 185, 33, 33),
+                        cancelText: const Text("", style: TextStyle(fontSize: 0)), 
+                        confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
+                        dialogWidth: 400,
+                        dialogHeight: 500,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.transparent),
+                        ),
+                        buttonIcon: const Icon(Icons.category, color: Color.fromARGB(255, 185, 33, 33)),
+                        buttonText: const Text(
+                          "Select Service Categories*",
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                        ),
+                        onConfirm: (values) {
+                          setState(() => _selectedServiceCategories = values.cast<String>());
+                        },
+                        chipDisplay: MultiSelectChipDisplay.none(),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Please select at least one category'
+                            : null,
+                      ),
+                    );
+                  }
+                },
+              ),
               const SizedBox(height: 16),
               CheckboxListTile(
                 title: Row(
