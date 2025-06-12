@@ -7,6 +7,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // For displaying existing network images
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class EditOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -251,15 +252,11 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
     final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order/$orderId');
 
     try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_authToken',
-          'X-API-Key': _apiKey,
-        },
-        body: jsonEncode(putData),
-      );
+      final response = await SafeHttp.safePut(context, url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_authToken',
+        'X-API-Key': _apiKey,
+      }, body: jsonEncode(putData));
 
       if (!mounted) return;
 

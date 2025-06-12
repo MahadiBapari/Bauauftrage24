@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 import '../widgets/edit_profile_form_contractor.dart'; // Make sure this path is correct
 import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
@@ -62,14 +63,11 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     final url =
         'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$_userId';
     try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-          if (_authToken != null) 'Authorization': 'Bearer $_authToken',
-        },
-      );
+      final response = await SafeHttp.safeGet(context, Uri.parse(url), headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+      });
       if (!mounted) return;
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -208,19 +206,15 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$_userId';
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_authToken',
-          'X-API-Key': apiKey,
+      final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_authToken',
+        'X-API-Key': apiKey,
+      }, body: json.encode({
+        'meta_input': {
+          'profile-picture': [mediaId.toString()],
         },
-        body: json.encode({
-          'meta_input': {
-            'profile-picture': [mediaId.toString()],
-          },
-        }),
-      );
+      }));
 
       if (!mounted) return;
 
@@ -348,18 +342,14 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                         }
                         final url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user/$userId/update-password';
                         try {
-                          final response = await http.post(
-                            Uri.parse(url),
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': 'Bearer $token',
-                              'X-API-Key': '1234567890abcdef',
-                            },
-                            body: json.encode({
-                              'password': newPass,
-                              'confirm_password': confirm,
-                            }),
-                          );
+                          final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer $token',
+                            'X-API-Key': '1234567890abcdef',
+                          }, body: json.encode({
+                            'password': newPass,
+                            'confirm_password': confirm,
+                          }));
                           Navigator.of(ctx).pop();
                           if (response.statusCode == 200) {
                             _showError('Password changed successfully.');

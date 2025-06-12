@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../screens/email_verification_screen.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class RegisterClientPage extends StatefulWidget {
   const RegisterClientPage({super.key});
@@ -35,22 +36,18 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': apiKey,
-        },
-        body: jsonEncode({
-          'username': _emailController.text.trim(),
-          'email': _emailController.text.trim(),
-          'first_name': _firstNameController.text.trim(),
-          'last_name': _lastNameController.text.trim(),
-          'user_phone_': _phoneController.text.trim(),
-          'password': _passwordController.text,
-          'role': 'um_client', // client registration role
-        }),
-      );
+      final response = await SafeHttp.safePost(context, Uri.parse(apiUrl), headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apiKey,
+      }, body: jsonEncode({
+        'username': _emailController.text.trim(),
+        'email': _emailController.text.trim(),
+        'first_name': _firstNameController.text.trim(),
+        'last_name': _lastNameController.text.trim(),
+        'user_phone_': _phoneController.text.trim(),
+        'password': _passwordController.text,
+        'role': 'um_client', // client registration role
+      }));
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Registration successful

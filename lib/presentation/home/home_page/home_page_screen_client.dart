@@ -7,6 +7,7 @@ import 'package:bauauftrage/utils/cache_manager.dart';
 import '../my_order_page/single_myorders_page_screen.dart';
 import 'package:bauauftrage/widgets/custom_loading_indicator.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class HomePageScreenClient extends StatefulWidget {
   const HomePageScreenClient({Key? key}) : super(key: key);
@@ -173,7 +174,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
       currentUserId = userId; // Store the user ID
       final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId');
-      final response = await http.get(url, headers: {'X-API-Key': apiKey});
+      final response = await SafeHttp.safeGet(context, url, headers: {'X-API-Key': apiKey});
 
       if (!mounted) return;
 
@@ -233,10 +234,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
       }
 
       // If no cache, fetch fresh data
-      final response = await http.get(
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
-        headers: {'X-API-Key': apiKey},
-      );
+      final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'), headers: {'X-API-Key': apiKey});
 
       debugPrint('Categories API status: ' + response.statusCode.toString());
       debugPrint('Categories API body: ' + response.body.toString());
@@ -271,10 +269,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
         Map<int, String> mediaUrlMap = {};
         for (var mediaId in mediaIds) {
           try {
-            final mediaResponse = await http.get(
-              Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'),
-              headers: {'X-API-Key': apiKey},
-            );
+            final mediaResponse = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'), headers: {'X-API-Key': apiKey});
             if (mediaResponse.statusCode == 200) {
               final mediaData = json.decode(mediaResponse.body);
               if (mediaData['source_url'] != null) {
@@ -338,9 +333,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
       }
 
       // If no cache, fetch fresh data
-      final response = await http.get(
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners'),
-      );
+      final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners'));
 
       if (!mounted) return;
 
@@ -489,9 +482,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
       }
 
       // If no cache, fetch fresh data
-      final response = await http.get(
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?_embed'),
-      );
+      final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?_embed'));
 
       if (!mounted) return;
 
@@ -517,10 +508,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                 final imageId = firstImage['id'];
                 debugPrint('Order "$title" imageId: $imageId');
                 try {
-                  final mediaResponse = await http.get(
-                    Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$imageId'),
-                    headers: {'X-API-KEY': apiKey},
-                  );
+                  final mediaResponse = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$imageId'), headers: {'X-API-KEY': apiKey});
                   if (mediaResponse.statusCode == 200) {
                     final mediaData = json.decode(mediaResponse.body);
                     imageUrl = mediaData['source_url'];

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,17 +27,13 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-        },
-        body: json.encode({
-          'username': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
+      final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      }, body: json.encode({
+        'username': _emailController.text,
+        'password': _passwordController.text,
+      }));
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);

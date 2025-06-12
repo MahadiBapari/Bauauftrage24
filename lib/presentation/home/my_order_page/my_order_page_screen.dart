@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:async'; // Added for Future.wait
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 import '../my_order_page/single_myorders_page_screen.dart'; // Ensure this is imported
 import '../../../widgets/custom_loading_indicator.dart';
@@ -185,7 +186,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
       debugPrint('MyOrdersPageScreen: Fetching orders from URL: $url');
       debugPrint('MyOrdersPageScreen: Fetching orders with headers: $headers');
 
-      final response = await http.get(url, headers: headers);
+      final response = await SafeHttp.safeGet(context, url, headers: headers);
 
       if (!mounted) {
         debugPrint('MyOrdersPageScreen: _fetchOrders: Widget unmounted during API call.');
@@ -242,7 +243,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
 
             if (firstImageId != null) {
               final mediaUrl = '$mediaEndpointBase$firstImageId';
-              final mediaResponse = await http.get(Uri.parse(mediaUrl));
+              final mediaResponse = await SafeHttp.safeGet(context, Uri.parse(mediaUrl));
 
               if (!mounted) {
                 debugPrint('MyOrdersPageScreen: _fetchOrders: Widget unmounted during media API call.');

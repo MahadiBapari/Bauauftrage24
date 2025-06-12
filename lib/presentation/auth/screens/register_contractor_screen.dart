@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../screens/email_verification_screen.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class RegisterContractorPage extends StatefulWidget {
   const RegisterContractorPage({super.key});
@@ -35,9 +36,7 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
   late final Future<List<Map<String, dynamic>>> _serviceCategoriesFuture = _fetchServiceCategories();
 
   Future<List<Map<String, dynamic>>> _fetchServiceCategories() async {
-    final response = await http.get(
-      Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
-    );
+    final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'));
     if (response.statusCode == 200) {
       final List data = json.decode(response.body);
       return data.map((item) => {
@@ -55,28 +54,24 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': apiKey,
+      final response = await SafeHttp.safePost(context, Uri.parse(apiUrl), headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apiKey,
+      }, body: jsonEncode({
+        'firmenname_': _firmController.text.trim(),
+        'uid_nummer': _uidController.text.trim(),
+        'username': _emailController.text.trim(),
+        'email': _emailController.text.trim(),
+        'first_name': _firstNameController.text.trim(),
+        'last_name': _lastNameController.text.trim(),
+        'user_phone_': _phoneController.text.trim(),
+        'password': _passwordController.text,
+        'available_time': _selectedCategory,
+        'role': 'um_contractor',
+        'meta_data': {
+          '_service_category_': _selectedServiceCategories,
         },
-        body: jsonEncode({
-          'firmenname_': _firmController.text.trim(),
-          'uid_nummer': _uidController.text.trim(),
-          'username': _emailController.text.trim(),
-          'email': _emailController.text.trim(),
-          'first_name': _firstNameController.text.trim(),
-          'last_name': _lastNameController.text.trim(),
-          'user_phone_': _phoneController.text.trim(),
-          'password': _passwordController.text,
-          'available_time': _selectedCategory,
-          'role': 'um_contractor',
-          'meta_data': {
-            '_service_category_': _selectedServiceCategories,
-          },
-        }),
-      );
+      }));
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Registration successful

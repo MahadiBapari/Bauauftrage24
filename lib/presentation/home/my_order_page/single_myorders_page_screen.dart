@@ -8,6 +8,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_order_page_screen.dart';
 import 'package:bauauftrage/utils/cache_manager.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class SingleMyOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -134,12 +135,12 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
 
 
       List<Future<dynamic>> futures = [
-        http.get(Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
-        http.get(Uri.parse(categoriesUrl)),
+        SafeHttp.safeGet(context, Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
+        SafeHttp.safeGet(context, Uri.parse(categoriesUrl)),
       ];
 
       for (int mediaId in galleryImageIds) {
-        futures.add(http.get(Uri.parse('$mediaUrlBase$mediaId'), headers: {'X-API-KEY': apiKey}));
+        futures.add(SafeHttp.safeGet(context, Uri.parse('$mediaUrlBase$mediaId'), headers: {'X-API-KEY': apiKey}));
       }
 
       List<dynamic> responses = await Future.wait(futures);
@@ -302,14 +303,11 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
       });
 
       try {
-        final response = await http.delete(
-          Uri.parse('$ordersEndpoint$orderId'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_authToken',
-            'X-API-KEY': apiKey,
-          },
-        );
+        final response = await SafeHttp.safeDelete(context, Uri.parse('$ordersEndpoint$orderId'), headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken',
+          'X-API-KEY': apiKey,
+        });
 
         if (!mounted) return;
 

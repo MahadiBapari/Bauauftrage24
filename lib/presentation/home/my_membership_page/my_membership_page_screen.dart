@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 // Assuming you will create this file for the membership form
 import 'membership_form_page_screen.dart'; // <--- NEW IMPORT for the form page
@@ -54,14 +55,11 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
         return;
       }
 
-      final response = await http.get(
-        Uri.parse(_membershipEndpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': _apiKey,
-          'Authorization': 'Bearer $authToken', 
-        },
-      );
+      final response = await SafeHttp.safeGet(context, Uri.parse(_membershipEndpoint), headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': _apiKey,
+        'Authorization': 'Bearer $authToken', 
+      });
 
       if (!mounted) return; 
 
@@ -132,13 +130,10 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
   // Function to hit the cancel membership endpoint
   Future<void> _cancelMembershipApiCall(String jwtToken) async {
     try {
-      final response = await http.post(
-        Uri.parse(_cancelMembershipEndpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $jwtToken',
-        },
-      );
+      final response = await SafeHttp.safePost(context, Uri.parse(_cancelMembershipEndpoint), headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $jwtToken',
+      });
 
       final data = jsonDecode(response.body);
 

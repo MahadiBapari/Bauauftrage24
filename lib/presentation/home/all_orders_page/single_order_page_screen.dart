@@ -7,6 +7,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:bauauftrage/utils/cache_manager.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 
 
@@ -51,12 +52,21 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
         _isLoading = false;
         _isCacheLoaded = true;
       });
+      // Fetch fresh data in background, but do not set _isLoading to true
+      fetchDetails(fromCache: true);
+    } else {
+      // No cache, show shimmer
+      setState(() {
+        _isLoading = true;
+        _isCacheLoaded = false;
+      });
+      fetchDetails(fromCache: false);
     }
-    fetchDetails(); // Always fetch fresh in background
   }
 
-  Future<void> fetchDetails() async {
-    if (!_isCacheLoaded) {
+  Future<void> fetchDetails({bool fromCache = false}) async {
+    // Only set loading if not from cache
+    if (!fromCache) {
       setState(() {
         _isLoading = true;
       });
@@ -74,12 +84,12 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
 
     try {
       List<Future<dynamic>> futures = [
-        http.get(Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
-        http.get(Uri.parse(categoriesUrl))
+        SafeHttp.safeGet(context, Uri.parse('$usersApiBaseUrl$authorId'), headers: {'X-API-KEY': apiKey}),
+        SafeHttp.safeGet(context, Uri.parse(categoriesUrl)),
       ];
 
       for (int mediaId in galleryImageIds) {
-        futures.add(http.get(Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'), headers: {'X-API-KEY': apiKey}));
+        futures.add(SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'), headers: {'X-API-KEY': apiKey}));
       }
 
       List<dynamic> responses = await Future.wait(futures);
@@ -118,14 +128,16 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
         }
       }
 
-      setState(() {
-        _user = user;
-        _imageUrls = imageUrls;
-        _categoryMap = categoryMap;
-        _orderCategories = orderCategories;
-        _isLoading = false;
-        _isCacheLoaded = true;
-      });
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _imageUrls = imageUrls;
+          _categoryMap = categoryMap;
+          _orderCategories = orderCategories;
+          _isLoading = false;
+          _isCacheLoaded = true;
+        });
+      }
       // Save to cache
       final cacheKey = 'single_order_${widget.order['id']}';
       await _cacheManager.saveToCache(cacheKey, {
@@ -136,9 +148,11 @@ class _SingleOrderPageScreenState extends State<SingleOrderPageScreen> {
       });
     } catch (e) {
       print('Error: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

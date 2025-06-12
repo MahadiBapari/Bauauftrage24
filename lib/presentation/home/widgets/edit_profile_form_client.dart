@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 class EditProfileFormClient extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -59,14 +60,10 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
       const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/';
 
       try {
-        final response = await http.post(
-          Uri.parse(url),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-API-Key': apiKey,
-          },
-          body: updatedData,
-        );
+        final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-API-Key': apiKey,
+        }, body: updatedData);
 
         // Ensure widget is still mounted before accessing context
         if (!mounted) return;

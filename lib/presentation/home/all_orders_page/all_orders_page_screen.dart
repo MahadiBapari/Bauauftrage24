@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:async'; // Added for Future.wait
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:bauauftrage/core/network/safe_http.dart';
 
 // Ensure this is imported if used for images
 import 'single_order_page_screen.dart'; // Ensure this is imported
@@ -187,10 +188,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     debugPrint('AllOrdersPageScreen: Fetching orders for page $page, append: $append');
     try {
       final headers = <String, String>{};
-      final response = await http.get(
-        Uri.parse('$ordersEndpoint?page=$page&per_page=$perPage'),
-        headers: headers,
-      );
+      final response = await SafeHttp.safeGet(context, Uri.parse('$ordersEndpoint?page=$page&per_page=$perPage'), headers: headers);
 
       if (!mounted) {
         debugPrint('AllOrdersPageScreen: Widget unmounted during orders API call.');
@@ -234,7 +232,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
             if (firstImageId != null) {
               final mediaUrl = '$mediaEndpointBase$firstImageId';
-              final mediaResponse = await http.get(Uri.parse(mediaUrl));
+              final mediaResponse = await SafeHttp.safeGet(context, Uri.parse(mediaUrl));
 
               if (!mounted) {
                 debugPrint('AllOrdersPageScreen: Widget unmounted during media API call.');
@@ -305,7 +303,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     ];
     debugPrint('AllOrdersPageScreen: Fetching categories...');
     try {
-      final response = await http.get(Uri.parse(categoriesEndpoint));
+      final response = await SafeHttp.safeGet(context, Uri.parse(categoriesEndpoint));
 
       if (!mounted) {
         debugPrint('AllOrdersPageScreen: Widget unmounted during categories API call.');
