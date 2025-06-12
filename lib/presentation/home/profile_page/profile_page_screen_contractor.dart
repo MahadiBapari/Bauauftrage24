@@ -266,6 +266,146 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     );
   }
 
+  void _showResetPasswordDialog(BuildContext context) {
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_reset, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
+              const SizedBox(height: 16),
+              const Text(
+                'Reset Password',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Enter your current and new password below.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: currentController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Current Password',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: newController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: confirmController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm New Password',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 185, 7, 7),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 185, 7, 7),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () async {
+                        final current = currentController.text.trim();
+                        final newPass = newController.text.trim();
+                        final confirm = confirmController.text.trim();
+                        if (newPass != confirm) {
+                          Navigator.of(ctx).pop();
+                          _showError('New passwords do not match.');
+                          return;
+                        }
+                        // Call the password reset API
+                        final prefs = await SharedPreferences.getInstance();
+                        final token = prefs.getString('auth_token');
+                        final userId = prefs.getString('user_id');
+                        if (token == null || userId == null) {
+                          Navigator.of(ctx).pop();
+                          _showError('Not authenticated.');
+                          return;
+                        }
+                        final url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/change-password/$userId';
+                        try {
+                          final response = await http.post(
+                            Uri.parse(url),
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': 'Bearer $token',
+                              'X-API-Key': '1234567890abcdef',
+                            },
+                            body: json.encode({
+                              'current_password': current,
+                              'new_password': newPass,
+                            }),
+                          );
+                          Navigator.of(ctx).pop();
+                          if (response.statusCode == 200) {
+                            _showError('Password changed successfully.');
+                          } else {
+                            _showError('Failed to change password: ${response.body}');
+                          }
+                        } catch (e) {
+                          Navigator.of(ctx).pop();
+                          _showError('Error: $e');
+                        }
+                      },
+                      child: const Text('Reset', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -354,14 +494,14 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           _buildInfoRow(
                             context,
                             'Phone',
-                            _userData!['meta_data']?['user_phone_']?[0] ??
+                            _userData!['meta_data']?['user_phone']?[0] ??
                                 'No phone number',
                             Icons.phone,
                           ),
                           _buildInfoRow(
                             context,
                             'Firm Name',
-                            _userData!['meta_data']?['firmenname_']?[0] ??
+                            _userData!['meta_data']?['firmenname']?[0] ??
                                 'No firm name',
                             Icons.business,
                           ),
@@ -388,9 +528,15 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           ),
                           _buildProfileOption(
                             context,
+                            'Reset Password',
+                            Icons.lock_reset,
+                          ),
+                          _buildProfileOption(
+                            context,
                             'Logout',
                             Icons.logout,
                           ),
+                          
                         ],
                       ),
                     ),
@@ -485,13 +631,15 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       onTap: () {
         if (title == 'Logout') {
           _handleLogout(context);
-        } else if (title == 'Help & Support') { 
+        } else if (title == 'Help & Support') {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const SupportAndHelpPageScreen(),
             ),
           );
+        } else if (title == 'Reset Password') {
+          _showResetPasswordDialog(context);
         }
       },
       child: Card(

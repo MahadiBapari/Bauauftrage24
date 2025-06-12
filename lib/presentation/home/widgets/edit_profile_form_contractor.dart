@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfileFormContractor extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -40,9 +39,9 @@ class _EditProfileFormContractorState
     // Initialize controllers with existing user data
     _emailController.text = widget.userData['user_email'] ?? ''; // Read-only, but good to set
     _phoneController.text =
-        widget.userData['meta_data']?['user_phone_']?[0] ?? '';
+        widget.userData['meta_data']?['user_phone']?[0] ?? '';
     _firmNameController.text =
-        widget.userData['meta_data']?['firmenname_']?[0] ?? '';
+        widget.userData['meta_data']?['firmenname']?[0] ?? '';
     _uidNumberController.text =
         widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
     _availableTimeController.text =
@@ -213,10 +212,9 @@ class _EditProfileFormContractorState
                       // Phone
                       TextFormField(
                         controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Phone',
-                          prefixIcon: Icon(Icons.phone_outlined),
+                          prefixIcon: const Icon(Icons.phone),
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -225,9 +223,9 @@ class _EditProfileFormContractorState
                       // Firm Name
                       TextFormField(
                         controller: _firmNameController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Firm Name',
-                          prefixIcon: Icon(Icons.business_outlined),
+                          prefixIcon: const Icon(Icons.business),
                           border: OutlineInputBorder(),
                         ),
                       ),

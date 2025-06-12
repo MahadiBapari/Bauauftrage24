@@ -517,7 +517,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                       onTap: _showTermsDialog,
                       child: const Text(
                         'Terms and Conditions',
-                        style: TextStyle(color: Color.fromARGB(255, 201, 45, 45), decoration: TextDecoration.underline),
+                        style: TextStyle(color: Color.fromARGB(255, 201, 45, 45)),
                       ),
                     ),
                   ],
