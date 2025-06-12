@@ -291,12 +291,13 @@ Widget build(BuildContext context) {
                           const Text("Select Categories", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           MultiSelectDialogField(
+                            backgroundColor: Colors.white,
                             items: categories.map((category) => MultiSelectItem(
                                 category['id'].toString(), category['name'])).toList(),
                             title: const Text("Categories"),
-                            selectedColor: Theme.of(context).primaryColor,
-                            cancelText: const Text("Cancel"),
-                            confirmText: const Text("OK"),
+                            selectedColor: const Color.fromARGB(255, 185, 33, 33),
+                            cancelText: const Text("", style: TextStyle(fontSize: 0)), 
+                            confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(8),
@@ -457,4 +458,3 @@ Widget build(BuildContext context) {
   }
 
 }
-

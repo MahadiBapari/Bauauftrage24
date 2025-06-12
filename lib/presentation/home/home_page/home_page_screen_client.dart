@@ -541,7 +541,22 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                         _isLoadingCategories
                             ? _buildCategoryShimmer()
                             : _categories.isEmpty
-                                ? const Center(child: Text('No categories available'))
+                                ? Column(
+                                    children: [
+                                      const Center(child: Text('No categories available or failed to load.')),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.refresh, size: 18),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color.fromARGB(255, 185, 7, 7),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                        ),
+                                        onPressed: _loadCategories,
+                                        label: const Text('Retry', style: TextStyle(color: Colors.white)),
+                                      ),
+                                    ],
+                                  )
                                 : SizedBox(
                                     height: 120,
                                     child: ListView.separated(

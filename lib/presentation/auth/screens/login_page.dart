@@ -64,16 +64,14 @@ class _LoginPageState extends State<LoginPage> {
             (Route<dynamic> route) => false,
             arguments: {'role': role},
           );
-        } else if (responseData['error'] != null) {
-          _showError('Login failed: ${responseData['error']}');
         } else {
-          _showError('Invalid response data. User ID or token is missing.');
+          _showError('Login failed: Email or password is wrong');
         }
       } else {
-        _showError('Login failed: ${response.body}');
+        _showError('Login failed: Email or password is wrong');
       }
     } catch (e) {
-      _showError('Error: $e');
+      _showError('Login failed: Email or password is wrong');
     } finally {
       if (mounted) { //check mounted
          setState(() {
@@ -88,12 +86,15 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Error'),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
+            child: const Text('OK',
+              style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
+            ),
           ),
         ],
       ),
