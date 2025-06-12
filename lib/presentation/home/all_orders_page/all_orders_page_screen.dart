@@ -58,7 +58,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAllData(); // Start fetching initial data
+    _loadAllDataFromCacheThenBackground();
     _scrollController.addListener(_scrollListener); // Add listener for pagination
     _fetchMembershipStatus(); // Add membership check
   }
@@ -75,6 +75,27 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !_isFetchingMore && _hasMoreOrders) {
       _loadMoreOrders();
     }
+  }
+
+  Future<void> _loadAllDataFromCacheThenBackground() async {
+    setState(() {
+      _isLoadingOrders = true;
+      _isLoadingCategories = true;
+    });
+    // Load from cache first
+    final cachedOrders = await _cacheManager.loadFromCache('all_orders');
+    final cachedCategories = await _cacheManager.loadFromCache('categories');
+    if (cachedOrders != null) {
+      _orders = List<Map<String, dynamic>>.from(cachedOrders as List);
+      _filterOrders();
+      setState(() => _isLoadingOrders = false);
+    }
+    if (cachedCategories != null) {
+      _categories = List<Map<String, dynamic>>.from(cachedCategories as List);
+      setState(() => _isLoadingCategories = false);
+    }
+    // Fetch fresh data in background
+    _loadAllData();
   }
 
   // Combines all initial data fetching operations using Future.wait
@@ -513,14 +534,23 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
-                    _isLoadingCategories
-                        ? const CustomLoadingIndicator(
-                              message: 'Loading categories...',
-                              isHorizontal: true,
+                    _isLoadingCategories && _categories.isEmpty
+                        ? SizedBox(
+                            height: 40,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
                               itemCount: 5,
-                              itemHeight: 40,
-                              itemWidth: 100,
-                            )
+                              separatorBuilder: (_, __) => const SizedBox(width: 10),
+                              itemBuilder: (context, index) => Container(
+                                width: 100,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          )
                         : _categories.isEmpty
                             ? const Text("No categories available.")
                             : SizedBox(
@@ -574,14 +604,20 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _onRefresh,
-                  child: _isLoadingOrders || _isLoadingMembership // Show loading if orders or membership is loading
-                      ? const CustomLoadingIndicator(
-                              message: 'Loading orders...',
-                              itemCount: 5,
-                              itemHeight: 120,
-                              itemWidth: double.infinity,
-                              isScrollable: true,
-                            )
+                  child: _isLoadingOrders && _filteredOrders.isEmpty
+                      ? ListView.separated(
+                          itemCount: 5,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            height: 180,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[300],
+                            ),
+                          ),
+                        )
                       : _filteredOrders.isEmpty
                           ? Center(child: Text(
                               _isActiveMembership ?

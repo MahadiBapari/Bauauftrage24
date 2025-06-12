@@ -332,7 +332,25 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
                   // New Arrivals Section (Newest Orders)
                   (isLoadingNewArrivals && _newArrivalsOrders.isEmpty)
-                      ? SizedBox.shrink() // No shimmer, just empty space while loading if no cache
+                      ? SizedBox(
+                          height: 220,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 4,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (_, __) => Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Container(
+                                width: 160,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ) // Horizontal shimmer for newest orders
                       : _newArrivalsOrders.isEmpty
                           ? const Text("No new orders in this category.")
                           : SizedBox(

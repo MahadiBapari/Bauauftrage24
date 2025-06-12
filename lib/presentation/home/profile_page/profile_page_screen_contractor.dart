@@ -5,9 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../widgets/edit_profile_form_contractor.dart'; // Make sure this path is correct
 import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
+import 'package:bauauftrage/utils/cache_manager.dart';
 
 class ProfilePageScreenContractor extends StatefulWidget {
   const ProfilePageScreenContractor({super.key});
@@ -29,41 +31,36 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   @override
   void initState() {
     super.initState();
-    _initAndLoadUserData(); // Combined initialization and data loading
+    _loadUserDataFromCacheThenBackground();
   }
 
-  // A new method to handle async initialization for initState
-  Future<void> _initAndLoadUserData() async {
+  Future<void> _loadUserDataFromCacheThenBackground() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('auth_token');
     _userId = prefs.getString('user_id');
-    await _loadUserData(); // Proceed to load user data from API
+    // Try to load from cache first
+    final cacheManager = CacheManager();
+    final cachedUser = await cacheManager.loadFromCache('profile_user_$_userId');
+    if (cachedUser != null) {
+      setState(() {
+        _userData = cachedUser as Map<String, dynamic>;
+        _isLoading = false;
+      });
+    }
+    // Fetch fresh data in background
+    _loadUserData(fetchAndUpdateCache: true);
   }
 
-  Future<void> _loadUserData() async {
-    if (!mounted) return; // Always check mounted before setState or context operations
-
+  Future<void> _loadUserData({bool fetchAndUpdateCache = false}) async {
+    if (!mounted) return;
     if (_userId == null) {
       _showError('User ID not found');
       setState(() => _isLoading = false);
       return;
     }
-
-    // Removed: No longer loading local image path for profile picture
-    // final prefs = await SharedPreferences.getInstance();
-    // final localImagePath = prefs.getString('local_profile_image_path');
-    // if (localImagePath != null && localImagePath.isNotEmpty) {
-    //   final localImageFile = File(localImagePath);
-    //   if (await localImageFile.exists()) {
-    //     setState(() {
-    //       _pickedImage = localImageFile;
-    //     });
-    //   }
-    // }
-
+    if (!fetchAndUpdateCache) setState(() => _isLoading = true);
     final url =
         'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$_userId';
-
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -73,25 +70,18 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
           if (_authToken != null) 'Authorization': 'Bearer $_authToken',
         },
       );
-
       if (!mounted) return;
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
-        // Removed: No longer checking for network profile picture to use
-        // if (_pickedImage == null &&
-        //     data['meta_data']?['profile-picture'] != null &&
-        //     (data['meta_data']['profile-picture'] as List).isNotEmpty) {
-        //   // You could optionally cache the network image locally here if desired.
-        // }
-
         setState(() {
           _userData = data;
           _isLoading = false;
         });
+        // Save to cache
+        final cacheManager = CacheManager();
+        await cacheManager.saveToCache('profile_user_$_userId', data);
       } else {
-        _showError('Failed to load profile: ${response.body}');
+        _showError('Failed to load profile: {response.body}');
         setState(() => _isLoading = false);
       }
     } catch (e) {
@@ -397,8 +387,8 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: _isLoading && _userData == null
+          ? _buildProfileShimmer()
           : _userData == null
               ? const Center(child: Text('No user data available'))
               : SafeArea(
@@ -529,6 +519,53 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                     ),
                   ),
                 ),
+    );
+  }
+
+  Widget _buildProfileShimmer() {
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height - 200,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: 120,
+                height: 20,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: 200,
+                height: 18,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: 260,
+                height: 18,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: 180,
+                height: 18,
+                color: Colors.grey[300],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

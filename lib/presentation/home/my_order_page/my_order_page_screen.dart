@@ -50,7 +50,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
   @override
   void initState() {
     super.initState();
-    _initUserAndLoadData(); // Initialize user ID and then load data
+    _loadOrdersFromCacheThenBackground();
     _scrollController.addListener(_scrollListener); // Add listener for pagination
   }
 
@@ -61,27 +61,30 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
     super.dispose();
   }
 
-  // New method to initialize user ID and then load all data
-  Future<void> _initUserAndLoadData() async {
+  Future<void> _loadOrdersFromCacheThenBackground() async {
     final prefs = await SharedPreferences.getInstance();
     _userId = prefs.getString('user_id');
-    _authToken = prefs.getString('auth_token'); // Fetch auth token if needed for API
-
-    debugPrint('MyOrdersPageScreen: Initializing with userId: $_userId, authToken present: ${_authToken != null}');
-
+    _authToken = prefs.getString('auth_token');
     if (_userId == null) {
-      debugPrint("MyOrdersPageScreen: User ID not found in SharedPreferences.");
-      if (mounted) {
-        setState(() {
-          _isLoadingOrders = false; // Stop loading since we can't fetch orders
-          _hasMoreOrders = false; // No more orders to load
-        });
-      }
+      setState(() {
+        _isLoadingOrders = false;
+        _hasMoreOrders = false;
+      });
       _showErrorDialog("User Not Logged In", "Please log in to view your orders.");
       return;
     }
-
-    await _loadAllData(); // This will handle setting _isLoadingOrders to false
+    // Try to load from cache first
+    final cachedOrdersKey = 'my_orders_$_userId';
+    final cachedData = await _cacheManager.loadFromCache(cachedOrdersKey);
+    if (cachedData != null) {
+      setState(() {
+        _orders = List<Map<String, dynamic>>.from(cachedData as List);
+        _filterOrders();
+        _isLoadingOrders = false;
+      });
+    }
+    // Fetch fresh data in background
+    _loadAllData();
   }
 
   // Listener for scroll events to trigger pagination
@@ -455,9 +458,19 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _onRefresh,
-                  child: _isLoadingOrders
-                      ? const Center(
-                          child: CircularProgressIndicator.adaptive(),
+                  child: _isLoadingOrders && _filteredOrders.isEmpty
+                      ? ListView.separated(
+                          itemCount: 5,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            height: 180,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[300],
+                            ),
+                          ),
                         )
                       : _filteredOrders.isEmpty
                           ? Center(

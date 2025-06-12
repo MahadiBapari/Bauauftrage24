@@ -7,6 +7,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_order_page_screen.dart';
+import 'package:bauauftrage/utils/cache_manager.dart';
 
 class SingleMyOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -22,8 +23,10 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
   List<String> _imageUrls = [];
   List<String> _orderCategories = [];
   bool _isLoading = true;
+  bool _isCacheLoaded = false;
 
   Map<String, dynamic> _currentOrderData = {}; // Store a mutable copy of the order data
+  final CacheManager _cacheManager = CacheManager();
 
   final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order/';
   final String mediaUrlBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
@@ -39,7 +42,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
     super.initState();
     _currentOrderData = Map<String, dynamic>.from(widget.order); // Initialize with widget data
     _loadAuthTokenAndUserId().then((_) {
-      fetchDetails();
+      _loadFromCacheThenFetch();
     });
   }
 
@@ -47,6 +50,21 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('auth_token');
     _userId = prefs.getString('user_id');
+  }
+
+  Future<void> _loadFromCacheThenFetch() async {
+    final cacheKey = 'single_myorder_${_currentOrderData['id']}';
+    final cachedData = await _cacheManager.loadFromCache(cacheKey);
+    if (cachedData != null && cachedData is Map<String, dynamic>) {
+      setState(() {
+        _user = cachedData['user'];
+        _imageUrls = List<String>.from(cachedData['imageUrls'] ?? []);
+        _orderCategories = List<String>.from(cachedData['orderCategories'] ?? []);
+        _isLoading = false;
+        _isCacheLoaded = true;
+      });
+    }
+    fetchDetails(); // Always fetch fresh in background
   }
 
   Future<void> fetchDetails() async {
@@ -172,9 +190,17 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
           _imageUrls = imageUrls;
           _orderCategories = orderCategories;
           _isLoading = false;
+          _isCacheLoaded = true;
         });
         debugPrint('SingleMyOrderPageScreen: Details fetched and state updated.');
       }
+      // Save to cache
+      final cacheKey = 'single_myorder_${_currentOrderData['id']}';
+      await _cacheManager.saveToCache(cacheKey, {
+        'user': user,
+        'imageUrls': imageUrls,
+        'orderCategories': orderCategories,
+      });
     } catch (e) {
       debugPrint('SingleMyOrderPageScreen: Error fetching details: $e');
       if (mounted) {
@@ -217,49 +243,49 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
           child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 48),
-          const SizedBox(height: 16),
-          const Text(
-            'Confirm Deletion',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Are you sure you want to delete this order? This action cannot be undone.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 24),
-          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-            foregroundColor: Colors.black87,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 48),
+              const SizedBox(height: 16),
+              const Text(
+                'Confirm Deletion',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red[700],
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(height: 10),
+              const Text(
+                'Are you sure you want to delete this order? This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
               ),
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Delete'),
-            ),
-          ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.black87,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[700],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('Delete'),
+                    ),
+                  ),
+                ],
+              ),
             ],
-          ),
-        ],
           ),
         ),
       ),
@@ -420,8 +446,8 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: (_isLoading && !_isCacheLoaded)
+          ? _buildShimmer()
           : Stack(
               children: [
                 Container(
@@ -555,6 +581,43 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          width: double.infinity,
+          color: Colors.grey[300],
+        ),
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.only(top: 24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8F8F8),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 18, width: 120, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Container(height: 24, width: 200, color: Colors.grey[300]),
+                  const SizedBox(height: 24),
+                  Container(height: 16, width: double.infinity, color: Colors.grey[300]),
+                  const SizedBox(height: 8),
+                  Container(height: 16, width: double.infinity, color: Colors.grey[300]),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

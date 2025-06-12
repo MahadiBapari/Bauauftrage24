@@ -66,7 +66,13 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   Future<void> _loadCategoriesFromCache() async {
     final cachedCategories = await _cacheManager.loadFromCache('categories');
     if (cachedCategories != null && cachedCategories is List && cachedCategories.isNotEmpty) {
-      final categories = cachedCategories.map((c) => Category.fromJson(c)).toList();
+      final filtered = cachedCategories.where((c) {
+        final id = c['id'];
+        final valid = id != null && (id is int || int.tryParse('$id') != null);
+        if (!valid) debugPrint('Skipping cached category with invalid id: $id');
+        return valid;
+      }).toList();
+      final categories = filtered.map((c) => Category.fromJson(c)).toList();
       if (mounted) {
         setState(() {
           _categories = categories;
@@ -209,7 +215,13 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
       final cachedCategories = await _cacheManager.loadFromCache('categories');
       debugPrint('Loaded cachedCategories: ' + cachedCategories.toString());
       if (cachedCategories != null && cachedCategories is List && cachedCategories.isNotEmpty) {
-        final categories = cachedCategories.map((c) => Category.fromJson(c)).toList();
+        final filtered = cachedCategories.where((c) {
+          final id = c['id'];
+          final valid = id != null && (id is int || int.tryParse('$id') != null);
+          if (!valid) debugPrint('Skipping cached category with invalid id: $id');
+          return valid;
+        }).toList();
+        final categories = filtered.map((c) => Category.fromJson(c)).toList();
         debugPrint('Parsed categories from cache: ' + categories.length.toString());
         if (mounted) {
           setState(() {
@@ -237,7 +249,10 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
         List<_CategoryTemp> tempCategories = [];
         Set<int> mediaIds = {};
         for (var item in categoriesData) {
-          if (item['id'] == null || (item['id'] is! int && int.tryParse(item['id'].toString()) == null)) continue;
+          if (item['id'] == null || (item['id'] is! int && int.tryParse(item['id'].toString()) == null)) {
+            debugPrint('Skipping fetched category with invalid id: ${item['id']}');
+            continue;
+          }
           final id = item['id'] is int ? item['id'] : int.parse(item['id'].toString());
           final name = item['name'] as String;
           int? imageMediaId;
@@ -1065,8 +1080,15 @@ class Category {
   }
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    int? safeId;
+    if (rawId is int) {
+      safeId = rawId;
+    } else if (rawId is String) {
+      safeId = int.tryParse(rawId);
+    }
     return Category(
-      id: json['id'] as int,
+      id: safeId ?? 0, // Use 0 if id is null or not convertible
       name: json['name'] as String,
       imageUrl: json['imageUrl'] as String?,
     );
