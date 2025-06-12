@@ -109,187 +109,201 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: 100,
-                ),
-                const SizedBox(height: 30),
-                const Text(
-                  'Welcome',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmall = constraints.maxWidth < 400;
+          final logoHeight = isSmall ? 70.0 : 100.0;
+          final horizontalPadding = isSmall ? 12.0 : 24.0;
+          final fieldFontSize = isSmall ? 15.0 : 16.0;
+          final buttonFontSize = isSmall ? 16.0 : 18.0;
+          final buttonPadding = isSmall ? 12.0 : 16.0;
+          return Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 420,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Log in to your account to continue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  ),
-                  style: const TextStyle(color: Colors.black),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_passwordVisible,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _passwordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: logoHeight,
+                        fit: BoxFit.contain,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _passwordVisible = !_passwordVisible;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  ),
-                  style: const TextStyle(color: Colors.black),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // Add forgot password logic
-                    },
-                    child: Text(
-                      'Forgot Password?',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : () => login(), 
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade800,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(
-                      fontSize: 18, 
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            strokeWidth: 2.5,
+                      const SizedBox(height: 30),
+                      const Text(
+                        'Welcome',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Log in to your account to continue',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 40),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'Enter your email',
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
                           ),
-                        )
-                      : const Text('Log In'),
-                ),
-                const SizedBox(height: 30),
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey[300])),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Text(
-                        "Don't have an account?",
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.grey[300])),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton.icon(
-                      icon: const Icon(Icons.person_outline, color: Color.fromARGB(255, 185, 7, 7)),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/register_client');
-                      },
-                      label: const Text(
-                        'Register as Client',
-                        style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         ),
-                        foregroundColor: Color.fromARGB(255, 185, 7, 7),
+                        style: TextStyle(color: Colors.black, fontSize: fieldFontSize),
                       ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextButton.icon(
-                      icon: const Icon(Icons.business_center_outlined, color: Color.fromARGB(255, 185, 7, 7)),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/register_contractor');
-                      },
-                      label: const Text(
-                        'Register as Contractor',
-                        style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: !_passwordVisible,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          hintText: 'Enter your password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _passwordVisible = !_passwordVisible;
+                              });
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         ),
-                        foregroundColor: Color.fromARGB(255, 185, 7, 7),
+                        style: TextStyle(color: Colors.black, fontSize: fieldFontSize),
                       ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            // Add forgot password logic
+                          },
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(color: Colors.grey[600], fontSize: isSmall ? 13 : 15),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : () => login(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade800,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: buttonPadding),
+                          textStyle: TextStyle(
+                            fontSize: buttonFontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : const Text('Log In'),
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey[300])),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: Text(
+                              "Don't have an account?",
+                              style: TextStyle(color: Colors.grey[600], fontSize: isSmall ? 13 : 15),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey[300])),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.person_outline, color: Color.fromARGB(255, 185, 7, 7)),
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/register_client');
+                              },
+                              label: const Text(
+                                'Register as Client',
+                                style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: buttonPadding),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                foregroundColor: Color.fromARGB(255, 185, 7, 7),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.business_center_outlined, color: Color.fromARGB(255, 185, 7, 7)),
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/register_contractor');
+                              },
+                              label: const Text(
+                                'Register as Contractor',
+                                style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: buttonPadding),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                foregroundColor: Color.fromARGB(255, 185, 7, 7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
