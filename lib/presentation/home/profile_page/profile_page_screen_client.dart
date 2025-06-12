@@ -267,7 +267,6 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
   }
 
   void _showResetPasswordDialog(BuildContext context) {
-    final currentController = TextEditingController();
     final newController = TextEditingController();
     final confirmController = TextEditingController();
     showDialog(
@@ -289,21 +288,11 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Enter your current and new password below.',
+                'Enter your new password below.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
               const SizedBox(height: 24),
-              TextField(
-                controller: currentController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Current Password',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              ),
-              const SizedBox(height: 14),
               TextField(
                 controller: newController,
                 obscureText: true,
@@ -352,15 +341,13 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () async {
-                        final current = currentController.text.trim();
                         final newPass = newController.text.trim();
                         final confirm = confirmController.text.trim();
                         if (newPass != confirm) {
                           Navigator.of(ctx).pop();
-                          _showError('New passwords do not match.');
+                          _showError('Passwords do not match.');
                           return;
                         }
-                        // Call the password reset API
                         final prefs = await SharedPreferences.getInstance();
                         final token = prefs.getString('auth_token');
                         final userId = prefs.getString('user_id');
@@ -369,7 +356,8 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                           _showError('Not authenticated.');
                           return;
                         }
-                        final url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/change-password/$userId';
+                        // Remove any invisible or stray characters in the URL string
+                        final url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user/$userId/update-password';
                         try {
                           final response = await http.post(
                             Uri.parse(url),
@@ -379,15 +367,15 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                               'X-API-Key': '1234567890abcdef',
                             },
                             body: json.encode({
-                              'current_password': current,
-                              'new_password': newPass,
+                              'password': newPass,
+                              'confirm_password': confirm,
                             }),
                           );
                           Navigator.of(ctx).pop();
                           if (response.statusCode == 200) {
                             _showError('Password changed successfully.');
                           } else {
-                            _showError('Failed to change password: ${response.body}');
+                            _showError('Failed to change password: \\n${response.body}');
                           }
                         } catch (e) {
                           Navigator.of(ctx).pop();
