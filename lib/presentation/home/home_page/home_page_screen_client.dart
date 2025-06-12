@@ -64,6 +64,8 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   }
 
   Future<void> _onRefresh() async {
+    // Clear category cache before refreshing all data
+    await _cacheManager.saveToCache('categories', []);
     await _refreshAllData();
   }
 
@@ -128,8 +130,10 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
     try {
       // Try to load from cache first
       final cachedCategories = await _cacheManager.loadFromCache('categories');
+      debugPrint('Loaded cachedCategories: ' + cachedCategories.toString());
       if (cachedCategories != null && cachedCategories is List && cachedCategories.isNotEmpty) {
         final categories = cachedCategories.map((c) => Category.fromJson(c)).toList();
+        debugPrint('Parsed categories from cache: ' + categories.length.toString());
         if (mounted) {
           setState(() {
             _categories = categories;
@@ -141,52 +145,75 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
       // If no cache, fetch fresh data
       final response = await http.get(
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories'),
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
+        headers: {'X-API-Key': apiKey},
       );
+
+      debugPrint('Categories API status: ' + response.statusCode.toString());
+      debugPrint('Categories API body: ' + response.body.toString());
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
         List<dynamic> categoriesData = json.decode(response.body);
-        List<Category> fetchedCategories = [];
-
+        debugPrint('Parsed categoriesData: ' + categoriesData.length.toString() + ' items');
+        List<_CategoryTemp> tempCategories = [];
+        Set<int> mediaIds = {};
         for (var item in categoriesData) {
-          final id = item['id'] as int;
+          if (item['id'] == null || (item['id'] is! int && int.tryParse(item['id'].toString()) == null)) continue;
+          final id = item['id'] is int ? item['id'] : int.parse(item['id'].toString());
           final name = item['name'] as String;
-          String? imageUrl;
-
-          // Check if cat_image exists and has an id
-          if (item['meta']?['cat_image'] != null && 
-              item['meta']?['cat_image'] is Map && 
-              item['meta']?['cat_image']?['id'] != null) {
-            final imageId = item['meta']?['cat_image']?['id'];
+          int? imageMediaId;
+          final catImage = item['meta']?['cat_image'];
+          if (catImage != null && catImage is Map && catImage['id'] != null) {
+            if (catImage['id'] is int) {
+              imageMediaId = catImage['id'];
+            } else if (catImage['id'] is String && int.tryParse(catImage['id']) != null) {
+              imageMediaId = int.parse(catImage['id']);
+            }
+            if (imageMediaId != null) mediaIds.add(imageMediaId);
+          }
+          tempCategories.add(_CategoryTemp(id: id, name: name, imageMediaId: imageMediaId));
+        }
+        // Fetch all media URLs in parallel
+        Map<int, String> mediaUrlMap = {};
+        for (var mediaId in mediaIds) {
+          try {
             final mediaResponse = await http.get(
-              Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$imageId'),
+              Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'),
+              headers: {'X-API-Key': apiKey},
             );
             if (mediaResponse.statusCode == 200) {
               final mediaData = json.decode(mediaResponse.body);
-              imageUrl = mediaData['source_url'];
+              if (mediaData['source_url'] != null) {
+                mediaUrlMap[mediaId] = mediaData['source_url'];
+              }
+            } else {
+              debugPrint('Failed to fetch media for category image id $mediaId: status ${mediaResponse.statusCode}');
             }
+          } catch (e) {
+            debugPrint('Error fetching media for category image id $mediaId: $e');
           }
-
-          fetchedCategories.add(Category(
-            id: id,
-            name: name,
-            imageUrl: imageUrl,
-          ));
         }
-
+        List<Category> fetchedCategories = tempCategories.map((c) => Category(
+          id: c.id,
+          name: c.name,
+          imageUrl: c.imageMediaId != null ? mediaUrlMap[c.imageMediaId!] : null,
+        )).toList();
+        debugPrint('Final fetchedCategories count: ' + fetchedCategories.length.toString());
+        for (var c in fetchedCategories) {
+          debugPrint('Category: id=' + c.id.toString() + ', name=' + c.name + ', imageUrl=' + (c.imageUrl ?? 'null'));
+        }
         if (mounted) {
           setState(() {
             _categories = fetchedCategories;
             _isLoadingCategories = false;
           });
         }
-
         // Save to cache
         await _cacheManager.saveToCache('categories', fetchedCategories.map((c) => c.toJson()).toList());
       } else {
-        debugPrint('Failed to load categories: ${response.statusCode}');
+        debugPrint('Failed to load categories: ' + response.statusCode.toString());
         if (mounted) {
           setState(() => _isLoadingCategories = false);
         }
@@ -541,22 +568,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                         _isLoadingCategories
                             ? _buildCategoryShimmer()
                             : _categories.isEmpty
-                                ? Column(
-                                    children: [
-                                      const Center(child: Text('No categories available or failed to load.')),
-                                      const SizedBox(height: 8),
-                                      ElevatedButton.icon(
-                                        icon: const Icon(Icons.refresh, size: 18),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color.fromARGB(255, 185, 7, 7),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                                        ),
-                                        onPressed: _loadCategories,
-                                        label: const Text('Retry', style: TextStyle(color: Colors.white)),
-                                      ),
-                                    ],
-                                  )
+                                ? const Center(child: Text('No categories available or failed to load.'))
                                 : SizedBox(
                                     height: 120,
                                     child: ListView.separated(
@@ -1062,4 +1074,12 @@ class Order {
       fullOrder: json['fullOrder'] as Map<String, dynamic>?,
     );
   }
+}
+
+// Helper class for temp category data
+class _CategoryTemp {
+  final int id;
+  final String name;
+  final int? imageMediaId;
+  _CategoryTemp({required this.id, required this.name, this.imageMediaId});
 }
