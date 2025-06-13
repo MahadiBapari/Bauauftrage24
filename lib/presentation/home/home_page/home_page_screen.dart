@@ -237,26 +237,54 @@ class _HomePageScreenState extends State<HomePageScreen> {
       
       final response = await SafeHttp.safeGet(
         context,
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/orders?status=publish&promo=true'),
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?status=publish&promo=true'),
         headers: {
           'Accept': 'application/json',
+          'X-API-Key': apiKey,
           if (token != null) 'Authorization': 'Bearer $token',
         },
       );
 
       debugPrint('Promo orders response status: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 401) {  // Accept both authenticated and public responses
+      if (response.statusCode == 200 || response.statusCode == 401) {
         final List<dynamic> data = json.decode(response.body);
         debugPrint('Parsed promo orders data length: ${data.length}');
         
-        final List<Map<String, dynamic>> formattedOrders = data.map((order) {
-          return {
+        final List<Map<String, dynamic>> formattedOrders = [];
+        for (var order in data) {
+          String imageUrl = '';
+          // Get the first image from the order gallery
+          if (order['meta']?['order_gallery'] != null) {
+            final gallery = order['meta']?['order_gallery'];
+            if (gallery is List && gallery.isNotEmpty) {
+              final firstImage = gallery[0];
+              if (firstImage is Map && firstImage['id'] != null) {
+                final imageId = firstImage['id'];
+                try {
+                  final mediaResponse = await SafeHttp.safeGet(
+                    context,
+                    Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$imageId'),
+                    headers: {'X-API-Key': apiKey},
+                  );
+                  
+                  if (mediaResponse.statusCode == 200) {
+                    final mediaData = json.decode(mediaResponse.body);
+                    imageUrl = mediaData['source_url'] ?? mediaData['media_details']?['sizes']?['full']?['source_url'] ?? '';
+                  }
+                } catch (e) {
+                  debugPrint('Error fetching media for ID $imageId: $e');
+                }
+              }
+            }
+          }
+
+          formattedOrders.add({
             "displayTitle": order['title']['rendered'] ?? '',
             "displayCategory": order['order_category'] ?? '',
-            "displayImageUrl": order['featured_image_url'] ?? '',
+            "displayImageUrl": imageUrl,
             "fullOrder": order,
-          };
-        }).toList();
+          });
+        }
 
         debugPrint('Formatted promo orders length: ${formattedOrders.length}');
 
@@ -318,7 +346,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       
-      String url = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/orders?status=publish&orderby=date&order=desc';
+      String url = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?status=publish&orderby=date&order=desc';
       if (categoryId != null) {
         url += '&order_category=$categoryId';
       }
@@ -329,25 +357,53 @@ class _HomePageScreenState extends State<HomePageScreen> {
         Uri.parse(url),
         headers: {
           'Accept': 'application/json',
+          'X-API-Key': apiKey,
           if (token != null) 'Authorization': 'Bearer $token',
         },
       );
       
       debugPrint('New arrivals response status: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 401) {  // Accept both authenticated and public responses
+      if (response.statusCode == 200 || response.statusCode == 401) {
         final List<dynamic> data = json.decode(response.body);
         debugPrint('Parsed new arrivals data length: ${data.length}');
         
-        final List<Map<String, dynamic>> formattedOrders = data.map((order) {
+        final List<Map<String, dynamic>> formattedOrders = [];
+        for (var order in data) {
+          String imageUrl = '';
+          // Get the first image from the order gallery
+          if (order['meta']?['order_gallery'] != null) {
+            final gallery = order['meta']?['order_gallery'];
+            if (gallery is List && gallery.isNotEmpty) {
+              final firstImage = gallery[0];
+              if (firstImage is Map && firstImage['id'] != null) {
+                final imageId = firstImage['id'];
+                try {
+                  final mediaResponse = await SafeHttp.safeGet(
+                    context,
+                    Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$imageId'),
+                    headers: {'X-API-Key': apiKey},
+                  );
+                  
+                  if (mediaResponse.statusCode == 200) {
+                    final mediaData = json.decode(mediaResponse.body);
+                    imageUrl = mediaData['source_url'] ?? mediaData['media_details']?['sizes']?['full']?['source_url'] ?? '';
+                  }
+                } catch (e) {
+                  debugPrint('Error fetching media for ID $imageId: $e');
+                }
+              }
+            }
+          }
+
           final formatted = {
             "displayTitle": order['title']['rendered'] ?? '',
             "displayCategory": order['order_category'] ?? '',
-            "displayImageUrl": order['featured_image_url'] ?? '',
+            "displayImageUrl": imageUrl,
             "fullOrder": order,
           };
           debugPrint('Formatted order: $formatted');
-          return formatted;
-        }).toList();
+          formattedOrders.add(formatted);
+        }
 
         debugPrint('Formatted new arrivals length: ${formattedOrders.length}');
 
@@ -411,18 +467,44 @@ class _HomePageScreenState extends State<HomePageScreen> {
   Future<void> _loadPartners() async {
     if (!mounted) return;
     try {
-      final response = await SafeHttp.safeGet(context, Uri.parse(_partnersEndpoint));
+      final response = await SafeHttp.safeGet(
+        context, 
+        Uri.parse(_partnersEndpoint),
+        headers: {'X-API-Key': apiKey},
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        final List<Partner> partners = data.map((partner) {
-          return Partner(
+        final List<Partner> partners = [];
+        
+        for (var partner in data) {
+          String? logoUrl;
+          int? logoId = partner['meta']?['logo']?['id'];
+          
+          if (logoId != null) {
+            try {
+              final mediaResponse = await SafeHttp.safeGet(
+                context,
+                Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$logoId'),
+                headers: {'X-API-Key': apiKey},
+              );
+              
+              if (mediaResponse.statusCode == 200) {
+                final mediaData = json.decode(mediaResponse.body);
+                logoUrl = mediaData['source_url'] ?? mediaData['media_details']?['sizes']?['full']?['source_url'];
+              }
+            } catch (e) {
+              debugPrint('Error fetching media for partner logo ID $logoId: $e');
+            }
+          }
+
+          partners.add(Partner(
             title: partner['title']['rendered'] ?? '',
             address: partner['partner_address'] ?? '',
-            logoId: partner['featured_media'],
-            logoUrl: partner['featured_image_url'],
-          );
-        }).toList();
+            logoId: logoId,
+            logoUrl: logoUrl,
+          ));
+        }
 
         if (mounted) {
           setState(() {
@@ -430,7 +512,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
             _isLoadingPartners = false;
           });
         }
-        // Cache the partners
         await _cacheManager.saveToCache('partners', partners.map((p) => p.toJson()).toList());
       }
     } catch (e) {
