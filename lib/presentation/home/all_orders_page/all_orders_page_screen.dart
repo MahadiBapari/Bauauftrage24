@@ -313,8 +313,13 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         for (var cat in data) {
-          if (cat['id'] is int && cat['name'] is String) {
-            fetchedCategories.add({'id': cat['id'], 'name': cat['name']});
+          final id = cat['id'];
+          if (id != null) {
+            // Ensure ID is converted to int if it's a string
+            final intId = id is int ? id : (id is String ? int.tryParse(id) : null);
+            if (intId != null && cat['name'] is String) {
+              fetchedCategories.add({'id': intId, 'name': cat['name']});
+            }
           }
         }
         if (mounted) {
@@ -354,8 +359,16 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
             return matchesSearch; // If "All Categories" is selected, only apply search filter
           }
 
-          // Ensure 'order-categories' is a List
-          final orderCategoryIds = (order['order-categories'] is List) ? order['order-categories'] : [];
+          // Ensure 'order-categories' is a List and convert string IDs to int if needed
+          List<int> orderCategoryIds = [];
+          if (order['order-categories'] is List) {
+            orderCategoryIds = order['order-categories'].map<int>((category) {
+              if (category is int) return category;
+              if (category is String) return int.tryParse(category) ?? -1;
+              return -1;
+            }).toList();
+          }
+          
           // Check if any of the order's category IDs match the selected category
           final matchesCategory = orderCategoryIds.contains(_selectedCategoryId);
 
@@ -620,7 +633,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                           ? Center(child: Text(
                               _isActiveMembership ?
                               "No orders found matching your criteria." :
-                              "A membership is required to view orders. Get a membership to access all order information."
+                              "No orders found matching your criteria."
                             ))
                           : ListView.builder(
                               controller: _scrollController,

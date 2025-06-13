@@ -239,14 +239,13 @@ class _HomePageScreenState extends State<HomePageScreen> {
         context,
         Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/orders?status=publish&promo=true'),
         headers: {
+          'Accept': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
       );
 
       debugPrint('Promo orders response status: ${response.statusCode}');
-      debugPrint('Promo orders response body: ${response.body}');
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 401) {  // Accept both authenticated and public responses
         final List<dynamic> data = json.decode(response.body);
         debugPrint('Parsed promo orders data length: ${data.length}');
         
@@ -329,14 +328,13 @@ class _HomePageScreenState extends State<HomePageScreen> {
         context, 
         Uri.parse(url),
         headers: {
+          'Accept': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
       );
       
       debugPrint('New arrivals response status: ${response.statusCode}');
-      debugPrint('New arrivals response body: ${response.body}');
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 401) {  // Accept both authenticated and public responses
         final List<dynamic> data = json.decode(response.body);
         debugPrint('Parsed new arrivals data length: ${data.length}');
         
