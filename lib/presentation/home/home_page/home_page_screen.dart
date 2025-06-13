@@ -1156,24 +1156,24 @@ class _HomePageScreenState extends State<HomePageScreen> {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text("Our Partners", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            if (_partners.length > 8)
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PartnerScreen()),
-                  );
-                },
-                child: const Text(
-                  'See all',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color.fromARGB(255, 179, 21, 21),
-                  ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PartnerScreen()),
+                );
+              },
+              child: const Text(
+                'See all',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color.fromARGB(255, 179, 21, 21),
                 ),
               ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -1192,10 +1192,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
                     height: 180,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: _randomPartnersForDisplay.length,
+                      itemCount: _partners.length,
                       separatorBuilder: (context, index) => const SizedBox(width: 14),
                       itemBuilder: (context, index) {
-                        final partner = _randomPartnersForDisplay[index];
+                        final partner = _partners[index];
                         return _buildPartnerCard(partner);
                       },
                     ),
