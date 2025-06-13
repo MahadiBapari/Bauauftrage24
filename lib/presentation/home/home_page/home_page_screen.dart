@@ -12,6 +12,7 @@ import '../all_orders_page/single_order_page_screen.dart'; // Ensure this is cor
 import '../my_membership_page/membership_form_page_screen.dart'; // Import for the form page
 import 'package:shimmer/shimmer.dart';
 import 'package:extended_image/extended_image.dart';
+import '../../../core/network/safe_http.dart';
 
 class HomePageScreen extends StatefulWidget {
   const HomePageScreen({super.key});
@@ -192,30 +193,255 @@ class _HomePageScreenState extends State<HomePageScreen> {
     }
   }
 
-  // Ensure all required fetch methods exist for cache/background refresh logic
   Future<void> _fetchUser() async {
-    if (isLoadingUser && displayName == "User") setState(() => isLoadingUser = true);
-    // ...fetch logic...
+    if (!mounted) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null) return;
+
+      final response = await SafeHttp.safeGet(
+        context,
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/users/me'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            displayName = userData['name'] ?? "User";
+            isLoadingUser = false;
+          });
+        }
+        // Cache the user data
+        await _cacheManager.saveToCache('user_data', displayName);
+      }
+    } catch (e) {
+      debugPrint('Error fetching user: $e');
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingUser = false);
+      }
+    }
   }
+
   Future<void> _fetchPromoOrders() async {
-    if (isLoadingPromos && promoOrders.isEmpty) setState(() => isLoadingPromos = true);
-    // ...fetch logic...
+    if (!mounted) return;
+    try {
+      debugPrint('Fetching promo orders...');
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      
+      final response = await SafeHttp.safeGet(
+        context,
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/orders?status=publish&promo=true'),
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('Promo orders response status: ${response.statusCode}');
+      debugPrint('Promo orders response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        debugPrint('Parsed promo orders data length: ${data.length}');
+        
+        final List<Map<String, dynamic>> formattedOrders = data.map((order) {
+          return {
+            "displayTitle": order['title']['rendered'] ?? '',
+            "displayCategory": order['order_category'] ?? '',
+            "displayImageUrl": order['featured_image_url'] ?? '',
+            "fullOrder": order,
+          };
+        }).toList();
+
+        debugPrint('Formatted promo orders length: ${formattedOrders.length}');
+
+        if (mounted) {
+          setState(() {
+            promoOrders = formattedOrders;
+            isLoadingPromos = false;
+          });
+        }
+        await _cacheManager.saveToCache('promo_orders', formattedOrders);
+      }
+    } catch (e) {
+      debugPrint('Error fetching promo orders: $e');
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingPromos = false);
+      }
+    }
   }
+
   Future<void> _fetchCategories() async {
-    if (isLoadingCategories && _categories.isEmpty) setState(() => isLoadingCategories = true);
-    // ...fetch logic...
+    if (!mounted) return;
+    try {
+      final response = await SafeHttp.safeGet(
+        context,
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final List<Map<String, dynamic>> formattedCategories = data.map((category) {
+          return {
+            "id": category['id'].toString(),
+            "name": category['name'] ?? '',
+          };
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _categories = formattedCategories;
+            isLoadingCategories = false;
+          });
+        }
+        // Cache the categories
+        await _cacheManager.saveToCache('categories', formattedCategories);
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingCategories = false);
+      }
+    }
   }
+
   Future<void> _fetchNewArrivalsOrders({String? categoryId}) async {
-    if (isLoadingNewArrivals && _newArrivalsOrders.isEmpty) setState(() => isLoadingNewArrivals = true);
-    // ...fetch logic...
+    if (!mounted) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      
+      String url = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/orders?status=publish&orderby=date&order=desc';
+      if (categoryId != null) {
+        url += '&order_category=$categoryId';
+      }
+      debugPrint('Fetching new arrivals from URL: $url');
+
+      final response = await SafeHttp.safeGet(
+        context, 
+        Uri.parse(url),
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      
+      debugPrint('New arrivals response status: ${response.statusCode}');
+      debugPrint('New arrivals response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        debugPrint('Parsed new arrivals data length: ${data.length}');
+        
+        final List<Map<String, dynamic>> formattedOrders = data.map((order) {
+          final formatted = {
+            "displayTitle": order['title']['rendered'] ?? '',
+            "displayCategory": order['order_category'] ?? '',
+            "displayImageUrl": order['featured_image_url'] ?? '',
+            "fullOrder": order,
+          };
+          debugPrint('Formatted order: $formatted');
+          return formatted;
+        }).toList();
+
+        debugPrint('Formatted new arrivals length: ${formattedOrders.length}');
+
+        if (mounted) {
+          setState(() {
+            _newArrivalsOrders = formattedOrders;
+            isLoadingNewArrivals = false;
+          });
+        }
+        await _cacheManager.saveToCache('new_arrivals', formattedOrders);
+      }
+    } catch (e) {
+      debugPrint('Error fetching new arrivals: $e');
+      debugPrint('Stack trace: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingNewArrivals = false);
+      }
+    }
   }
+
   Future<void> _fetchMembershipStatus() async {
-    if (_isLoadingMembership && !_isActiveMembership && _membershipStatusMessage.isEmpty) setState(() => _isLoadingMembership = true);
-    // ...fetch logic...
+    if (!mounted) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null) return;
+
+      final response = await SafeHttp.safeGet(
+        context,
+        Uri.parse(_membershipEndpoint),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            _isActiveMembership = data['active'] ?? false;
+            _membershipStatusMessage = data['message'] ?? '';
+            _isLoadingMembership = false;
+          });
+        }
+        // Cache the membership status
+        await _cacheManager.saveToCache('membership_status', {
+          'active': _isActiveMembership,
+          'message': _membershipStatusMessage,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching membership status: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMembership = false);
+      }
+    }
   }
+
   Future<void> _loadPartners() async {
-    if (_isLoadingPartners && _partners.isEmpty) setState(() => _isLoadingPartners = true);
-    // ...fetch logic...
+    if (!mounted) return;
+    try {
+      final response = await SafeHttp.safeGet(context, Uri.parse(_partnersEndpoint));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final List<Partner> partners = data.map((partner) {
+          return Partner(
+            title: partner['title']['rendered'] ?? '',
+            address: partner['partner_address'] ?? '',
+            logoId: partner['featured_media'],
+            logoUrl: partner['featured_image_url'],
+          );
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _partners = partners;
+            _isLoadingPartners = false;
+          });
+        }
+        // Cache the partners
+        await _cacheManager.saveToCache('partners', partners.map((p) => p.toJson()).toList());
+      }
+    } catch (e) {
+      debugPrint('Error loading partners: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingPartners = false);
+      }
+    }
   }
 
   // In build(), for each section, only show shimmer/loading if loading==true and data is empty
@@ -719,7 +945,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   const Text(
-                                    '„bauaufträge24“ ein, um 20% Rabatt zu erhalten. (Keine Passkarte erforderlich.)',
+                                    '„bauaufträge24" ein, um 20% Rabatt zu erhalten. (Keine Passkarte erforderlich.)',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
                                   ),
