@@ -10,6 +10,7 @@ import '../../../widgets/custom_loading_indicator.dart';
 import '../../../widgets/membership_required_dialog.dart';
 import '../all_orders_page/single_order_page_screen.dart'; // Ensure this is correctly imported
 import '../my_membership_page/membership_form_page_screen.dart'; // Import for the form page
+import '../partners_page/partners_page_screen.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:extended_image/extended_image.dart';
 import '../../../core/network/safe_http.dart';
@@ -45,8 +46,9 @@ class _HomePageScreenState extends State<HomePageScreen> {
   final String _membershipEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user-membership';
 
   List<Partner> _partners = [];
+  List<Partner> _randomPartnersForDisplay = [];
   bool _isLoadingPartners = true;
-  final String _partnersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners';
+  final String _partnersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners?per_page=100';
 
   // Add cache expiration constants
   static const Duration _cacheExpiration = Duration(hours: 1);
@@ -159,6 +161,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
       if (mounted) {
         setState(() {
           _partners = partners;
+          final shuffledPartners = List<Partner>.from(partners)..shuffle();
+          _randomPartnersForDisplay = shuffledPartners.take(8).toList();
           _isLoadingPartners = false;
         });
       }
@@ -183,6 +187,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
         if (mounted) {
           setState(() {
             _partners = partners;
+            final shuffledPartners = List<Partner>.from(partners)..shuffle();
+            _randomPartnersForDisplay = shuffledPartners.take(8).toList();
             _isLoadingPartners = false;
           });
         }
@@ -533,6 +539,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
         if (mounted) {
           setState(() {
             _partners = partners;
+            final shuffledPartners = List<Partner>.from(partners)..shuffle();
+            _randomPartnersForDisplay = shuffledPartners.take(8).toList();
             _isLoadingPartners = false;
           });
         }
@@ -1146,7 +1154,28 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Our Partners", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("Our Partners", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            if (_partners.length > 8)
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PartnerScreen()),
+                  );
+                },
+                child: const Text(
+                  'See all',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color.fromARGB(255, 179, 21, 21),
+                  ),
+                ),
+              ),
+          ],
+        ),
         const SizedBox(height: 12),
         _isLoadingPartners
             ? const CustomLoadingIndicator(
@@ -1163,10 +1192,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
                     height: 180,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: _partners.length,
+                      itemCount: _randomPartnersForDisplay.length,
                       separatorBuilder: (context, index) => const SizedBox(width: 14),
                       itemBuilder: (context, index) {
-                        final partner = _partners[index];
+                        final partner = _randomPartnersForDisplay[index];
                         return _buildPartnerCard(partner);
                       },
                     ),

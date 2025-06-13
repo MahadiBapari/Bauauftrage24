@@ -14,8 +14,7 @@ class PartnerScreen extends StatefulWidget {
 class _PartnerScreenState extends State<PartnerScreen> {
   late Future<List<Partner>> _partnersFuture;
 
-  // IMPORTANT: Replace 'YOUR_API_KEY_HERE' with your actual API key
-  final String _apiKey = 'YOUR_API_KEY_HERE'; 
+  final String _apiKey = '1234567890abcdef'; 
 
   @override
   void initState() {
@@ -24,9 +23,9 @@ class _PartnerScreenState extends State<PartnerScreen> {
   }
 
   Future<List<Partner>> fetchPartners() async {
-    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners');
+    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners?per_page=100');
     final response = await SafeHttp.safeGet(context, url, headers: {
-      'X-API-Key': _apiKey,
+      
       'Accept': 'application/json',
     });
 
