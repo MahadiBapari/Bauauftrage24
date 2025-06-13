@@ -816,9 +816,25 @@ class _HomePageScreenState extends State<HomePageScreen> {
         const Text("Newest Orders", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         isLoadingCategories
-            ? const CustomLoadingIndicator(
-                size: 30.0,
-                message: 'Loading categories...',
+            ? Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: SizedBox(
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) => Container(
+                      width: 100,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
               )
             : _categories.isEmpty
                 ? const Text("No categories available.")
@@ -1160,6 +1176,15 @@ class _HomePageScreenState extends State<HomePageScreen> {
   }
 
   Widget _buildPartnerCard(Partner partner) {
+    // Responsive width based on screen size
+    final double screenWidth = MediaQuery.of(context).size.width;
+    // Card width: max 180, min 120, 40% of screen for small screens
+    final double cardWidth = screenWidth < 400
+        ? screenWidth * 0.4
+        : screenWidth < 600
+            ? 140
+            : 160;
+
     return InkWell(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1167,8 +1192,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
         );
       },
       child: Container(
-        width: 150,
-        margin: const EdgeInsets.symmetric(vertical: 12), 
+        width: cardWidth,
+        margin: const EdgeInsets.symmetric(vertical: 12),
         padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1184,57 +1209,63 @@ class _HomePageScreenState extends State<HomePageScreen> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (partner.logoUrl != null && partner.logoUrl!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0, left: 8, right: 8),
-                  child: AspectRatio(
-                    aspectRatio: 1.5,
-                    child: Image.network(
-                      partner.logoUrl!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double imageHeight = constraints.maxWidth * 0.55;
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (partner.logoUrl != null && partner.logoUrl!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 13.0, left: 10, right: 10),
+                      child: SizedBox(
+                        height: imageHeight,
+                        child: Image.network(
+                          partner.logoUrl!,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: EdgeInsets.only(top: imageHeight * 0.2),
+                      child: Column(
+                        children: [
+                          Icon(Icons.business, size: imageHeight * 0.7, color: Colors.grey),
+                          Text(
+                            'No Logo',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      partner.title,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: screenWidth < 400 ? 13 : 15,
+                        color: Colors.black87,
                       ),
                     ),
                   ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.only(top: 24.0),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.business, size: 48, color: Colors.grey),
-                      Text(
-                        'No Logo',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  partner.title,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
+                  const SizedBox(height: 12),
+                ],
+              );
+            },
           ),
         ),
       ),

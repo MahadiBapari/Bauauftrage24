@@ -5,6 +5,7 @@ import 'dart:async'; // Added for Future.wait
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Ensure this is imported if used for images
 import 'single_order_page_screen.dart'; // Ensure this is imported
@@ -599,16 +600,20 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                     _isLoadingCategories && _categories.isEmpty
                         ? SizedBox(
                             height: 40,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: 5,
-                              separatorBuilder: (_, __) => const SizedBox(width: 10),
-                              itemBuilder: (context, index) => Container(
-                                width: 100,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(12),
+                            child: Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: 5,
+                                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                itemBuilder: (context, index) => Container(
+                                  width: 100,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ),
@@ -665,16 +670,20 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                 child: RefreshIndicator(
                   onRefresh: _onRefresh,
                   child: _isLoadingOrders && _filteredOrders.isEmpty
-                      ? ListView.separated(
-                          itemCount: 5,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) => Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            height: 180,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: Colors.grey[300],
+                      ? Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: ListView.separated(
+                            itemCount: 5,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) => Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              height: 180,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         )
