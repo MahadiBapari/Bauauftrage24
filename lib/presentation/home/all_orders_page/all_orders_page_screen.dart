@@ -44,7 +44,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
   // API constants
   final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order';
-  final String categoriesEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories';
+  final String categoriesEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100';
   final String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
   final String apiKey = '1234567890abcdef'; // Assuming API key needed for user data
 
@@ -92,7 +92,20 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
       setState(() => _isLoadingOrders = false);
     }
     if (cachedCategories != null) {
-      _categories = List<Map<String, dynamic>>.from(cachedCategories as List);
+      // 1. Convert to the right type
+      var processedCategories = (cachedCategories as List).map((cat) {
+        dynamic id = cat['id'];
+        if (id is String) {
+          id = int.tryParse(id);
+        }
+        return {'id': id, 'name': cat['name'] as String};
+      }).toList();
+
+      // 2. Ensure 'All Categories' is present and at the top
+      processedCategories.removeWhere((cat) => cat['id'] == null);
+      processedCategories.insert(0, {'id': null, 'name': 'All Categories'});
+
+      _categories = processedCategories;
       setState(() => _isLoadingCategories = false);
     }
     // Fetch fresh data in background
@@ -122,7 +135,20 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
             _filterOrders(); // <--- Call filterOrders immediately after loading from cache
           }
           if (cachedData[1] != null) {
-            _categories = List<Map<String, dynamic>>.from(cachedData[1] as List);
+            // 1. Convert to the right type
+            var processedCategories = (cachedData[1] as List).map((cat) {
+              dynamic id = cat['id'];
+              if (id is String) {
+                id = int.tryParse(id);
+              }
+              return {'id': id, 'name': cat['name'] as String};
+            }).toList();
+
+            // 2. Ensure 'All Categories' is present and at the top
+            processedCategories.removeWhere((cat) => cat['id'] == null);
+            processedCategories.insert(0, {'id': null, 'name': 'All Categories'});
+            
+            _categories = processedCategories;
             _isLoadingCategories = false;
           }
         });
@@ -188,7 +214,14 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
     debugPrint('AllOrdersPageScreen: Fetching orders for page $page, append: $append');
     try {
       final headers = <String, String>{};
-      final response = await SafeHttp.safeGet(context, Uri.parse('$ordersEndpoint?page=$page&per_page=$perPage'), headers: headers);
+      
+      // Add category filter to API call if a category is selected
+      String url = '$ordersEndpoint?page=$page&per_page=$perPage';
+      if (_selectedCategoryId != null) {
+        url += '&order-categories=$_selectedCategoryId';
+      }
+
+      final response = await SafeHttp.safeGet(context, Uri.parse(url), headers: headers);
 
       if (!mounted) {
         debugPrint('AllOrdersPageScreen: Widget unmounted during orders API call.');
@@ -450,6 +483,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
       _isLoadingOrders = true;
       _isLoadingCategories = true;
       _isLoadingMembership = true;
+      _selectedCategoryId = null; // Reset category filter on pull-to-refresh
     });
 
     try {
@@ -596,6 +630,8 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                                             _currentPage = 1;
                                             _hasMoreOrders = true; // Assume there might be more orders with new filter
                                             _orders.clear(); // Clear existing orders to load fresh for new filter
+                                            _filteredOrders.clear(); // Also clear filtered orders to show loading indicator
+                                            _isLoadingOrders = true; // Show loading indicator
                                           });
                                           // Fetch orders again with the new category filter
                                           _fetchOrders(page: _currentPage, perPage: _perPage, append: false);

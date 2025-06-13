@@ -27,8 +27,9 @@ class _HomePageScreenState extends State<HomePageScreen> {
   bool isLoadingPromos = true;
 
   List<Map<String, dynamic>> _categories = [];
-  String? _selectedCategoryId;
+  int? _selectedCategoryId;
   List<Map<String, dynamic>> _newArrivalsOrders = [];
+  List<Map<String, dynamic>> _filteredNewArrivalsOrders = [];
   bool isLoadingCategories = true;
   bool isLoadingNewArrivals = true;
 
@@ -104,8 +105,23 @@ class _HomePageScreenState extends State<HomePageScreen> {
     final cachedData = await _cacheManager.loadFromCache('categories');
     if (cachedData != null) {
       if (mounted) {
+        var rawCategories = (cachedData as List).map((cat) {
+          dynamic id = cat['id'];
+          if (id is String) {
+            id = int.tryParse(id);
+          }
+          return {'id': id, 'name': cat['name'] as String};
+        }).toList();
+
+        // Ensure no "All" option from a potentially bad cache is there.
+        rawCategories.removeWhere((cat) => cat['id'] == null);
+        
+        // Create the list for the UI, adding the "All" button
+        var uiCategories = List<Map<String, dynamic>>.from(rawCategories);
+        uiCategories.insert(0, {'id': null, 'name': 'All'});
+
         setState(() {
-          _categories = List<Map<String, dynamic>>.from(cachedData as List);
+          _categories = uiCategories;
           isLoadingCategories = false;
         });
       }
@@ -118,6 +134,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
       if (mounted) {
         setState(() {
           _newArrivalsOrders = List<Map<String, dynamic>>.from(cachedData as List);
+          _filterNewArrivals();
           isLoadingNewArrivals = false;
         });
       }
@@ -178,7 +195,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
         _fetchUser(),
         _fetchPromoOrders(),
         _fetchCategories(),
-        _fetchNewArrivalsOrders(categoryId: _selectedCategoryId),
+        _fetchNewArrivalsOrders(),
         _fetchMembershipStatus(),
         _loadPartners(),
       ]);
@@ -310,26 +327,36 @@ class _HomePageScreenState extends State<HomePageScreen> {
     try {
       final response = await SafeHttp.safeGet(
         context,
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories'),
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        final List<Map<String, dynamic>> formattedCategories = data.map((category) {
-          return {
-            "id": category['id'].toString(),
-            "name": category['name'] ?? '',
-          };
-        }).toList();
+        
+        List<Map<String, dynamic>> rawCategories = [];
+        for (var cat in data) {
+          final id = cat['id'];
+          if (id != null) {
+            final intId = id is int ? id : (id is String ? int.tryParse(id) : null);
+            if (intId != null && cat['name'] is String) {
+              rawCategories.add({'id': intId, 'name': cat['name']});
+            }
+          }
+        }
+
+        // Save the raw, unmodified list to cache
+        await _cacheManager.saveToCache('categories', rawCategories);
 
         if (mounted) {
+          
+          var uiCategories = List<Map<String, dynamic>>.from(rawCategories);
+          uiCategories.insert(0, {'id': null, 'name': 'All Category'});
+          
           setState(() {
-            _categories = formattedCategories;
+            _categories = uiCategories;
             isLoadingCategories = false;
           });
         }
-        // Cache the categories
-        await _cacheManager.saveToCache('categories', formattedCategories);
       }
     } catch (e) {
       debugPrint('Error fetching categories: $e');
@@ -340,16 +367,15 @@ class _HomePageScreenState extends State<HomePageScreen> {
     }
   }
 
-  Future<void> _fetchNewArrivalsOrders({String? categoryId}) async {
+  Future<void> _fetchNewArrivalsOrders({int? categoryId}) async {
     if (!mounted) return;
     try {
+      setState(() => isLoadingNewArrivals = true);
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       
       String url = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?status=publish&orderby=date&order=desc';
-      if (categoryId != null) {
-        url += '&order_category=$categoryId';
-      }
+      // The categoryId parameter is removed from the URL to fetch all orders
       debugPrint('Fetching new arrivals from URL: $url');
 
       final response = await SafeHttp.safeGet(
@@ -410,6 +436,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
         if (mounted) {
           setState(() {
             _newArrivalsOrders = formattedOrders;
+            _filterNewArrivals(); // Filter after fetching
             isLoadingNewArrivals = false;
           });
         }
@@ -520,6 +547,26 @@ class _HomePageScreenState extends State<HomePageScreen> {
       if (mounted) {
         setState(() => _isLoadingPartners = false);
       }
+    }
+  }
+
+  void _filterNewArrivals() {
+    if (mounted) {
+      setState(() {
+        if (_selectedCategoryId == null) {
+          _filteredNewArrivalsOrders = List.from(_newArrivalsOrders);
+        } else {
+          _filteredNewArrivalsOrders = _newArrivalsOrders.where((order) {
+            final fullOrder = order['fullOrder'];
+            if (fullOrder != null && fullOrder['order-categories'] is List) {
+              final categoryIds = List<int>.from(fullOrder['order-categories']
+                  .map((catId) => catId is int ? catId : int.tryParse(catId.toString()) ?? -1));
+              return categoryIds.contains(_selectedCategoryId);
+            }
+            return false;
+          }).toList();
+        }
+      });
     }
   }
 
@@ -656,16 +703,16 @@ class _HomePageScreenState extends State<HomePageScreen> {
                             ),
                           ),
                         ) // Horizontal shimmer for newest orders
-                      : _newArrivalsOrders.isEmpty
+                      : _filteredNewArrivalsOrders.isEmpty
                           ? const Text("No new orders in this category.")
                           : SizedBox(
                               height: 220,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: _newArrivalsOrders.length,
+                                itemCount: _filteredNewArrivalsOrders.length,
                                 separatorBuilder: (_, __) => const SizedBox(width: 14),
                                 itemBuilder: (context, index) {
-                                  final orderData = _newArrivalsOrders[index];
+                                  final orderData = _filteredNewArrivalsOrders[index];
                                   return _buildNewArrivalCard(orderData);
                                 },
                               ),
@@ -786,16 +833,19 @@ class _HomePageScreenState extends State<HomePageScreen> {
                       separatorBuilder: (_, __) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         final category = _categories[index];
-                        final isSelected = _selectedCategoryId == category['id'];
+                        final categoryId = category['id'] as int?;
+                        final isSelected = _selectedCategoryId == categoryId;
                         return ActionChip(
                           label: Text(category['name']!),
-                          backgroundColor: isSelected ? Color.fromARGB(255, 179, 21, 21) : Colors.grey[200],
+                          backgroundColor: isSelected ? const Color.fromARGB(255, 179, 21, 21) : Colors.grey[200],
                           labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
                           onPressed: () {
                             setState(() {
-                              _selectedCategoryId = isSelected ? null : category['id'];
+                              // When a chip is pressed, its ID is now the selected one.
+                              // For the "All" chip, the categoryId is null.
+                              _selectedCategoryId = categoryId;
                             });
-                            _fetchNewArrivalsOrders(categoryId: _selectedCategoryId);
+                            _filterNewArrivals();
                           },
                         );
                       },
