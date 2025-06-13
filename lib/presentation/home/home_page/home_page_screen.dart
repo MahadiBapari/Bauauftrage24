@@ -105,7 +105,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
     final cachedData = await _cacheManager.loadFromCache('categories');
     if (cachedData != null) {
       if (mounted) {
-        var rawCategories = (cachedData as List).map((cat) {
+        var processedCategories = (cachedData as List).map((cat) {
           dynamic id = cat['id'];
           if (id is String) {
             id = int.tryParse(id);
@@ -113,15 +113,12 @@ class _HomePageScreenState extends State<HomePageScreen> {
           return {'id': id, 'name': cat['name'] as String};
         }).toList();
 
-        // Ensure no "All" option from a potentially bad cache is there.
-        rawCategories.removeWhere((cat) => cat['id'] == null);
+        // Ensure 'All Categories' is present and at the top.
+        processedCategories.removeWhere((cat) => cat['id'] == null);
+        processedCategories.insert(0, {'id': null, 'name': 'All Categories'});
         
-        // Create the list for the UI, adding the "All" button
-        var uiCategories = List<Map<String, dynamic>>.from(rawCategories);
-        uiCategories.insert(0, {'id': null, 'name': 'All'});
-
         setState(() {
-          _categories = uiCategories;
+          _categories = processedCategories;
           isLoadingCategories = false;
         });
       }
@@ -350,7 +347,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
         if (mounted) {
           
           var uiCategories = List<Map<String, dynamic>>.from(rawCategories);
-          uiCategories.insert(0, {'id': null, 'name': 'All Category'});
+          uiCategories.insert(0, {'id': null, 'name': 'All Categories'});
           
           setState(() {
             _categories = uiCategories;

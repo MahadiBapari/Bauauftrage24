@@ -210,6 +210,16 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   }
 
   Future<void> _fetchOrders({required int page, required int perPage, required bool append}) async {
+    if (!append) {
+      // For a new fetch (not pagination), we should show a full loading indicator.
+      if (mounted) {
+        setState(() {
+          _isLoadingOrders = true;
+          _filteredOrders.clear(); // Clear existing to show loader
+        });
+      }
+    }
+
     List<Map<String, dynamic>> currentFetchedOrders = [];
     debugPrint('AllOrdersPageScreen: Fetching orders for page $page, append: $append');
     try {
@@ -325,6 +335,13 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
             _orders.clear();
             _filteredOrders.clear();
           }
+        });
+      }
+    } finally {
+      // ALWAYS ensure loading state is set to false, even on error or success.
+      if (mounted && !append) {
+        setState(() {
+          _isLoadingOrders = false;
         });
       }
     }
@@ -624,16 +641,12 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                                         FocusScope.of(context).unfocus();
                                         if (mounted) {
                                           setState(() {
-                                            // Toggle selected category: if already selected, deselect (set to null)
                                             _selectedCategoryId = isSelected ? null : id;
-                                            // Reset current page to 1 whenever category filter changes
                                             _currentPage = 1;
-                                            _hasMoreOrders = true; // Assume there might be more orders with new filter
-                                            _orders.clear(); // Clear existing orders to load fresh for new filter
-                                            _filteredOrders.clear(); // Also clear filtered orders to show loading indicator
-                                            _isLoadingOrders = true; // Show loading indicator
+                                            _hasMoreOrders = true;
+                                            _orders.clear();
                                           });
-                                          // Fetch orders again with the new category filter
+                                          // Just trigger the fetch, it will handle its own loading state.
                                           _fetchOrders(page: _currentPage, perPage: _perPage, append: false);
                                         }
                                       },
