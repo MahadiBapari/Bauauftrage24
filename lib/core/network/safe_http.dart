@@ -25,7 +25,8 @@ class SafeHttp {
     try {
       final response = await http.post(url, headers: headers, body: body);
       
-      if (response.statusCode == 401 || response.statusCode == 403) {
+      final isLoginRequest = url.path.endsWith('/login/');
+      if ((response.statusCode == 401 || response.statusCode == 403) && !isLoginRequest) {
         // Handle unauthorized/forbidden
         _handleUnauthorized(context);
         throw Exception('Unauthorized');

@@ -21,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
     const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/login/';
     const apiKey = '1234567890abcdef';
 
-    if (_isLoading) return;  // Prevent multiple login attempts
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
     });
@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
           await prefs.setString('user_role', role);
           await prefs.setString('auth_token', token);
 
-          print('Login successful! Token: $token'); //debugging
+          print('Login successful! Token: $token'); 
           Navigator.pushNamedAndRemoveUntil(
             context,
             '/home',
@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       _showError('Login failed: Email or password is wrong');
     } finally {
-      if (mounted) { //check mounted
+      if (mounted) { 
          setState(() {
           _isLoading = false;
         });
@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showError(String message) {
-    if (!mounted) return; //check mounted
+    if (!mounted) return; 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
