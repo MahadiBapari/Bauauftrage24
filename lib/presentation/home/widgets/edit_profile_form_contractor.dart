@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class EditProfileFormContractor extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -33,6 +34,11 @@ class _EditProfileFormContractorState
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
 
+  // New state for service categories
+  List<Map<String, dynamic>> _allServiceCategories = [];
+  List<String> _selectedServiceCategoryIds = [];
+  bool _isLoadingCategories = true;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +56,46 @@ class _EditProfileFormContractorState
         widget.userData['meta_data']?['first_name']?[0] ?? '';
     _lastNameController.text =
         widget.userData['meta_data']?['last_name']?[0] ?? '';
+
+    // Initialize selected categories from user data
+    final serviceCategories = widget.userData['meta_data']?['_service_category_'];
+    if (serviceCategories is List) {
+      _selectedServiceCategoryIds = serviceCategories
+          .map((cat) => cat is Map ? cat['id']?.toString() : null)
+          .where((id) => id != null)
+          .cast<String>()
+          .toList();
+    }
+
+    // Fetch all categories
+    _fetchServiceCategories();
+  }
+
+  Future<void> _fetchServiceCategories() async {
+    const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _allServiceCategories = data.map((item) => {
+            'id': item['id'].toString(),
+            'name': item['name'],
+          }).toList();
+        });
+      }
+    } catch (e) {
+      // Handle or log error
+      debugPrint('Failed to load categories: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
+    }
   }
 
   @override
@@ -69,14 +115,14 @@ class _EditProfileFormContractorState
     if (_formKey.currentState!.validate()) {
       final updatedData = {
         'user_id': widget.userData['ID'].toString(),
-        // FIX: Include the email from widget.userData['user_email'] here
-        'user_email': widget.userData['user_email'] ?? '',
+        'email': widget.userData['user_email'] ?? '',
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
         'user_phone_': _phoneController.text,
         'firmenname_': _firmNameController.text,
         'uid_nummer': _uidNumberController.text,
         'available_time': _availableTimeController.text,
+        '_service_category_': _selectedServiceCategoryIds.map((id) => int.tryParse(id) ?? 0).where((id) => id > 0).toList(),
       };
 
       const apiKey = '1234567890abcdef';
@@ -87,10 +133,10 @@ class _EditProfileFormContractorState
         final response = await http.post(
           Uri.parse(url),
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
             'X-API-Key': apiKey,
           },
-          body: updatedData,
+          body: json.encode(updatedData),
         );
 
         // Ensure widget is still mounted before interacting with the UI
@@ -269,7 +315,46 @@ class _EditProfileFormContractorState
                           });
                         },
                       ),
-                      const SizedBox(height: 16), // Spacing after last field
+                      const SizedBox(height: 16),
+
+                      // Service Categories MultiSelect
+                      _isLoadingCategories
+                          ? const Center(child: CircularProgressIndicator())
+                          : MultiSelectDialogField(
+                              backgroundColor: Colors.white,
+                              items: _allServiceCategories
+                                  .map((category) => MultiSelectItem<String>(
+                                      category['id']!, category['name']!))
+                                  .toList(),
+                              initialValue: _selectedServiceCategoryIds,
+                              title: const Text("Categories"),
+                              selectedColor: const Color.fromARGB(255, 185, 33, 33),
+                              cancelText: const Text("", style: TextStyle(fontSize: 0)),
+                              confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              buttonText: const Text("Select Categories"),
+                              onConfirm: (values) {
+                                setState(() {
+                                  _selectedServiceCategoryIds = values.cast<String>();
+                                });
+                              },
+                              chipDisplay: MultiSelectChipDisplay(
+                                chipColor: const Color.fromARGB(76, 167, 17, 17),
+                                textStyle: const TextStyle(color: Color.fromARGB(255, 82, 82, 82)),
+                                icon: null, // This removes the default check icon
+                                onTap: (value) {
+                                  setState(() {
+                                    _selectedServiceCategoryIds.remove(value);
+                                  });
+                                },
+                              ),
+                              validator: (value) =>
+                                  value == null || value.isEmpty ? 'Please select at least one category' : null,
+                            ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),

@@ -68,10 +68,9 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
         'password': _passwordController.text,
         'available_time': _selectedCategory,
         'role': 'um_contractor',
-        'meta_data': {
-          '_service_category_': _selectedServiceCategories,
+        '_service_category_': _selectedServiceCategories.map((id) => {'id': id}).toList(),
         },
-      }));
+      ));
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Registration successful

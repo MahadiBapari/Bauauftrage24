@@ -29,10 +29,41 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   String? _authToken; // Store auth token
   String? _userId;    // Store user ID
 
+  List<Map<String, dynamic>> _allServiceCategories = [];
+
   @override
   void initState() {
     super.initState();
     _loadUserDataFromCacheThenBackground();
+    _fetchAllServiceCategories();
+  }
+
+  Future<void> _fetchAllServiceCategories() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    try {
+      final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
+      headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      if (mounted && response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _allServiceCategories = data.map((item) => {
+            'id': item['id'].toString(),
+            'name': item['name'],
+          }).toList();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        debugPrint('Failed to load service categories: $e');
+      }
+    }
   }
 
   Future<void> _loadUserDataFromCacheThenBackground() async {
@@ -481,6 +512,12 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           ),
                           _buildInfoRow(
                             context,
+                            'Service Categories',
+                            _getCategoryNames(),
+                            Icons.category,
+                          ),
+                          _buildInfoRow(
+                            context,
                             'Available Time',
                             _userData!['meta_data']?['available_time']?[0] ??
                                 'No Available time',
@@ -490,7 +527,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           _buildSectionTitle('Utilities'),
                           _buildProfileOption(
                             context,
-                            'Help & Support',
+                            'Support & Help',
                             Icons.question_mark,
                           ),
                           _buildProfileOption(
@@ -755,5 +792,37 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       ),
       ),
     );
+  }
+
+  String _getCategoryNames() {
+    if (_userData == null || _allServiceCategories.isEmpty) {
+      return 'Loading categories...';
+    }
+
+    final metaData = _userData!['meta_data'];
+    if (metaData == null || metaData['_service_category_'] == null) {
+      return 'No categories selected';
+    }
+
+    final rawCategories = metaData['_service_category_'];
+    if (rawCategories is! List || rawCategories.isEmpty) {
+      return 'No categories selected';
+    }
+
+    final selectedIds = rawCategories
+        .map((cat) => cat is Map ? cat['id']?.toString() : null)
+        .where((id) => id != null)
+        .toSet();
+
+    if (selectedIds.isEmpty) {
+      return 'No categories selected';
+    }
+
+    final selectedNames = _allServiceCategories
+        .where((category) => selectedIds.contains(category['id']))
+        .map((category) => category['name'] as String)
+        .toList();
+
+    return selectedNames.isNotEmpty ? selectedNames.join(', ') : 'Loading categories...';
   }
 }
