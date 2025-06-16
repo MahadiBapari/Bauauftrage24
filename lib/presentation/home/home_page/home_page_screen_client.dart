@@ -8,9 +8,11 @@ import '../my_order_page/single_myorders_page_screen.dart';
 import 'package:bauauftrage/widgets/custom_loading_indicator.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
+import '../add_new_order_page/add_new_order_page_screen.dart';
 
 class HomePageScreenClient extends StatefulWidget {
-  const HomePageScreenClient({Key? key}) : super(key: key);
+  final void Function(String categoryId)? onCategorySelected;
+  const HomePageScreenClient({Key? key, this.onCategorySelected}) : super(key: key);
 
   @override
   State<HomePageScreenClient> createState() => _HomePageScreenClientState();
@@ -719,7 +721,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to category details
+          widget.onCategorySelected?.call(category.id.toString());
         },
         child: Material(
           elevation: 0,

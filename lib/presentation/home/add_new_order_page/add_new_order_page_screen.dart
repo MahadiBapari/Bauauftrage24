@@ -9,7 +9,9 @@ import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart'; 
 
 class AddNewOrderPageScreen extends StatefulWidget {
-  const AddNewOrderPageScreen({super.key});
+  final String? initialCategoryId;
+
+  const AddNewOrderPageScreen({super.key, this.initialCategoryId});
 
   @override
   _AddNewOrderPageScreenState createState() => _AddNewOrderPageScreenState();
@@ -38,6 +40,9 @@ class _AddNewOrderPageScreenState extends State<AddNewOrderPageScreen> {
     super.initState();
     _loadAuthToken();
     _categoriesFuture = _fetchOrderCategories(); // Fetch categories in initState
+    if (widget.initialCategoryId != null) {
+      _selectedCategories.add(widget.initialCategoryId!);
+    }
   }
 
   // Function to fetch order categories from the API

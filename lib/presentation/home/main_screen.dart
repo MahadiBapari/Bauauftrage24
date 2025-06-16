@@ -23,7 +23,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-  late final List<Widget> _screens;
+  String? _initialCategoryIdForAddOrder;
   late final List<IconData> _icons;
   late final List<String> _labels;
 
@@ -33,33 +33,25 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeScreens();
+    _initializeNavItems();
     _fetchUser();
   }
 
-  void _initializeScreens() {
+  void _navigateToAddNewOrder(String categoryId) {
+    setState(() {
+      _initialCategoryIdForAddOrder = categoryId;
+      _selectedIndex = 2; // Switch to the AddNewOrderPage
+    });
+  }
+
+  void _initializeNavItems() {
     if (widget.role == 'um_client') {
-      _screens = [
-        const HomePageScreenClient(key: ValueKey('home_page')),
-        const ProfilePageScreenClient(key: ValueKey('profile_page')),
-        const AddNewOrderPageScreen(key: ValueKey('add_new_order_page')),
-      ];
       _icons = [Icons.home, Icons.person];
       _labels = ['Home', 'Profile'];
     } else if (widget.role == 'um_contractor') {
-      _screens = [
-        const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreenContractor(key: ValueKey('profile_page')),
-        const MyMembershipPageScreen(key: ValueKey('my_membership_page')),
-        AllOrdersPageScreen(key: ValueKey('all_orders_page')),
-      ];
       _icons = [Icons.home, Icons.person, Icons.card_membership, Icons.shopping_bag];
       _labels = ['Home', 'Profile', 'Membership', 'All Orders'];
     } else {
-      _screens = [
-        const HomePageScreen(key: ValueKey('home_page')),
-        const ProfilePageScreenClient(key: ValueKey('profile_page')),
-      ];
       _icons = [Icons.home, Icons.person];
       _labels = ['Home', 'Profile'];
     }
@@ -67,6 +59,10 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onItemTapped(int index) {
     setState(() {
+      // If user manually taps the 'Add' button, ensure it's a fresh form
+      if (widget.role == 'um_client' && index == 2) {
+        _initialCategoryIdForAddOrder = null;
+      }
       _selectedIndex = index;
     });
   }
@@ -124,6 +120,34 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     bool isClient = widget.role == 'um_client';
 
+    // Build screens declaratively
+    final List<Widget> screens;
+    if (widget.role == 'um_client') {
+      screens = [
+        HomePageScreenClient(
+          key: const ValueKey('home_page'),
+          onCategorySelected: _navigateToAddNewOrder,
+        ),
+        const ProfilePageScreenClient(key: ValueKey('profile_page')),
+        AddNewOrderPageScreen(
+          key: ValueKey('add_new_order_page_$_initialCategoryIdForAddOrder'),
+          initialCategoryId: _initialCategoryIdForAddOrder,
+        ),
+      ];
+    } else if (widget.role == 'um_contractor') {
+      screens = [
+        const HomePageScreen(key: ValueKey('home_page')),
+        const ProfilePageScreenContractor(key: ValueKey('profile_page')),
+        const MyMembershipPageScreen(key: ValueKey('my_membership_page')),
+        AllOrdersPageScreen(key: ValueKey('all_orders_page')),
+      ];
+    } else {
+      screens = [
+        const HomePageScreen(key: ValueKey('home_page')),
+        const ProfilePageScreenClient(key: ValueKey('profile_page')),
+      ];
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -172,7 +196,7 @@ class _MainScreenState extends State<MainScreen> {
         },
       ),
       body: SizedBox.expand(
-        child: _screens[_selectedIndex],
+        child: screens[_selectedIndex],
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
