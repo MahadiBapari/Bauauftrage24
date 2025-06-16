@@ -255,24 +255,48 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
   // --- _linkProfileImageToUser (will not be called for profile picture display) ---
   Future<void> _linkProfileImageToUser(int mediaId) async {
-    if (_userId == null || _authToken == null) {
-      if (mounted) _showError('Missing user ID or token. Cannot update profile.');
+    if (_userId == null || _authToken == null || _userData == null) {
+      if (mounted) _showError('Missing user data or token. Cannot update profile.');
       return;
     }
 
-    final url =
-        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$_userId';
+    final meta = _userData!['meta_data'] ?? {};
+    final serviceCategories = meta['_service_category_'];
+    List<int> serviceCategoryIds = [];
+    if (serviceCategories is List) {
+      serviceCategoryIds = serviceCategories
+          .map((cat) {
+            if (cat is Map && cat.containsKey('id')) {
+              return int.tryParse(cat['id'].toString());
+            }
+            return null;
+          })
+          .whereType<int>()
+          .toList();
+    }
+
+    final body = {
+      'user_id': _userId,
+      'email': _userData!['user_email'] ?? '',
+      'first_name': meta['first_name']?[0] ?? '',
+      'last_name': meta['last_name']?[0] ?? '',
+      'user_phone_': meta['user_phone']?[0] ?? '', 
+      'firmenname_': meta['firmenname']?[0] ?? '',
+      'uid_nummer': meta['uid_nummer']?[0] ?? '',
+      'available_time': meta['available_time']?[0] ?? '',
+      '_service_category_': serviceCategoryIds,
+      'profile-picture': mediaId.toString(),
+    };
+
+    const url =
+        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/';
 
     try {
       final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $_authToken',
         'X-API-Key': apiKey,
-      }, body: json.encode({
-        
-          'profile-picture': [mediaId.toString()],
-        
-      }));
+      }, body: json.encode(body));
 
       if (!mounted) return;
 
