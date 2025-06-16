@@ -28,6 +28,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
   String? _authToken; // Store auth token
   String? _userId;    // Store user ID
+  String? _profileImageUrl;
 
   List<Map<String, dynamic>> _allServiceCategories = [];
 
@@ -78,6 +79,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         _userData = cachedUser as Map<String, dynamic>;
         _isLoading = false;
       });
+      _loadProfilePicture();
     }
     // Fetch fresh data in background
     _loadUserData(fetchAndUpdateCache: true);
@@ -106,6 +108,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
           _userData = data;
           _isLoading = false;
         });
+        _loadProfilePicture();
         // Save to cache
         final cacheManager = CacheManager();
         await cacheManager.saveToCache('profile_user_$_userId', data);
@@ -117,6 +120,41 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       if (!mounted) return;
       _showError('Error loading profile: $e');
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadProfilePicture() async {
+    if (_userData == null || !mounted) return;
+
+    final dynamic rawMediaId = _userData!['meta_data']?['profile-picture']?[0];
+    final String? mediaId = (rawMediaId is int) ? rawMediaId.toString() : rawMediaId as String?;
+
+    if (mediaId != null && mediaId.isNotEmpty) {
+      try {
+        final mediaUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId';
+        final response = await SafeHttp.safeGet(context, Uri.parse(mediaUrl), headers: {
+          'Authorization': 'Bearer $_authToken',
+          'X-API-Key': apiKey,
+        });
+
+        if (mounted && response.statusCode == 200) {
+          final mediaData = json.decode(response.body);
+          final imageUrl = mediaData['source_url'];
+          if (imageUrl != null) {
+            setState(() {
+              _profileImageUrl = imageUrl;
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to load profile image: $e');
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _profileImageUrl = null;
+        });
+      }
     }
   }
 
@@ -149,18 +187,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       final imageFile = File(pickedFile.path);
 
       if (await imageFile.exists()) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('local_profile_image_path', imageFile.path); // Persist local path
-
-        if (!mounted) return;
-        // setState(() {
-        //   _pickedImage = imageFile; // This line is commented out as we use static image
-        // });
-
-        // If you still want to upload the picked image to server even if not displayed
-        // await _uploadAndLinkProfileImage(imageFile);
-        if (!mounted) return;
-        _showError("Profile picture is static. Image was not uploaded.");
+        await _uploadAndLinkProfileImage(imageFile);
       } else {
         if (!mounted) return;
         _showError("Selected image does not exist.");
@@ -242,9 +269,9 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         'Authorization': 'Bearer $_authToken',
         'X-API-Key': apiKey,
       }, body: json.encode({
-        'meta_input': {
+        
           'profile-picture': [mediaId.toString()],
-        },
+        
       }));
 
       if (!mounted) return;
@@ -434,29 +461,30 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                                       ),
                                     ],
                                   ),
-                                  child: const CircleAvatar( // Changed to const
+                                  child: CircleAvatar( // Changed to const
                                     radius: 55,
                                     backgroundColor: Colors.white,
-                                    backgroundImage: AssetImage('assets/images/profile.png'), // STATIC IMAGE
-                                    child: null, // No child needed as we have a background image
+                                    backgroundImage: _profileImageUrl != null
+                                        ? CachedNetworkImageProvider(_profileImageUrl!)
+                                        : const AssetImage('assets/images/profile.png') as ImageProvider,
                                   ),
                                 ),
-                                // Positioned(
-                                //   bottom: 4,
-                                //   right: 4,
-                                //   child: GestureDetector(
-                                //     onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
-                                //     child: Container(
-                                //       padding: const EdgeInsets.all(6),
-                                //       decoration: BoxDecoration(
-                                //         shape: BoxShape.circle,
-                                //         color: Theme.of(context).primaryColor,
-                                //       ),
-                                //       child: const Icon(Icons.camera_alt,
-                                //           size: 18, color: Colors.white),
-                                //     ),
-                                //   ),
-                                // ),
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      child: const Icon(Icons.camera_alt,
+                                          size: 18, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

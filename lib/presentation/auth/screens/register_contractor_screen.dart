@@ -68,7 +68,7 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
         'password': _passwordController.text,
         'available_time': _selectedCategory,
         'role': 'um_contractor',
-        '_service_category_': _selectedServiceCategories.map((id) => {'id': id}).toList(),
+        '_service_category_': _selectedServiceCategories.map((id) => int.tryParse(id) ?? 0).where((id) => id > 0).toList(),
         },
       ));
 
