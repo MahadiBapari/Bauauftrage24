@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../widgets/edit_profile_form_client.dart'; // Make sure this path is correct
 import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
@@ -22,12 +23,12 @@ class ProfilePageScreenClient extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePageScreenClient> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-  // File? _pickedImage; // Removed: No longer needed for static profile picture
-  final ImagePicker _picker = ImagePicker(); // Keep if other image picking is needed
+  final ImagePicker _picker = ImagePicker();
   final String apiKey = '1234567890abcdef'; // Your actual API key.
 
   String? _authToken; // Store auth token
   String? _userId;    // Store user ID
+  String? _profileImageUrl;
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
         _userData = cachedUser as Map<String, dynamic>;
         _isLoading = false;
       });
+      _loadProfilePicture();
     }
     // Fetch fresh data in background
     _loadUserData(fetchAndUpdateCache: true);
@@ -75,6 +77,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
           _userData = data;
           _isLoading = false;
         });
+        _loadProfilePicture();
         // Save to cache
         final cacheManager = CacheManager();
         await cacheManager.saveToCache('profile_user_$_userId', data);
@@ -86,6 +89,41 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
       if (!mounted) return;
       _showError('Error loading profile: $e');
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadProfilePicture() async {
+    if (_userData == null || !mounted) return;
+
+    final dynamic rawMediaId = _userData!['meta_data']?['profile-picture']?[0];
+    final String? mediaId = (rawMediaId is int) ? rawMediaId.toString() : rawMediaId as String?;
+
+    if (mediaId != null && mediaId.isNotEmpty) {
+      try {
+        final mediaUrl = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId';
+        final response = await SafeHttp.safeGet(context, Uri.parse(mediaUrl), headers: {
+          'Authorization': 'Bearer $_authToken',
+          'X-API-Key': apiKey,
+        });
+
+        if (mounted && response.statusCode == 200) {
+          final mediaData = json.decode(response.body);
+          final imageUrl = mediaData['source_url'];
+          if (imageUrl != null) {
+            setState(() {
+              _profileImageUrl = imageUrl;
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to load profile image: $e');
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _profileImageUrl = null;
+        });
+      }
     }
   }
 
@@ -118,18 +156,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
       final imageFile = File(pickedFile.path);
 
       if (await imageFile.exists()) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('local_profile_image_path', imageFile.path); // Persist local path
-
-        if (!mounted) return;
-        // setState(() {
-        //   _pickedImage = imageFile; // This line is commented out as we use static image
-        // });
-
-        // If you still want to upload the picked image to server even if not displayed
-        // await _uploadAndLinkProfileImage(imageFile);
-        if (!mounted) return;
-        _showError("Profile picture is static. Image was not uploaded.");
+        await _uploadAndLinkProfileImage(imageFile);
       } else {
         if (!mounted) return;
         _showError("Selected image does not exist.");
@@ -197,24 +224,30 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
   // --- _linkProfileImageToUser (will not be called for profile picture display) ---
   Future<void> _linkProfileImageToUser(int mediaId) async {
-    if (_userId == null || _authToken == null) {
-      if (mounted) _showError('Missing user ID or token. Cannot update profile.');
+    if (_userId == null || _authToken == null || _userData == null) {
+      if (mounted) _showError('Missing user data or token. Cannot update profile.');
       return;
     }
 
-    final url =
-        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/$_userId';
+    final meta = _userData!['meta_data'] ?? {};
+    final body = {
+      'user_id': _userId,
+      'email': _userData!['user_email'] ?? '',
+      'first_name': meta['first_name']?[0] ?? '',
+      'last_name': meta['last_name']?[0] ?? '',
+      'user_phone_': meta['user_phone_']?[0] ?? '',
+      'profile-picture': mediaId.toString(),
+    };
+
+    const url =
+        'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/edit-user/';
 
     try {
       final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $_authToken',
         'X-API-Key': apiKey,
-      }, body: json.encode({
-        'meta_input': {
-          'profile-picture': [mediaId.toString()],
-        },
-      }));
+      }, body: json.encode(body));
 
       if (!mounted) return;
 
@@ -404,33 +437,33 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                                       ),
                                     ],
                                   ),
-                                  child: const CircleAvatar( // Changed to const
+                                  child: CircleAvatar(
                                     radius: 55,
                                     backgroundColor: Colors.white,
-                                    backgroundImage: AssetImage('assets/images/profile.png'), // STATIC IMAGE
-                                    child: null, // No child needed as we have a background image
+                                    backgroundImage: _profileImageUrl != null
+                                        ? CachedNetworkImageProvider(_profileImageUrl!)
+                                        : const AssetImage('assets/images/profile.png') as ImageProvider,
                                   ),
                                 ),
-                                // Positioned(
-                                //   bottom: 4,
-                                //   right: 4,
-                                //   child: GestureDetector(
-                                //     onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
-                                //     child: Container(
-                                //       padding: const EdgeInsets.all(6),
-                                //       decoration: BoxDecoration(
-                                //         shape: BoxShape.circle,
-                                //         color: Theme.of(context).primaryColor,
-                                //       ),
-                                //       child: const Icon(Icons.camera_alt,
-                                //           size: 18, color: Colors.white),
-                                //     ),
-                                //   ),
-                                // ),
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: _pickImage,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Color.fromARGB(255, 185, 7, 7)
+                                      ),
+                                      child: const Icon(Icons.camera_alt,
+                                          size: 18, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          // Removed the "Save Profile Image" button as it's now autosave
                           const SizedBox(height: 12),
                           Text(
                             '${_userData!['meta_data']?['first_name']?[0] ?? ''} ${_userData!['meta_data']?['last_name']?[0] ?? ''}',
@@ -466,27 +499,6 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                                 'No phone number',
                             Icons.phone,
                           ),
-                          // _buildInfoRow(
-                          //   context,
-                          //   'Firm Name',
-                          //   _userData!['meta_data']?['firmenname_']?[0] ??
-                          //       'No firm name',
-                          //   Icons.business,
-                          // ),
-                          // _buildInfoRow(
-                          //   context,
-                          //   'UID Number',
-                          //   _userData!['meta_data']?['uid_nummer']?[0] ??
-                          //       'No UID number',
-                          //   Icons.badge,
-                          // ),
-                          // _buildInfoRow(
-                          //   context,
-                          //   'Available Time',
-                          //   _userData!['meta_data']?['available_time']?[0] ??
-                          //       'No Available time',
-                          //   Icons.access_time,
-                          // ),
                           const SizedBox(height: 30),
                           _buildSectionTitle('Utilities'),
                           _buildProfileOption(
@@ -514,46 +526,50 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
   }
 
   Widget _buildProfileShimmer() {
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height - 200,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  shape: BoxShape.circle,
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height - 200,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 120,
-                height: 20,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 200,
-                height: 18,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 260,
-                height: 18,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 180,
-                height: 18,
-                color: Colors.grey[300],
-              ),
-            ],
+                const SizedBox(height: 16),
+                Container(
+                  width: 120,
+                  height: 20,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 200,
+                  height: 18,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 260,
+                  height: 18,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 180,
+                  height: 18,
+                  color: Colors.white,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -22,12 +22,11 @@ class ProfilePageScreenContractor extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePageScreenContractor> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-  // File? _pickedImage; // Removed: No longer needed for static profile picture
-  final ImagePicker _picker = ImagePicker(); // Keep if other image picking is needed
-  final String apiKey = '1234567890abcdef'; // Your actual API key.
-
-  String? _authToken; // Store auth token
-  String? _userId;    // Store user ID
+  
+  final ImagePicker _picker = ImagePicker(); 
+  final String apiKey = '1234567890abcdef'; 
+  String? _authToken; 
+  String? _userId;
   String? _profileImageUrl;
 
   List<Map<String, dynamic>> _allServiceCategories = [];
@@ -113,7 +112,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         final cacheManager = CacheManager();
         await cacheManager.saveToCache('profile_user_$_userId', data);
       } else {
-        _showError('Failed to load profile: {response.body}');
+        _showError('Failed to load profile: {response.body}');
         setState(() => _isLoading = false);
       }
     } catch (e) {
@@ -158,7 +157,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- _pickImage function (still here but its use for profile pic is commented out in UI) ---
+ 
   Future<void> _pickImage() async {
     final source = await showModalBottomSheet<ImageSource?>(
       context: context,
@@ -179,7 +178,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       ),
     );
 
-    if (source == null) return; // User cancelled selection
+    if (source == null) return; 
 
     final XFile? pickedFile = await _picker.pickImage(source: source);
 
@@ -195,7 +194,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- _uploadAndLinkProfileImage (will not be called for profile picture display) ---
+  
   Future<void> _uploadAndLinkProfileImage(File imageFile) async {
     if (!mounted) return;
     setState(() {
@@ -215,7 +214,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- _uploadImageToMediaLibrary (will not be called for profile picture display) ---
+ 
   Future<int?> _uploadImageToMediaLibrary(File imageFile) async {
     try {
       final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media');
@@ -253,7 +252,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     }
   }
 
-  // --- _linkProfileImageToUser (will not be called for profile picture display) ---
+  
   Future<void> _linkProfileImageToUser(int mediaId) async {
     if (_userId == null || _authToken == null || _userData == null) {
       if (mounted) _showError('Missing user data or token. Cannot update profile.');
@@ -485,7 +484,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                                       ),
                                     ],
                                   ),
-                                  child: CircleAvatar( // Changed to const
+                                  child: CircleAvatar( 
                                     radius: 55,
                                     backgroundColor: Colors.white,
                                     backgroundImage: _profileImageUrl != null
@@ -497,22 +496,22 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                                   bottom: 4,
                                   right: 4,
                                   child: GestureDetector(
-                                    onTap: _pickImage, // KEPT: To still allow tapping for demo/future, but gives message
+                                    onTap: _pickImage, 
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Theme.of(context).primaryColor,
+                                        color: Color.fromARGB(255, 185, 7, 7)
                                       ),
                                       child: const Icon(Icons.camera_alt,
-                                          size: 18, color: Colors.white),
+                                          size: 18, color: Color.fromARGB(255, 255, 255, 255)),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          // Removed the "Save Profile Image" button as it's now autosave
+                          
                           const SizedBox(height: 12),
                           Text(
                             '${_userData!['meta_data']?['first_name']?[0] ?? ''} ${_userData!['meta_data']?['last_name']?[0] ?? ''}',
