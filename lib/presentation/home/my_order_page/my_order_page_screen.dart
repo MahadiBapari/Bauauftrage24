@@ -37,7 +37,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
   final ScrollController _scrollController = ScrollController();
 
   // API constants
-  final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order';
+  final String ordersEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?per_page=100';
   final String mediaEndpointBase = 'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/';
   final String apiKey = '1234567890abcdef';
 

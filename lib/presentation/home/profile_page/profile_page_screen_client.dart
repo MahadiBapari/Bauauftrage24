@@ -373,7 +373,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                           _showError('Not authenticated.');
                           return;
                         }
-                        // Remove any invisible or stray characters in the URL string
+                        
                         final url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user/$userId/update-password';
                         try {
                           final response = await SafeHttp.safePost(context, Uri.parse(url), headers: {

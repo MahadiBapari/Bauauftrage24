@@ -1,16 +1,75 @@
+import 'dart:async';
+import 'package:bauauftrage/presentation/auth/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:app_links/app_links.dart';
 import 'routing/routes.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // Listen for incoming links while the app is running
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      if (mounted) {
+        _handleDeepLink(uri);
+      }
+    });
+
+    // Handle the link that started the app
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme == 'bauauftrage' && uri.host == 'reset-password') {
+      final token = uri.queryParameters['token'];
+      if (token != null) {
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => ResetPasswordScreen(token: token),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Your App Name',
       theme: ThemeData(
         //primarySwatch: Colors.blue,
@@ -19,8 +78,8 @@ class MyApp extends StatelessWidget {
         //   bodyText1: TextStyle(fontSize: 16.0, color: Colors.black),
         //   bodyText2: TextStyle(fontSize: 14.0, color: Colors.black54),
         // ),
-          scaffoldBackgroundColor: Color(0xFFFDF8F8), // ← your desired background color
-          canvasColor: Color(0xFFFDF8F8),
+          scaffoldBackgroundColor: const Color(0xFFFDF8F8), // ← your desired background color
+          canvasColor: const Color(0xFFFDF8F8),
           appBarTheme: const AppBarTheme(
             backgroundColor: Color.fromARGB(255, 255, 255, 255), // ← your desired app bar color
             //iconTheme: IconThemeData(color: Colors.black),

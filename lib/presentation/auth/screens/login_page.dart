@@ -78,6 +78,77 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _showForgotPasswordDialog() {
+    final TextEditingController emailController = TextEditingController();
+    showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+              title: const Text('Reset Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                      'Please enter your email address to receive a password reset link.'),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration:
+                        const InputDecoration(labelText: 'Email Address'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Send'),
+                  onPressed: () async {
+                    if (emailController.text.isNotEmpty) {
+                      Navigator.of(ctx).pop(); // Close the dialog
+                      _sendPasswordResetLink(emailController.text);
+                    }
+                  },
+                ),
+              ],
+            ));
+  }
+
+  Future<void> _sendPasswordResetLink(String email) async {
+    setState(() => _isLoading = true);
+    const url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom/v1/forgot-password';
+    try {
+      final response = await http.post(Uri.parse(url),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': '1234567890abcdef',
+          },
+          body: json.encode({'email': email}));
+
+      String message;
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        message = responseData['message'] ?? 'A password reset link has been sent to your email.';
+      } else {
+        final responseData = json.decode(response.body);
+        message = responseData['message'] ?? 'Failed to send reset link. Please check the email and try again.';
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _showError(String message) {
     if (!mounted) return; 
     showDialog(
@@ -205,7 +276,7 @@ class _LoginPageState extends State<LoginPage> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // Add forgot password logic
+                            _showForgotPasswordDialog();
                           },
                           child: Text(
                             'Forgot Password?',
