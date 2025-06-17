@@ -54,7 +54,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.scheme == 'bauauftrage' && uri.host == 'reset-password') {
+    if (uri.path.contains('/reset-password')) {
       final token = uri.queryParameters['token'];
       if (token != null) {
         _navigatorKey.currentState?.push(

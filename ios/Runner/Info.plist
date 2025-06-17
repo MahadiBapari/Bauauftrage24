@@ -56,7 +56,7 @@
 			<string>bauauftrage</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>bauauftrage</string>
+				<string>app</string>
 			</array>
 		</dict>
 	</array>
