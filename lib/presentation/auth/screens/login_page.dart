@@ -81,39 +81,84 @@ class _LoginPageState extends State<LoginPage> {
   void _showForgotPasswordDialog() {
     final TextEditingController emailController = TextEditingController();
     showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: const Text('Reset Password'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.email_outlined, size: 48, color: Color.fromARGB(255, 185, 7, 7)),
+              const SizedBox(height: 16),
+              const Text(
+                'Forgot Password',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Enter your email to receive a password reset link.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
                 children: [
-                  const Text(
-                      'Please enter your email address to receive a password reset link.'),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration:
-                        const InputDecoration(labelText: 'Email Address'),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 185, 7, 7),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 185, 7, 7),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () {
+                        if (emailController.text.isNotEmpty) {
+                          Navigator.of(ctx).pop();
+                          _sendPasswordResetLink(emailController.text);
+                        }
+                      },
+                      child: const Text('Send', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    ),
                   ),
                 ],
               ),
-              actions: [
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-                ElevatedButton(
-                  child: const Text('Send'),
-                  onPressed: () async {
-                    if (emailController.text.isNotEmpty) {
-                      Navigator.of(ctx).pop(); // Close the dialog
-                      _sendPasswordResetLink(emailController.text);
-                    }
-                  },
-                ),
-              ],
-            ));
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _sendPasswordResetLink(String email) async {

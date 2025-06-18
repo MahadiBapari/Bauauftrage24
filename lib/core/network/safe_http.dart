@@ -26,7 +26,8 @@ class SafeHttp {
       final response = await http.post(url, headers: headers, body: body);
       
       final isLoginRequest = url.path.endsWith('/login/');
-      if ((response.statusCode == 401 || response.statusCode == 403) && !isLoginRequest) {
+      final isResetPasswordRequest = url.path.endsWith('/reset-password');
+      if ((response.statusCode == 401 || response.statusCode == 403) && !isLoginRequest && !isResetPasswordRequest) {
         // Handle unauthorized/forbidden
         _handleUnauthorized(context);
         throw Exception('Unauthorized');
