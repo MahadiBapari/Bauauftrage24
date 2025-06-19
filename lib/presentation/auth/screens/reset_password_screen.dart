@@ -34,7 +34,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _message = '';
     });
 
-    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/reset-password');
+    final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom/v1/reset-password');
     try {
       final response = await SafeHttp.safePost(
         context,
@@ -45,7 +45,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           },
         body: json.encode({
           'token': widget.token,
-          'password': _newPasswordController.text,
+          'new_password': _newPasswordController.text,
           'confirm_password': _confirmPasswordController.text,
         }),
       );
