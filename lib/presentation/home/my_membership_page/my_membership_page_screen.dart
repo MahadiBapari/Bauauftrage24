@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:bauauftrage/core/network/safe_http.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 // Assuming you will create this file for the membership form
 import 'membership_form_page_screen.dart'; // <--- NEW IMPORT for the form page
@@ -34,6 +35,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
   }
 
   Future<void> _fetchMembershipDetails() async {
+    if (!await isUserAuthenticated()) return;
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -129,6 +131,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
 
   // Function to hit the cancel membership endpoint
   Future<void> _cancelMembershipApiCall(String jwtToken) async {
+    if (!await isUserAuthenticated()) return;
     try {
       final response = await SafeHttp.safePost(context, Uri.parse(_cancelMembershipEndpoint), headers: {
         'Content-Type': 'application/json',

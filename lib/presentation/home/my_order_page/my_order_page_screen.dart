@@ -8,6 +8,7 @@ import 'package:bauauftrage/core/network/safe_http.dart';
 import '../my_order_page/single_myorders_page_screen.dart'; // Ensure this is imported
 import '../../../widgets/custom_loading_indicator.dart';
 import '../../../utils/cache_manager.dart'; // Assuming you have this Utility
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 class MyOrdersPageScreen extends StatefulWidget {
   const MyOrdersPageScreen({super.key});
@@ -172,6 +173,8 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
   }
 
   Future<void> _fetchOrders({required String userId, required int page, required int perPage, required bool append}) async {
+    if (!await isUserAuthenticated()) return;
+
     List<Map<String, dynamic>> currentFetchedOrders = [];
     debugPrint('MyOrdersPageScreen: _fetchOrders started for page $page, append: $append');
     try {

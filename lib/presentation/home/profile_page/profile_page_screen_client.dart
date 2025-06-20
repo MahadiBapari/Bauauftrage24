@@ -12,6 +12,7 @@ import '../widgets/edit_profile_form_client.dart'; // Make sure this path is cor
 import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
 import 'package:bauauftrage/utils/cache_manager.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 class ProfilePageScreenClient extends StatefulWidget {
   const ProfilePageScreenClient({super.key});
@@ -56,6 +57,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
   Future<void> _loadUserData({bool fetchAndUpdateCache = false}) async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     if (_userId == null) {
       _showError('User ID not found');
       setState(() => _isLoading = false);
@@ -94,6 +96,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
   Future<void> _loadProfilePicture() async {
     if (_userData == null || !mounted) return;
+    if (!await isUserAuthenticated()) return;
 
     final dynamic rawMediaId = _userData!['meta_data']?['profile-picture']?[0];
     final String? mediaId = (rawMediaId is int) ? rawMediaId.toString() : rawMediaId as String?;

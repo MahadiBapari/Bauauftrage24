@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_order_page_screen.dart';
 import 'package:bauauftrage/utils/cache_manager.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 class SingleMyOrderPageScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -68,7 +69,9 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
     fetchDetails(); // Always fetch fresh in background
   }
 
-  Future<void> fetchDetails() async {
+  Future<void> fetchDetails({bool fromCache = false}) async {
+    if (!await isUserAuthenticated()) return;
+
     if (!mounted) return;
 
     setState(() {

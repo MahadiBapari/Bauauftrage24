@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 // Ensure this is imported if used for images
 import 'single_order_page_screen.dart'; // Ensure this is imported
@@ -211,6 +212,8 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   }
 
   Future<void> _fetchOrders({required int page, required int perPage, required bool append}) async {
+    if (!await isUserAuthenticated()) return;
+
     if (!append) {
       // For a new fetch (not pagination), we should show a full loading indicator.
       if (mounted) {
@@ -349,6 +352,8 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
   }
 
   Future<void> _fetchCategories() async {
+    if (!await isUserAuthenticated()) return;
+
     List<Map<String, dynamic>> fetchedCategories = [
       {'id': null, 'name': 'All Categories'} // Add an "All Categories" option
     ];

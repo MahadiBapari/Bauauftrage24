@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 import '../widgets/edit_profile_form_contractor.dart'; // Make sure this path is correct
 import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
@@ -39,6 +40,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   }
 
   Future<void> _fetchAllServiceCategories() async {
+    if (!await isUserAuthenticated()) return;
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
 
@@ -86,6 +88,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
   Future<void> _loadUserData({bool fetchAndUpdateCache = false}) async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     if (_userId == null) {
       _showError('User ID not found');
       setState(() => _isLoading = false);
@@ -124,6 +127,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
   Future<void> _loadProfilePicture() async {
     if (_userData == null || !mounted) return;
+    if (!await isUserAuthenticated()) return;
 
     final dynamic rawMediaId = _userData!['meta_data']?['profile-picture']?[0];
     final String? mediaId = (rawMediaId is int) ? rawMediaId.toString() : rawMediaId as String?;

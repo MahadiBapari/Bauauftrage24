@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async'; 
 import 'package:bauauftrage/core/network/safe_http.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 class PartnerScreen extends StatefulWidget {
   const PartnerScreen({super.key});
@@ -23,6 +24,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
   }
 
   Future<List<Partner>> fetchPartners() async {
+    if (!await isUserAuthenticated()) return [];
     final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners?per_page=100');
     final response = await SafeHttp.safeGet(context, url, headers: {
       
@@ -48,6 +50,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
   }
 
   Future<String?> fetchLogoUrl(int logoId) async {
+    if (!await isUserAuthenticated()) return null;
     final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$logoId');
     final response = await SafeHttp.safeGet(context, url, headers: {
       'X-API-Key': _apiKey,

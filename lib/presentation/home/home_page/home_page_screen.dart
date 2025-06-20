@@ -14,6 +14,7 @@ import '../partners_page/partners_page_screen.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:extended_image/extended_image.dart';
 import '../../../core/network/safe_http.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 class HomePageScreen extends StatefulWidget {
   const HomePageScreen({super.key});
@@ -215,6 +216,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _fetchUser() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -250,6 +252,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _fetchPromoOrders() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     try {
       debugPrint('Fetching promo orders...');
       final prefs = await SharedPreferences.getInstance();
@@ -327,6 +330,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _fetchCategories() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     try {
       final response = await SafeHttp.safeGet(
         context,
@@ -372,6 +376,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _fetchNewArrivalsOrders({int? categoryId}) async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     try {
       setState(() => isLoadingNewArrivals = true);
       final prefs = await SharedPreferences.getInstance();
@@ -457,6 +462,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _fetchMembershipStatus() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -496,6 +502,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _loadPartners() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     try {
       final response = await SafeHttp.safeGet(
         context, 

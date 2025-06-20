@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:bauauftrage/core/network/safe_http.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class ResetPasswordScreen extends StatefulWidget {
   final String token;
@@ -36,13 +36,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom/v1/reset-password');
     try {
-      final response = await SafeHttp.safePost(
-        context,
+      final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': apiKey,
-          },
+        },
         body: json.encode({
           'token': widget.token,
           'new_password': _newPasswordController.text,

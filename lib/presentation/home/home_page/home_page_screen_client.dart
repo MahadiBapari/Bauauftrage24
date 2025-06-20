@@ -9,6 +9,7 @@ import 'package:bauauftrage/widgets/custom_loading_indicator.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
 import '../add_new_order_page/add_new_order_page_screen.dart';
+import 'package:bauauftrage/common/utils/auth_utils.dart';
 
 class HomePageScreenClient extends StatefulWidget {
   final void Function(String categoryId)? onCategorySelected;
@@ -157,6 +158,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
   Future<void> _fetchUser() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     setState(() => isLoadingUser = true);
 
     try {
@@ -211,6 +213,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
   Future<void> _loadCategories() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     setState(() => _isLoadingCategories = true);
 
     try {
@@ -317,6 +320,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
   Future<void> _loadPartners() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     setState(() => _isLoadingPartners = true);
 
     try {
@@ -461,6 +465,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
   Future<void> _loadOrders() async {
     if (!mounted) return;
+    if (!await isUserAuthenticated()) return;
     setState(() => _isLoadingOrders = true);
 
     try {

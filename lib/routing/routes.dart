@@ -9,6 +9,7 @@ import '../presentation/home/support_and_help_page/support_and_help_page_screen.
 import '../presentation/home/my_favourite_page/my_favourite_page_screen.dart';
 import '../presentation/home/my_membership_page/my_membership_page_screen.dart';
 import '../presentation/home/partners_page/partners_page_screen.dart'; 
+import '../presentation/auth/screens/reset_password_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String myContractor = '/my_contractor';
   static const String myMembership = '/my_membership';
   static const String partners = '/partners'; 
+  static const String resetPassword = '/reset-password';
 }
 
 final Map<String, WidgetBuilder> appRoutes = {
@@ -38,4 +40,9 @@ final Map<String, WidgetBuilder> appRoutes = {
   AppRoutes.myContractor: (context) => const MyFavouritePageScreen(),
   AppRoutes.myMembership: (context) => const MyMembershipPageScreen(),
   AppRoutes.partners: (context) => const PartnerScreen(), 
+  AppRoutes.resetPassword: (context) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    final token = args?['token'] as String? ?? '';
+    return ResetPasswordScreen(token: token);
+  },
 };
