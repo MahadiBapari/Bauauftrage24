@@ -508,14 +508,19 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
             SizedBox(
               width: double.infinity, 
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   // Navigate to the membership form page
-                  Navigator.push(
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const MembershipFormPageScreen(),
                     ),
                   );
+
+                  // If the result is true, it means the purchase was successful.
+                  if (result == true && mounted) {
+                    _fetchMembershipDetails();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 185, 33, 33), 

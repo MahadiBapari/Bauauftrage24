@@ -3,25 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 
 class MembershipFormPageScreen extends StatefulWidget {
   const MembershipFormPageScreen({super.key});
 
   @override
-  State<MembershipFormPageScreen> createState() => _MembershipFormPageScreenState();
+  State<MembershipFormPageScreen> createState() =>
+      _MembershipFormPageScreenState();
 }
 
-class _MembershipFormPageScreenState extends State<MembershipFormPageScreen> {
+class _MembershipFormPageScreenState
+    extends State<MembershipFormPageScreen> {
   String? membershipName;
   int? initialPayment;
   String? userEmail;
   bool isLoading = true;
   String? errorMessage;
   bool agreeToTerms = false;
+  bool _isProcessing = false;
 
-  final TextEditingController _cardNumberController = TextEditingController();
-  final TextEditingController _expiryController = TextEditingController();
-  final TextEditingController _cvcController = TextEditingController();
+  CardFieldInputDetails? _card;
 
   @override
   void initState() {
@@ -30,7 +32,10 @@ class _MembershipFormPageScreenState extends State<MembershipFormPageScreen> {
   }
 
   Future<void> _fetchMembershipAndUser() async {
-    setState(() { isLoading = true; errorMessage = null; });
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -43,7 +48,8 @@ class _MembershipFormPageScreenState extends State<MembershipFormPageScreen> {
         return;
       }
       final response = await http.get(
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/membership/1'),
+        Uri.parse(
+            'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/membership/1'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -85,7 +91,76 @@ class _MembershipFormPageScreenState extends State<MembershipFormPageScreen> {
     return "$formatted.00 CHF pro Jahr";
   }
 
+  Future<void> _handleBuyMembership() async {
+    if (_card == null || !_card!.complete) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Please fill in the card details completely.')),
+      );
+      return;
+    }
 
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // NOTE: Make sure 'user_id' is stored in SharedPreferences after login.
+      final userId = prefs.getInt('user_id');
+      final token = prefs.getString('auth_token');
+
+      if (userId == null || token == null) {
+        throw Exception('User not authenticated. Please log in again.');
+      }
+
+      final paymentMethod = await Stripe.instance.createPaymentMethod(
+        params: PaymentMethodParams.card(
+          paymentMethodData: PaymentMethodData(
+            billingDetails: BillingDetails(email: userEmail),
+          ),
+        ),
+      );
+
+      final response = await http.post(
+        Uri.parse(
+            'https://xn--bauauftrge24-ncb.ch/wp-json/custom/v1/buy-membership/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'user_id': userId,
+          'stripe_token': paymentMethod.id,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('✅ Membership active until: ${data['expires_on']}')),
+        );
+        // Pop screen and return true to signal success
+        Navigator.of(context).pop(true);
+      } else {
+        throw Exception(data['error'] ?? 'Failed to purchase membership.');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Error: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
 
   void _showTermsDialog() {
     showDialog(
@@ -102,7 +177,8 @@ class _MembershipFormPageScreenState extends State<MembershipFormPageScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.description, size: 48, color: Color.fromARGB(255, 185, 7, 7)),
+                const Icon(Icons.description,
+                    size: 48, color: Color.fromARGB(255, 185, 7, 7)),
                 const SizedBox(height: 16),
                 const Text(
                   'Allgemeine Geschäftsbedingungen',
@@ -163,10 +239,12 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 185, 7, 7),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('Schließen', style: TextStyle(fontSize: 16)),
+                    child:
+                        const Text('Schließen', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ],
@@ -194,10 +272,13 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage != null
-              ? Center(child: Text(errorMessage!, style: TextStyle(color: Colors.red[300])))
+              ? Center(
+                  child: Text(errorMessage!,
+                      style: TextStyle(color: Colors.red[300])))
               : SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 18.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 18.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -205,29 +286,38 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                         Card(
                           color: Colors.white,
                           elevation: 4,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18)),
                           margin: const EdgeInsets.only(bottom: 18),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 24),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Informationen zur Mitgliedschaft',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: lightTitle),
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                      color: lightTitle),
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Sie haben die Mitgliedschaftsstufe ',
-                                  style: TextStyle(fontSize: 15, color: lighterText),
+                                  style: TextStyle(
+                                      fontSize: 15, color: lighterText),
                                 ),
                                 RichText(
                                   text: TextSpan(
-                                    style: TextStyle(fontSize: 15, color: lightText),
+                                    style: TextStyle(
+                                        fontSize: 15, color: lightText),
                                     children: [
                                       TextSpan(
                                           text: membershipName ?? '',
-                                          style: TextStyle(fontWeight: FontWeight.bold, color: lightTitle)),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: lightTitle)),
                                       TextSpan(
                                           text: ' ausgewählt.',
                                           style: TextStyle(
@@ -240,10 +330,13 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                 Text(
                                   'Der Preis für die Mitgliedschaft beträgt ',
                                   style: TextStyle(
-                                      fontWeight: FontWeight.normal, color: lightText),
+                                      fontWeight: FontWeight.normal,
+                                      color: lightText),
                                 ),
                                 Text(
-                                  initialPayment != null ? _formatPrice(initialPayment) : '',
+                                  initialPayment != null
+                                      ? _formatPrice(initialPayment)
+                                      : '',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 17,
@@ -252,95 +345,57 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                 const SizedBox(height: 8),
                                 Text(
                                   'Die Mitgliedschaft ist für 1 Jahr gültig und kann danach ganz bequem verlängert werden.',
-                                  style: TextStyle(fontSize: 15, color: lightText),
+                                  style:
+                                      TextStyle(fontSize: 15, color: lightText),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        
-                     
+
                         // Payment Info Card
                         Card(
                           color: Colors.white,
                           elevation: 4,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18)),
                           margin: const EdgeInsets.only(bottom: 18),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 24),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Column(
-                                  children: [
-                                    Text(
-                                      'Zahlungsinformationen',
-                                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: lightTitle),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Image.asset('assets/images/visa.png', height: 28),
-                                        const SizedBox(width: 6),
-                                        Image.asset('assets/images/mastercard.png', height: 28),
-                                        const SizedBox(width: 6),
-                                        Image.asset('assets/images/discover.png', height: 28),
-                                        const SizedBox(width: 6),
-                                        Image.asset('assets/images/amex.png', height: 28),
-                                      ],
-                                    ),
-                                  ],
+                                Text(
+                                  'Zahlungsinformationen',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: lightTitle),
                                 ),
                                 const SizedBox(height: 18),
-                                TextFormField(
-                                  controller: _cardNumberController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Kartennummer',
-                                    labelStyle: TextStyle(color: lighterText),
-                                    hintText: '1234 1234 1234 1234',
-                                    hintStyle: TextStyle(color: lighterText),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                    // suffixIcon: TextButton(
-                                    //   onPressed: () {},
-                                    //   child: Text('Autofill link', style: TextStyle(color: const Color.fromARGB(255, 17, 108, 182))),
-                                    // ),
-                                  ),
-                                  style: TextStyle(color: lightText),
-                                  keyboardType: TextInputType.number,
+                                CardField(
+                                  onCardChanged: (card) {
+                                    setState(() {
+                                      _card = card;
+                                    });
+                                  },
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 18),
                                 Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Expanded(
-                                      child: TextFormField(
-                                        controller: _expiryController,
-                                        decoration: InputDecoration(
-                                          labelText: 'Ablaufdatum',
-                                          labelStyle: TextStyle(color: lighterText),
-                                          hintText: 'MM / YY',
-                                          hintStyle: TextStyle(color: lighterText),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                        style: TextStyle(color: lightText),
-                                        keyboardType: TextInputType.datetime,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: TextFormField(
-                                        controller: _cvcController,
-                                        decoration: InputDecoration(
-                                          labelText: 'CVC',
-                                          labelStyle: TextStyle(color: lighterText),
-                                          hintText: 'CVC',
-                                          hintStyle: TextStyle(color: lighterText),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                        style: TextStyle(color: lightText),
-                                        keyboardType: TextInputType.number,
-                                      ),
-                                    ),
+                                    Image.asset('assets/images/visa.png',
+                                        height: 28),
+                                    const SizedBox(width: 6),
+                                    Image.asset('assets/images/mastercard.png',
+                                        height: 28),
+                                    const SizedBox(width: 6),
+                                    Image.asset('assets/images/discover.png',
+                                        height: 28),
+                                    const SizedBox(width: 6),
+                                    Image.asset('assets/images/amex.png',
+                                        height: 28),
                                   ],
                                 ),
                               ],
@@ -352,15 +407,19 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                           children: [
                             Checkbox(
                               value: agreeToTerms,
-                              onChanged: (val) => setState(() => agreeToTerms = val ?? false),
+                              onChanged: (val) =>
+                                  setState(() => agreeToTerms = val ?? false),
                               activeColor: const Color.fromARGB(255, 185, 33, 33),
                             ),
-                            Text('Ich stimme dem zu ', style: TextStyle(color: lightText)),
+                            Text('Ich stimme dem zu ',
+                                style: TextStyle(color: lightText)),
                             GestureDetector(
                               onTap: _showTermsDialog,
                               child: Text(
                                 'Allgemeine Geschäftsbedingungen',
-                                style: TextStyle(color: const Color.fromARGB(255, 201, 45, 45)),
+                                style: TextStyle(
+                                    color:
+                                        const Color.fromARGB(255, 201, 45, 45)),
                               ),
                             ),
                             Text(' *', style: TextStyle(color: lighterText)),
@@ -370,16 +429,29 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: agreeToTerms ? () {} : null,
+                            onPressed: agreeToTerms && !_isProcessing
+                                ? _handleBuyMembership
+                                : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 185, 33, 33),
+                              backgroundColor:
+                                  const Color.fromARGB(255, 185, 33, 33),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 18),
+                              textStyle: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                               elevation: 2,
                             ),
-                            child: const Text("LOS GEHT'S"),
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 3),
+                                  )
+                                : const Text("LOS GEHT'S"),
                           ),
                         ),
                         const SizedBox(height: 24),

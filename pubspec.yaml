@@ -47,6 +47,7 @@ dependencies:
   carousel_slider: ^4.2.1
   extended_image: ^8.2.0
   app_links: ^6.4.0
+  flutter_stripe: ^11.5.0
   
  
 

@@ -2,9 +2,12 @@ import 'dart:async';
 import 'package:bauauftrage/presentation/auth/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'routing/routes.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  Stripe.publishableKey = 'pk_test_51R4IES4PgABMuYZqF1Hpx9wWxaBAEh5zVxM6SlHAlt65I0ek0ww3vrPV9EYSatNor7wfXKLMjbKEwPMfyLakPt9800OiKUhmut';
   runApp(const MyApp());
 }
 
