@@ -357,103 +357,121 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                         style:
                                             TextStyle(fontSize: 15, color: lightText),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // Payment Info Card
-                              Card(
-                                color: Colors.white,
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18)),
-                                margin: const EdgeInsets.only(bottom: 18),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 24, vertical: 24),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Zahlungsinformationen',
-                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Card(
-                                        elevation: 2,
-                                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(16.0),
-                                          child: CardField(
-                                            onCardChanged: (card) {
-                                              setState(() {
-                                                _card = card;
-                                              });
-                                            },
+                                      const SizedBox(height: 18),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          onPressed: isLoading || _isProcessing
+                                              ? null
+                                              : () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    isScrollControlled: true,
+                                                    shape: const RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                                    ),
+                                                    builder: (context) => Padding(
+                                                      padding: EdgeInsets.only(
+                                                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                                                      ),
+                                                      child: StatefulBuilder(
+                                                        builder: (context, setModalState) {
+                                                          return Padding(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                                                            child: Column(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                  children: [
+                                                                    const Text(
+                                                                      'Add your payment information',
+                                                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                                    ),
+                                                                    IconButton(
+                                                                      icon: const Icon(Icons.close),
+                                                                      onPressed: () => Navigator.pop(context),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(height: 16),
+                                                                CardFormField(
+                                                                  onCardChanged: (card) {
+                                                                    setModalState(() {
+                                                                      _card = card;
+                                                                    });
+                                                                  },
+                                                                ),
+                                                                const SizedBox(height: 16),
+                                                                Row(
+                                                                  children: [
+                                                                    Checkbox(
+                                                                      value: agreeToTerms,
+                                                                      onChanged: (val) => setModalState(() => agreeToTerms = val ?? false),
+                                                                      activeColor: const Color.fromARGB(255, 185, 33, 33),
+                                                                    ),
+                                                                    Text('Ich stimme dem zu ', style: TextStyle(color: lightText)),
+                                                                    GestureDetector(
+                                                                      onTap: _showTermsDialog,
+                                                                      child: Text(
+                                                                        'Allgemeine Geschäftsbedingungen',
+                                                                        style: TextStyle(color: const Color.fromARGB(255, 201, 45, 45)),
+                                                                      ),
+                                                                    ),
+                                                                    Text(' *', style: TextStyle(color: lighterText)),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(height: 8),
+                                                                SizedBox(
+                                                                  width: double.infinity,
+                                                                  child: ElevatedButton(
+                                                                    onPressed: (_card != null && _card!.complete && agreeToTerms && !_isProcessing)
+                                                                        ? () async {
+                                                                            Navigator.pop(context); // Close modal
+                                                                            await _handleBuyMembership();
+                                                                          }
+                                                                        : null,
+                                                                    style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: const Color.fromARGB(255, 185, 33, 33),
+                                                                      foregroundColor: Colors.white,
+                                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                                      padding: const EdgeInsets.symmetric(vertical: 18),
+                                                                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                                                      elevation: 2,
+                                                                    ),
+                                                                    child: _isProcessing
+                                                                        ? const SizedBox(
+                                                                            height: 24,
+                                                                            width: 24,
+                                                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                                                          )
+                                                                        : Text('Pay ' + (initialPayment != null ? _formatPrice(initialPayment) : '')),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color.fromARGB(255, 185, 33, 33),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            padding: const EdgeInsets.symmetric(vertical: 18),
+                                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                            elevation: 2,
                                           ),
+                                          child: const Text('Buy Now'),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-                              // Terms and Button
-                              Row(
-                                children: [
-                                  Checkbox(
-                                    value: agreeToTerms,
-                                    onChanged: (val) =>
-                                        setState(() => agreeToTerms = val ?? false),
-                                    activeColor: const Color.fromARGB(255, 185, 33, 33),
-                                  ),
-                                  Text('Ich stimme dem zu ',
-                                      style: TextStyle(color: lightText)),
-                                  GestureDetector(
-                                    onTap: _showTermsDialog,
-                                    child: Text(
-                                      'Allgemeine Geschäftsbedingungen',
-                                      style: TextStyle(
-                                          color:
-                                              const Color.fromARGB(255, 201, 45, 45)),
-                                    ),
-                                  ),
-                                  Text(' *', style: TextStyle(color: lighterText)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: agreeToTerms && !_isProcessing
-                                      ? _handleBuyMembership
-                                      : null,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        const Color.fromARGB(255, 185, 33, 33),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10)),
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 18),
-                                    textStyle: const TextStyle(
-                                        fontSize: 18, fontWeight: FontWeight.bold),
-                                    elevation: 2,
-                                  ),
-                                  child: _isProcessing
-                                      ? const SizedBox(
-                                          height: 24,
-                                          width: 24,
-                                          child: CircularProgressIndicator(
-                                              color: Colors.white, strokeWidth: 3),
-                                        )
-                                      : const Text("LOS GEHT'S"),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
                             ],
                           ),
                         ),
