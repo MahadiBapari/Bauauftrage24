@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 3500),
+      duration: const Duration(milliseconds: 1500), // Reduced animation time
       vsync: this,
     );
 
@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 5)); // Slightly longer to let animation finish
+    await Future.delayed(const Duration(seconds: 2)); // Shorter delay to match animation
     final prefs = await SharedPreferences.getInstance();
     final bool hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
     final String? token = prefs.getString('auth_token');
@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               children: [
                 Image.asset(
                   'assets/images/logo.png',
-                  height: 140,
+                  height: 80, // Smaller logo
                 ),
               ],
             ),

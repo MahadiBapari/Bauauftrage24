@@ -147,7 +147,7 @@ class _MembershipFormPageScreenState
       if (response.statusCode == 200 && data['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('✅ Membership active until: ${data['expires_on']}')),
+              content: Text('Membership active until: ${data['expires_on']}')),
         );
         // Pop screen and return true to signal success
         Navigator.of(context).pop(true);
@@ -268,7 +268,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buy Membership'),
+       // title: const Text('Buy Membership'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: lightTitle,
@@ -313,28 +313,28 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
-                                        'Sie haben die Mitgliedschaftsstufe ',
+                                        'Mitgliedschaftsstufe des Auftragnehmers. ',
                                         style: TextStyle(
-                                            fontSize: 15, color: lighterText),
+                                            fontSize: 15, color: lightText),
                                       ),
-                                      RichText(
-                                        text: TextSpan(
-                                          style: TextStyle(
-                                              fontSize: 15, color: lightText),
-                                          children: [
-                                            TextSpan(
-                                                text: membershipName ?? '',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: lightTitle)),
-                                            TextSpan(
-                                                text: ' ausgewählt.',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.normal,
-                                                    color: lightText)),
-                                          ],
-                                        ),
-                                      ),
+                                      // RichText(
+                                      //   text: TextSpan(
+                                      //     style: TextStyle(
+                                      //         fontSize: 15, color: lightText),
+                                      //     children: [
+                                      //       TextSpan(
+                                      //           text: membershipName ?? '',
+                                      //           style: TextStyle(
+                                      //               fontWeight: FontWeight.bold,
+                                      //               color: lightTitle)),
+                                      //       TextSpan(
+                                      //           text: ' ausgewählt.',
+                                      //           style: TextStyle(
+                                      //               fontWeight: FontWeight.normal,
+                                      //               color: lightText)),
+                                      //     ],
+                                      //   ),
+                                      // ),
                                       const SizedBox(height: 8),
                                       Text(
                                         'Der Preis für die Mitgliedschaft beträgt ',
@@ -365,6 +365,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                               ? null
                                               : () {
                                                   showModalBottomSheet(
+                                                    backgroundColor: Colors.white,
                                                     context: context,
                                                     isScrollControlled: true,
                                                     shape: const RoundedRectangleBorder(
@@ -377,7 +378,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                       child: StatefulBuilder(
                                                         builder: (context, setModalState) {
                                                           return Padding(
-                                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                                                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
                                                             child: Column(
                                                               mainAxisSize: MainAxisSize.min,
                                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,23 +405,39 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                   },
                                                                 ),
                                                                 const SizedBox(height: 16),
-                                                                Row(
-                                                                  children: [
+                                                                LayoutBuilder(
+                                                                  builder: (context, constraints) {
+                                                                  final isSmallScreen = constraints.maxWidth < 400;
+                                                                  return Row(
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                    children: [
                                                                     Checkbox(
                                                                       value: agreeToTerms,
                                                                       onChanged: (val) => setModalState(() => agreeToTerms = val ?? false),
                                                                       activeColor: const Color.fromARGB(255, 185, 33, 33),
                                                                     ),
-                                                                    Text('Ich stimme dem zu ', style: TextStyle(color: lightText)),
-                                                                    GestureDetector(
-                                                                      onTap: _showTermsDialog,
-                                                                      child: Text(
-                                                                        'Allgemeine Geschäftsbedingungen',
-                                                                        style: TextStyle(color: const Color.fromARGB(255, 201, 45, 45)),
+                                                                    Expanded(
+                                                                      child: Wrap(
+                                                                      alignment: WrapAlignment.start,
+                                                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                                                      spacing: 2,
+                                                                      runSpacing: isSmallScreen ? 4 : 0,
+                                                                      children: [
+                                                                        Text('Ich stimme dem zu ', style: TextStyle(color: lightText)),
+                                                                        GestureDetector(
+                                                                        onTap: _showTermsDialog,
+                                                                        child: Text(
+                                                                          'Allgemeine Geschäftsbedingungen',
+                                                                          style: TextStyle(color: const Color.fromARGB(255, 201, 45, 45)),
+                                                                        ),
+                                                                        ),
+                                                                        Text(' *', style: TextStyle(color: lighterText)),
+                                                                      ],
                                                                       ),
                                                                     ),
-                                                                    Text(' *', style: TextStyle(color: lighterText)),
-                                                                  ],
+                                                                    ],
+                                                                  );
+                                                                  },
                                                                 ),
                                                                 const SizedBox(height: 8),
                                                                 SizedBox(
