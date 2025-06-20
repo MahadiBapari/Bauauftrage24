@@ -107,11 +107,16 @@ class _MembershipFormPageScreenState
     try {
       final prefs = await SharedPreferences.getInstance();
       // NOTE: Make sure 'user_id' is stored in SharedPreferences after login.
-      final userId = prefs.getInt('user_id');
+      final userIdString = prefs.getString('user_id');
       final token = prefs.getString('auth_token');
 
-      if (userId == null || token == null) {
+      if (userIdString == null || token == null) {
         throw Exception('User not authenticated. Please log in again.');
+      }
+      
+      final userId = int.tryParse(userIdString);
+      if (userId == null) {
+        throw Exception('Invalid user ID format.');
       }
 
       final paymentMethod = await Stripe.instance.createPaymentMethod(
@@ -269,196 +274,193 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
         foregroundColor: lightTitle,
       ),
       backgroundColor: Colors.white,
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage != null
-              ? Center(
-                  child: Text(errorMessage!,
-                      style: TextStyle(color: Colors.red[300])))
-              : SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 18.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Membership Info Card
-                        Card(
-                          color: Colors.white,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18)),
-                          margin: const EdgeInsets.only(bottom: 18),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Informationen zur Mitgliedschaft',
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                      color: lightTitle),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Sie haben die Mitgliedschaftsstufe ',
-                                  style: TextStyle(
-                                      fontSize: 15, color: lighterText),
-                                ),
-                                RichText(
-                                  text: TextSpan(
-                                    style: TextStyle(
-                                        fontSize: 15, color: lightText),
+      body: AbsorbPointer(
+        absorbing: _isProcessing,
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : errorMessage != null
+                ? Center(
+                    child: Text(errorMessage!,
+                        style: TextStyle(color: Colors.red[300])))
+                : CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 18.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Membership Info Card
+                              Card(
+                                color: Colors.white,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18)),
+                                margin: const EdgeInsets.only(bottom: 18),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 24),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      TextSpan(
-                                          text: membershipName ?? '',
+                                      Text(
+                                        'Informationen zur Mitgliedschaft',
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                            color: lightTitle),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Sie haben die Mitgliedschaftsstufe ',
+                                        style: TextStyle(
+                                            fontSize: 15, color: lighterText),
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
                                           style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: lightTitle)),
-                                      TextSpan(
-                                          text: ' ausgewählt.',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.normal,
-                                              color: lightText)),
+                                              fontSize: 15, color: lightText),
+                                          children: [
+                                            TextSpan(
+                                                text: membershipName ?? '',
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: lightTitle)),
+                                            TextSpan(
+                                                text: ' ausgewählt.',
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.normal,
+                                                    color: lightText)),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Der Preis für die Mitgliedschaft beträgt ',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.normal,
+                                            color: lightText),
+                                      ),
+                                      Text(
+                                        initialPayment != null
+                                            ? _formatPrice(initialPayment)
+                                            : '',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 17,
+                                            color: lightTitle),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Die Mitgliedschaft ist für 1 Jahr gültig und kann danach ganz bequem verlängert werden.',
+                                        style:
+                                            TextStyle(fontSize: 15, color: lightText),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Der Preis für die Mitgliedschaft beträgt ',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                      color: lightText),
-                                ),
-                                Text(
-                                  initialPayment != null
-                                      ? _formatPrice(initialPayment)
-                                      : '',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 17,
-                                      color: lightTitle),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Die Mitgliedschaft ist für 1 Jahr gültig und kann danach ganz bequem verlängert werden.',
-                                  style:
-                                      TextStyle(fontSize: 15, color: lightText),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Payment Info Card
-                        Card(
-                          color: Colors.white,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18)),
-                          margin: const EdgeInsets.only(bottom: 18),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Zahlungsinformationen',
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: lightTitle),
-                                ),
-                                const SizedBox(height: 18),
-                                CardField(
-                                  onCardChanged: (card) {
-                                    setState(() {
-                                      _card = card;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 18),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset('assets/images/visa.png',
-                                        height: 28),
-                                    const SizedBox(width: 6),
-                                    Image.asset('assets/images/mastercard.png',
-                                        height: 28),
-                                    const SizedBox(width: 6),
-                                    Image.asset('assets/images/discover.png',
-                                        height: 28),
-                                    const SizedBox(width: 6),
-                                    Image.asset('assets/images/amex.png',
-                                        height: 28),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Terms and Button
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: agreeToTerms,
-                              onChanged: (val) =>
-                                  setState(() => agreeToTerms = val ?? false),
-                              activeColor: const Color.fromARGB(255, 185, 33, 33),
-                            ),
-                            Text('Ich stimme dem zu ',
-                                style: TextStyle(color: lightText)),
-                            GestureDetector(
-                              onTap: _showTermsDialog,
-                              child: Text(
-                                'Allgemeine Geschäftsbedingungen',
-                                style: TextStyle(
-                                    color:
-                                        const Color.fromARGB(255, 201, 45, 45)),
                               ),
-                            ),
-                            Text(' *', style: TextStyle(color: lighterText)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: agreeToTerms && !_isProcessing
-                                ? _handleBuyMembership
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color.fromARGB(255, 185, 33, 33),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 18),
-                              textStyle: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                              elevation: 2,
-                            ),
-                            child: _isProcessing
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 3),
-                                  )
-                                : const Text("LOS GEHT'S"),
+
+                              // Payment Info Card
+                              Card(
+                                color: Colors.white,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18)),
+                                margin: const EdgeInsets.only(bottom: 18),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 24),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Zahlungsinformationen',
+                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Card(
+                                        elevation: 2,
+                                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: CardField(
+                                            onCardChanged: (card) {
+                                              setState(() {
+                                                _card = card;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Terms and Button
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: agreeToTerms,
+                                    onChanged: (val) =>
+                                        setState(() => agreeToTerms = val ?? false),
+                                    activeColor: const Color.fromARGB(255, 185, 33, 33),
+                                  ),
+                                  Text('Ich stimme dem zu ',
+                                      style: TextStyle(color: lightText)),
+                                  GestureDetector(
+                                    onTap: _showTermsDialog,
+                                    child: Text(
+                                      'Allgemeine Geschäftsbedingungen',
+                                      style: TextStyle(
+                                          color:
+                                              const Color.fromARGB(255, 201, 45, 45)),
+                                    ),
+                                  ),
+                                  Text(' *', style: TextStyle(color: lighterText)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: agreeToTerms && !_isProcessing
+                                      ? _handleBuyMembership
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        const Color.fromARGB(255, 185, 33, 33),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10)),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 18),
+                                    textStyle: const TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.bold),
+                                    elevation: 2,
+                                  ),
+                                  child: _isProcessing
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white, strokeWidth: 3),
+                                        )
+                                      : const Text("LOS GEHT'S"),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
+      ),
     );
   }
 }
