@@ -63,8 +63,15 @@ class SafeHttp {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     
-    // Navigate to login if not already there
-    if (context.mounted) {
+    // Get current route name
+    String? currentRoute;
+    Navigator.popUntil(context, (route) {
+      currentRoute = route.settings.name;
+      return true;
+    });
+
+    // Only redirect if not on public routes
+    if (context.mounted && currentRoute != '/login' && currentRoute != '/reset-password') {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
