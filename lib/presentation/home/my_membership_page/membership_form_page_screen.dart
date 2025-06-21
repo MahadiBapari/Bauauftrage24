@@ -365,7 +365,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                               ? null
                                               : () {
                                                   showModalBottomSheet(
-                                                    backgroundColor: Colors.white,
+                                                    backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                                                     context: context,
                                                     isScrollControlled: true,
                                                     shape: const RoundedRectangleBorder(
@@ -388,7 +388,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                   children: [
                                                                     const Text(
                                                                       'Add your payment information',
-                                                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color.fromARGB(255, 0, 0, 0)),
                                                                     ),
                                                                     IconButton(
                                                                       icon: const Icon(Icons.close),
@@ -398,6 +398,12 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                 ),
                                                                 const SizedBox(height: 16),
                                                                 CardFormField(
+                                                                  style: CardFormStyle(
+                                                                  backgroundColor: const Color.fromARGB(255, 255, 255, 255), // or Colors.black for dark
+                                                                  textColor: const Color.fromARGB(255, 0, 0, 0),       // or Colors.white for dark
+                              
+                                                                  placeholderColor: Colors.grey,
+                                                                ),
                                                                   onCardChanged: (card) {
                                                                     setModalState(() {
                                                                       _card = card;
@@ -423,7 +429,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                       spacing: 2,
                                                                       runSpacing: isSmallScreen ? 4 : 0,
                                                                       children: [
-                                                                        Text('Ich stimme dem zu ', style: TextStyle(color: lightText)),
+                                                                        Text('Ich stimme dem zu ', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0))),
                                                                         GestureDetector(
                                                                         onTap: _showTermsDialog,
                                                                         child: Text(
