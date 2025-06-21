@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../my_order_page/my_order_page_screen.dart'; // Ensure this path is correct
+import 'package:provider/provider.dart';
+import '../../../common/themes/theme_notifier.dart';
 
 class AppDrawer extends StatelessWidget {
   final String role;
@@ -188,6 +190,15 @@ Widget build(BuildContext context) {
                   fontWeight: FontWeight.w500,
                 ),
               ),
+            ),
+            // Dark mode toggle
+            SwitchListTile(
+              title: const Text('Dark Mode'),
+              secondary: const Icon(Icons.brightness_6),
+              value: context.watch<ThemeNotifier>().isDarkMode,
+              onChanged: (value) {
+                context.read<ThemeNotifier>().toggleTheme();
+              },
             ),
             ..._buildRoleMenuItems(context),
             ..._buildStaticMenuItems(context),
