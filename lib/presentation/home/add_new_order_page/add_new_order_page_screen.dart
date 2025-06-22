@@ -144,7 +144,17 @@ Future<List<int>> uploadImages(List<File> imageFiles) async {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
+      ),
+    );
   }
 
 Future<void> _submitForm() async {
@@ -208,7 +218,15 @@ final Map<String, dynamic> postData = {
         if (!mounted) return; // Check if the widget is still mounted before interacting with the UI
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order submitted and published successfully!')),
+          SnackBar(
+            content: const Text('Order submitted and published successfully!'),
+            backgroundColor: const Color.fromARGB(129, 0, 0, 0),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
         );
 
         // Reset the form fields managed by _formKey

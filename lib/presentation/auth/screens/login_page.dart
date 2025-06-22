@@ -173,19 +173,38 @@ class _LoginPageState extends State<LoginPage> {
           body: json.encode({'email': email}));
 
       String message;
+      Color backgroundColor;
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         message = responseData['message'] ?? 'A password reset link has been sent to your email.';
+        backgroundColor = const Color.fromARGB(129, 0, 0, 0);
       } else {
         final responseData = json.decode(response.body);
         message = responseData['message'] ?? 'Failed to send reset link. Please check the email and try again.';
+        backgroundColor = const Color.fromARGB(160, 244, 67, 54);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(message),
+          backgroundColor: backgroundColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(10),
+        ));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('An error occurred: $e'),
+          backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(10),
+        ));
       }
     } finally {
       if (mounted) {
@@ -196,20 +215,15 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showError(String message) {
     if (!mounted) return; 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Error'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK',
-              style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
-            ),
-          ),
-        ],
+        backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
       ),
     );
   }

@@ -72,7 +72,15 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
 
         if (response.statusCode == 200 && responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully!')),
+            SnackBar(
+              content: const Text('Profile updated successfully!'),
+              backgroundColor: const Color.fromARGB(129, 0, 0, 0),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(10),
+            ),
           );
           widget.onProfileUpdated(); // Callback to refresh parent data
           Navigator.of(context).pop(); // Close the dialog
@@ -89,17 +97,15 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     // Ensure widget is still mounted before accessing context
     if (!mounted) return;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Error'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
+        backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
       ),
     );
   }

@@ -146,7 +146,15 @@ class _EditProfileFormContractorState
 
         if (response.statusCode == 200 && responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully!')),
+            SnackBar(
+              content: const Text('Profile updated successfully!'),
+              backgroundColor: const Color.fromARGB(103, 0, 0, 0),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(10),
+            ),
           );
           widget.onProfileUpdated(); // Callback to refresh parent data
           Navigator.of(context).pop(); // Close the dialog
@@ -163,17 +171,15 @@ class _EditProfileFormContractorState
     // Ensure widget is still mounted before interacting with the UI
     if (!mounted) return;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Error'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
+        backgroundColor: const Color.fromARGB(162, 244, 67, 54),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
       ),
     );
   }
@@ -332,8 +338,8 @@ class _EditProfileFormContractorState
                               cancelText: const Text("", style: TextStyle(fontSize: 0)),
                               confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color.fromARGB(255, 88, 88, 88)),
+                                borderRadius: BorderRadius.circular(4),
                               ),
                               buttonText: const Text("Select Categories"),
                               onConfirm: (values) {

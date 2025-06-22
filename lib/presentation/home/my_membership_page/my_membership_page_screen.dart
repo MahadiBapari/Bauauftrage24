@@ -145,21 +145,45 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
       if (response.statusCode == 200 && data['success'] == true) {
         debugPrint('Membership cancelled: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Membership cancelled: ${data['message']}')),
+          SnackBar(
+            content: Text('Membership cancelled: ${data['message']}'),
+            backgroundColor: const Color.fromARGB(129, 0, 0, 0),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
         );
       
         _fetchMembershipDetails();
       } else {
         debugPrint('Failed to cancel membership: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to cancel membership: ${data['message']}')),
+          SnackBar(
+            content: Text('Failed to cancel membership: ${data['message']}'),
+            backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
         );
       }
     } catch (e) {
       debugPrint('Error cancelling membership: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error cancelling membership: $e')),
+          SnackBar(
+            content: Text('Error cancelling membership: $e'),
+            backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
         );
       }
     }
@@ -242,7 +266,15 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No authentication token found. Please log in.')),
+            SnackBar(
+              content: const Text('No authentication token found. Please log in.'),
+              backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(10),
+            ),
           );
         }
       }
@@ -420,7 +452,15 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                     TextButton(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Renew button pressed!')),
+                          SnackBar(
+                            content: const Text('Renew button pressed!'),
+                            backgroundColor: const Color.fromARGB(129, 0, 0, 0),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            margin: const EdgeInsets.all(10),
+                          ),
                         );
                         // TODO: Implement actual renew logic here 
                       },

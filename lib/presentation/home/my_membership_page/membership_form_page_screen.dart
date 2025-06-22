@@ -94,8 +94,15 @@ class _MembershipFormPageScreenState
   Future<void> _handleBuyMembership() async {
     if (_card == null || !_card!.complete) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please fill in the card details completely.')),
+        SnackBar(
+          content: const Text('Please fill in the card details completely.'),
+          backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(10),
+        ),
       );
       return;
     }
@@ -147,7 +154,14 @@ class _MembershipFormPageScreenState
       if (response.statusCode == 200 && data['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Membership active until: ${data['expires_on']}')),
+            content: Text('Membership active until: ${data['expires_on']}'),
+            backgroundColor: const Color.fromARGB(129, 0, 0, 0),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
+          ),
         );
         // Pop screen and return true to signal success
         Navigator.of(context).pop(true);
@@ -156,7 +170,15 @@ class _MembershipFormPageScreenState
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Error: $e')),
+        SnackBar(
+          content: Text('❌ Error: $e'),
+          backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(10),
+        ),
       );
     } finally {
       if (mounted) {

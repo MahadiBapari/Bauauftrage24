@@ -65,6 +65,12 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
           SnackBar(
             content: Text(
                 'Fehler: ${jsonDecode(response.body)['message'] ?? 'Unbekannter Fehler'}'),
+            backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(10),
           ),
         );
       }
@@ -74,6 +80,12 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
+          backgroundColor: const Color.fromARGB(160, 244, 67, 54),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(10),
         ),
       );
     } finally {
