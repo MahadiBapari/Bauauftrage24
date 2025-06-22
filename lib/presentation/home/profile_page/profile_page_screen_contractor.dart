@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
 import 'package:bauauftrage/common/utils/auth_utils.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../widgets/edit_profile_form_contractor.dart'; // Make sure this path is correct
 import '../support_and_help_page/support_and_help_page_screen.dart'; // Import the new screen
@@ -605,46 +606,50 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   }
 
   Widget _buildProfileShimmer() {
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height - 200,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  shape: BoxShape.circle,
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height - 200,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 120,
-                height: 20,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 200,
-                height: 18,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 260,
-                height: 18,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 180,
-                height: 18,
-                color: Colors.grey[300],
-              ),
-            ],
+                const SizedBox(height: 16),
+                Container(
+                  width: 120,
+                  height: 20,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 200,
+                  height: 18,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 260,
+                  height: 18,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 180,
+                  height: 18,
+                  color: Colors.white,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:bauauftrage/core/network/safe_http.dart';
 import 'package:bauauftrage/common/utils/auth_utils.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Assuming you will create this file for the membership form
 import 'membership_form_page_screen.dart'; // <--- NEW IMPORT for the form page
@@ -287,7 +288,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255), // White background
      
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildMembershipShimmer()
           : _errorMessage.isNotEmpty // Show error message if present
               ? Center(
                   child: Padding(
@@ -330,6 +331,74 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  Widget _buildMembershipShimmer() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(width: 150, height: 20, color: Colors.white),
+                      Container(width: 50, height: 12, color: Colors.white),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(width: 50, height: 14, color: Colors.white),
+                          const SizedBox(height: 4),
+                          Container(width: 100, height: 16, color: Colors.white),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(width: 50, height: 14, color: Colors.white),
+                          const SizedBox(height: 4),
+                          Container(width: 100, height: 16, color: Colors.white),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(width: 60, height: 16, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Container(width: 1, height: 20, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Container(width: 120, height: 16, color: Colors.white),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
