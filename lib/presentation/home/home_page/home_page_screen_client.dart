@@ -10,6 +10,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:bauauftrage/core/network/safe_http.dart';
 import '../add_new_order_page/add_new_order_page_screen.dart';
 import 'package:bauauftrage/common/utils/auth_utils.dart';
+import '../partners_page/partners_page_screen.dart';
 
 class HomePageScreenClient extends StatefulWidget {
   final void Function(String categoryId)? onCategorySelected;
@@ -662,12 +663,33 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                   const SizedBox(height: 24),
 
                   // Partners Section
-                  const Text(
-                    'Our Partners',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Our Partners',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const PartnerScreen()),
+                          );
+                        },
+                        child: const Text(
+                          'See all',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color.fromARGB(255, 179, 21, 21),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   _isLoadingPartners
