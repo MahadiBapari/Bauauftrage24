@@ -622,7 +622,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome back,',
+                              'Welcome',
                               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 4),

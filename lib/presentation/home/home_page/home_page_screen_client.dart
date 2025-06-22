@@ -19,7 +19,10 @@ class HomePageScreenClient extends StatefulWidget {
   State<HomePageScreenClient> createState() => _HomePageScreenClientState();
 }
 
-class _HomePageScreenClientState extends State<HomePageScreenClient> {
+class _HomePageScreenClientState extends State<HomePageScreenClient> with AutomaticKeepAliveClientMixin<HomePageScreenClient> {
+  @override
+  bool get wantKeepAlive => true;
+  
   final CacheManager _cacheManager = CacheManager();
   bool _isLoading = true;
   bool _isLoadingCategories = true;
@@ -120,7 +123,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   Future<void> _refreshAllDataInBackground() async {
     await _fetchUser();
     await Future.wait([
-      _loadCategories(),
+      _loadCategories(isRefresh: true),
       _loadPartners(),
       _loadOrders(),
     ]);
@@ -143,7 +146,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
     });
     await _fetchUser();
     await Future.wait([
-      _loadCategories(),
+      _loadCategories(isRefresh: true),
       _loadPartners(),
       _loadOrders(),
     ]);
@@ -151,8 +154,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
   }
 
   Future<void> _onRefresh() async {
-    // Clear category cache before refreshing all data
-    await _cacheManager.saveToCache('categories', []);
+    // We are not using cache for categories anymore, so no need to clear it.
     await _refreshAllData();
   }
 
@@ -211,48 +213,35 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
     }
   }
 
-  Future<void> _loadCategories() async {
+  Future<void> _loadCategories({bool isRefresh = false}) async {
     if (!mounted) return;
     if (!await isUserAuthenticated()) return;
-    setState(() => _isLoadingCategories = true);
+    
+    if (isRefresh && _categories.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = true;
+        });
+      }
+    }
 
     try {
-      // Try to load from cache first
-      final cachedCategories = await _cacheManager.loadFromCache('categories');
-      debugPrint('Loaded cachedCategories: ' + cachedCategories.toString());
-      if (cachedCategories != null && cachedCategories is List && cachedCategories.isNotEmpty) {
-        final filtered = cachedCategories.where((c) {
-          final id = c['id'];
-          final valid = id != null && (id is int || int.tryParse('$id') != null);
-          if (!valid) debugPrint('Skipping cached category with invalid id: $id');
-          return valid;
-        }).toList();
-        final categories = filtered.map((c) => Category.fromJson(c)).toList();
-        debugPrint('Parsed categories from cache: ' + categories.length.toString());
-        if (mounted) {
-          setState(() {
-            _categories = categories;
-            _isLoadingCategories = false;
-          });
-        }
-        return;
-      }
-
-      // If no cache, fetch fresh data
-      final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'), headers: {'X-API-Key': apiKey});
-
-      debugPrint('Categories API status: ' + response.statusCode.toString());
-      debugPrint('Categories API body: ' + response.body.toString());
+      final response = await SafeHttp.safeGet(
+          context,
+          Uri.parse(
+              'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
+          headers: {'X-API-Key': apiKey});
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
         List<dynamic> categoriesData = json.decode(response.body);
-        debugPrint('Parsed categoriesData: ' + categoriesData.length.toString() + ' items');
+
         List<_CategoryTemp> tempCategories = [];
         Set<int> mediaIds = {};
         for (var item in categoriesData) {
-          if (item['id'] == null || (item['id'] is! int && int.tryParse(item['id'].toString()) == null)) {
+          if (item['id'] == null ||
+              (item['id'] is! int && int.tryParse(item['id'].toString()) == null)) {
             debugPrint('Skipping fetched category with invalid id: ${item['id']}');
             continue;
           }
@@ -263,57 +252,66 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
           if (catImage != null && catImage is Map && catImage['id'] != null) {
             if (catImage['id'] is int) {
               imageMediaId = catImage['id'];
-            } else if (catImage['id'] is String && int.tryParse(catImage['id']) != null) {
+            } else if (catImage['id'] is String &&
+                int.tryParse(catImage['id']) != null) {
               imageMediaId = int.parse(catImage['id']);
             }
             if (imageMediaId != null) mediaIds.add(imageMediaId);
           }
-          tempCategories.add(_CategoryTemp(id: id, name: name, imageMediaId: imageMediaId));
+          tempCategories.add(
+              _CategoryTemp(id: id, name: name, imageMediaId: imageMediaId));
         }
-        // Fetch all media URLs in parallel
+        
         Map<int, String> mediaUrlMap = {};
-        for (var mediaId in mediaIds) {
+        await Future.wait(mediaIds.map((mediaId) async {
           try {
-            final mediaResponse = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'), headers: {'X-API-Key': apiKey});
+            final mediaResponse = await SafeHttp.safeGet(
+                context,
+                Uri.parse(
+                    'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'),
+                headers: {'X-API-Key': apiKey});
             if (mediaResponse.statusCode == 200) {
               final mediaData = json.decode(mediaResponse.body);
               if (mediaData['source_url'] != null) {
                 mediaUrlMap[mediaId] = mediaData['source_url'];
               }
             } else {
-              debugPrint('Failed to fetch media for category image id $mediaId: status ${mediaResponse.statusCode}');
+              debugPrint(
+                  'Failed to fetch media for category image id $mediaId: status ${mediaResponse.statusCode}');
             }
           } catch (e) {
-            debugPrint('Error fetching media for category image id $mediaId: $e');
+            debugPrint(
+                'Error fetching media for category image id $mediaId: $e');
           }
-        }
-        List<Category> fetchedCategories = tempCategories.map((c) => Category(
-          id: c.id,
-          name: c.name,
-          imageUrl: c.imageMediaId != null ? mediaUrlMap[c.imageMediaId!] : null,
-        )).toList();
-        debugPrint('Final fetchedCategories count: ' + fetchedCategories.length.toString());
-        for (var c in fetchedCategories) {
-          debugPrint('Category: id=' + c.id.toString() + ', name=' + c.name + ', imageUrl=' + (c.imageUrl ?? 'null'));
-        }
+        }));
+
+        List<Category> fetchedCategories = tempCategories
+            .map((c) => Category(
+                  id: c.id,
+                  name: c.name,
+                  imageUrl:
+                      c.imageMediaId != null ? mediaUrlMap[c.imageMediaId!] : null,
+                ))
+            .toList();
+        
         if (mounted) {
           setState(() {
             _categories = fetchedCategories;
-            _isLoadingCategories = false;
           });
         }
-        // Save to cache
-        await _cacheManager.saveToCache('categories', fetchedCategories.map((c) => c.toJson()).toList());
+        
+        await _cacheManager.saveToCache('categories', _categories.map((c) => c.toJson()).toList());
+
       } else {
         debugPrint('Failed to load categories: ' + response.statusCode.toString());
-        if (mounted) {
-          setState(() => _isLoadingCategories = false);
-        }
       }
     } catch (e) {
       debugPrint('Error loading categories: $e');
+    } finally {
       if (mounted) {
-        setState(() => _isLoadingCategories = false);
+        setState(() {
+          _isLoadingCategories = false;
+        });
       }
     }
   }
@@ -581,6 +579,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Keep state alive
     debugPrint('Building HomePageScreenClient');
     debugPrint('Categories count: ${_categories.length}');
     debugPrint('Partners count: ${_partners.length}');
@@ -623,7 +622,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome back,',
+                              'Welcome',
                               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 4),
