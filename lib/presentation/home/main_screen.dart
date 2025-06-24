@@ -47,13 +47,13 @@ class _MainScreenState extends State<MainScreen> {
   void _initializeNavItems() {
     if (widget.role == 'um_client') {
       _icons = [Icons.home, Icons.person];
-      _labels = ['Home', 'Profile'];
+      _labels = ['Startseite', 'Profil'];
     } else if (widget.role == 'um_contractor') {
       _icons = [Icons.home, Icons.person, Icons.card_membership, Icons.shopping_bag];
-      _labels = ['Home', 'Profile', 'Membership', 'All Orders'];
+      _labels = ['Startseite', 'Profil', 'Mitgliedschaft', 'Alle Aufträge'];
     } else {
       _icons = [Icons.home, Icons.person];
-      _labels = ['Home', 'Profile'];
+      _labels = ['Startseite', 'Profil'];
     }
   }
 

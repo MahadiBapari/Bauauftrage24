@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
         final responseData = json.decode(response.body);
 
         final userId = responseData['user_id']?.toString();
-        final username = responseData['username'] ?? 'Unknown User';
+        final username = responseData['username'] ?? 'Unbekannter Benutzer';
         final email = responseData['email'] ?? '';
         final displayName = responseData['display_name'] ?? '';
         final role = responseData['role'];
@@ -62,13 +62,13 @@ class _LoginPageState extends State<LoginPage> {
             arguments: {'role': role},
           );
         } else {
-          _showError('Login failed: Email or password is wrong');
+          _showError('Anmeldung fehlgeschlagen: E-Mail oder Passwort ist falsch');
         }
       } else {
-        _showError('Login failed: Email or password is wrong');
+        _showError('Anmeldung fehlgeschlagen: E-Mail oder Passwort ist falsch');
       }
     } catch (e) {
-      _showError('Login failed: Email or password is wrong');
+      _showError('Anmeldung fehlgeschlagen: E-Mail oder Passwort ist falsch');
     } finally {
       if (mounted) { 
          setState(() {
@@ -94,12 +94,12 @@ class _LoginPageState extends State<LoginPage> {
               const Icon(Icons.email_outlined, size: 48, color: Color.fromARGB(255, 185, 7, 7)),
               const SizedBox(height: 16),
               const Text(
-                'Forgot Password',
+                'Passwort vergessen',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Enter your email to receive a password reset link.',
+                'Bitte geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
@@ -108,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email Address',
+                  labelText: 'E-Mail-Adresse',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -127,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       onPressed: () => Navigator.of(ctx).pop(),
                       child: const Text(
-                        'Cancel',
+                        'Abbrechen',
                         style: TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 185, 7, 7),
@@ -149,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                           _sendPasswordResetLink(emailController.text);
                         }
                       },
-                      child: const Text('Send', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      child: const Text('Senden', style: TextStyle(fontSize: 16, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -176,11 +176,11 @@ class _LoginPageState extends State<LoginPage> {
       Color backgroundColor;
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        message = responseData['message'] ?? 'A password reset link has been sent to your email.';
+        message = responseData['message'] ?? 'Ein Link zum Zurücksetzen des Passworts wurde an Ihre E-Mail gesendet.';
         backgroundColor = const Color.fromARGB(129, 0, 0, 0);
       } else {
         final responseData = json.decode(response.body);
-        message = responseData['message'] ?? 'Failed to send reset link. Please check the email and try again.';
+        message = responseData['message'] ?? 'Senden des Links fehlgeschlagen. Bitte überprüfen Sie die E-Mail-Adresse und versuchen Sie es erneut.';
         backgroundColor = const Color.fromARGB(160, 244, 67, 54);
       }
       if (mounted) {
@@ -260,13 +260,13 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/logolight.png',
                         height: logoHeight,
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 30),
                       const Text(
-                        'Welcome',
+                        'Willkommen',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
@@ -276,7 +276,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Log in to your account to continue',
+                        'Melden Sie sich bei Ihrem Konto an, um fortzufahren',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
@@ -288,8 +288,8 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'Enter your email',
+                          labelText: 'E-Mail',
+                          hintText: 'Bitte geben Sie Ihre E-Mail ein',
                           prefixIcon: const Icon(Icons.email_outlined),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -306,8 +306,8 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _passwordController,
                         obscureText: !_passwordVisible,
                         decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: 'Enter your password',
+                          labelText: 'Passwort',
+                          hintText: 'Bitte geben Sie Ihr Passwort ein',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -338,7 +338,7 @@ class _LoginPageState extends State<LoginPage> {
                             _showForgotPasswordDialog();
                           },
                           child: Text(
-                            'Forgot Password?',
+                            'Passwort vergessen?',
                             style: TextStyle(color: Colors.grey[600], fontSize: isSmall ? 13 : 15),
                           ),
                         ),
@@ -367,7 +367,7 @@ class _LoginPageState extends State<LoginPage> {
                                   strokeWidth: 2.5,
                                 ),
                               )
-                            : const Text('Log In'),
+                            : const Text('Anmelden'),
                       ),
                       const SizedBox(height: 30),
                       Row(
@@ -376,8 +376,8 @@ class _LoginPageState extends State<LoginPage> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12.0),
                             child: Text(
-                              "Don't have an account?",
-                              style: TextStyle(color: Colors.grey[600], fontSize: isSmall ? 13 : 15),
+                              "Sie haben noch kein Konto?",
+                              style: TextStyle(color: Colors.grey[600], fontSize: isSmall ? 11 : 13),
                             ),
                           ),
                           Expanded(child: Divider(color: Colors.grey[300])),
@@ -393,7 +393,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Navigator.pushNamed(context, '/register_client');
                               },
                               label: const Text(
-                                'Register as Client',
+                                'Als Kunde Eintragen',
                                 style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
                               ),
                               style: TextButton.styleFrom(
@@ -413,7 +413,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Navigator.pushNamed(context, '/register_contractor');
                               },
                               label: const Text(
-                                'Register as Contractor',
+                                'Als Firma Eintragen',
                                 style: TextStyle(color: Color.fromARGB(255, 185, 7, 7)),
                               ),
                               style: TextButton.styleFrom(

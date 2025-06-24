@@ -147,7 +147,7 @@ class _EditProfileFormContractorState
         if (response.statusCode == 200 && responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Profile updated successfully!'),
+              content: const Text('Profil erfolgreich aktualisiert!'),
               backgroundColor: const Color.fromARGB(103, 0, 0, 0),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -204,7 +204,7 @@ class _EditProfileFormContractorState
                 ),
                 const Spacer(),
                 const Text(
-                  'Edit Contractor Profile',
+                  'Profil bearbeiten',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
@@ -231,7 +231,7 @@ class _EditProfileFormContractorState
                       TextFormField(
                         controller: _firstNameController,
                         decoration: const InputDecoration(
-                          labelText: 'First Name',
+                          labelText: 'Vorname',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -242,7 +242,7 @@ class _EditProfileFormContractorState
                       TextFormField(
                         controller: _lastNameController,
                         decoration: const InputDecoration(
-                          labelText: 'Last Name',
+                          labelText: 'Nachname',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -254,7 +254,7 @@ class _EditProfileFormContractorState
                         initialValue: widget.userData['user_email'] ?? '', // Use initialValue for readOnly
                         readOnly: true,
                         decoration: const InputDecoration(
-                          labelText: 'Email (not editable)',
+                          labelText: 'E-Mail (nicht bearbeitbar)',
                           prefixIcon: Icon(Icons.email_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -265,7 +265,7 @@ class _EditProfileFormContractorState
                       TextFormField(
                         controller: _phoneController,
                         decoration: InputDecoration(
-                          labelText: 'Phone',
+                          labelText: 'Telefon',
                           prefixIcon: const Icon(Icons.phone),
                           border: OutlineInputBorder(),
                         ),
@@ -276,7 +276,7 @@ class _EditProfileFormContractorState
                       TextFormField(
                         controller: _firmNameController,
                         decoration: InputDecoration(
-                          labelText: 'Firm Name',
+                          labelText: 'Firmenname',
                           prefixIcon: const Icon(Icons.business),
                           border: OutlineInputBorder(),
                         ),
@@ -287,7 +287,7 @@ class _EditProfileFormContractorState
                       TextFormField(
                         controller: _uidNumberController,
                         decoration: const InputDecoration(
-                          labelText: 'UID Number',
+                          labelText: 'UID-Nummer',
                           prefixIcon: Icon(Icons.confirmation_number_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -300,7 +300,7 @@ class _EditProfileFormContractorState
                             ? _availableTimeController.text
                             : null,
                         decoration: const InputDecoration(
-                          labelText: 'Available Time',
+                          labelText: 'Verfügbare Zeit',
                           prefixIcon: Icon(Icons.access_time),
                           border: OutlineInputBorder(),
                         ),
@@ -333,7 +333,7 @@ class _EditProfileFormContractorState
                                       category['id']!, category['name']!))
                                   .toList(),
                               initialValue: _selectedServiceCategoryIds,
-                              title: const Text("Categories"),
+                              title: const Text("Kategorien"),
                               selectedColor: const Color.fromARGB(255, 185, 33, 33),
                               cancelText: const Text("", style: TextStyle(fontSize: 0)),
                               confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
@@ -341,7 +341,7 @@ class _EditProfileFormContractorState
                                 border: Border.all(color: const Color.fromARGB(255, 88, 88, 88)),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              buttonText: const Text("Select Categories"),
+                              buttonText: const Text("Kategorien auswählen"),
                               onConfirm: (values) {
                                 setState(() {
                                   _selectedServiceCategoryIds = values.cast<String>();
@@ -376,7 +376,7 @@ class _EditProfileFormContractorState
               child: ElevatedButton.icon(
                 onPressed: _updateProfile,
                 icon: const Icon(Icons.save),
-                label: const Text('Save Changes'),
+                label: const Text('Änderungen speichern'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: const Color.fromARGB(255, 185, 7, 7),

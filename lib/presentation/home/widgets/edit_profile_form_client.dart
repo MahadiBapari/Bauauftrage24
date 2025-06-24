@@ -73,7 +73,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
         if (response.statusCode == 200 && responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Profile updated successfully!'),
+              content: const Text('Profil erfolgreich aktualisiert!'),
               backgroundColor: const Color.fromARGB(129, 0, 0, 0),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -130,7 +130,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                 ),
                 const Spacer(),
                 const Text(
-                  'Edit Profile',
+                  'Profil bearbeiten',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
@@ -155,7 +155,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                       TextFormField(
                         controller: _firstNameController,
                         decoration: const InputDecoration(
-                          labelText: 'First Name',
+                          labelText: 'Vorname',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -166,7 +166,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                       TextFormField(
                         controller: _lastNameController,
                         decoration: const InputDecoration(
-                          labelText: 'Last Name',
+                          labelText: 'Nachname',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -178,7 +178,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                         initialValue: widget.userData['user_email'] ?? '',
                         readOnly: true,
                         decoration: const InputDecoration(
-                          labelText: 'Email (not editable)',
+                          labelText: 'E-Mail (nicht bearbeitbar)',
                           prefixIcon: Icon(Icons.email_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -190,7 +190,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
-                          labelText: 'Phone',
+                          labelText: 'Telefon',
                           prefixIcon: Icon(Icons.phone_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -211,7 +211,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
               child: ElevatedButton.icon(
                 onPressed: _updateProfile,
                 icon: const Icon(Icons.save),
-                label: const Text('Save Changes'),
+                label: const Text('Änderungen speichern'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: const Color.fromARGB(255, 185, 7, 7),

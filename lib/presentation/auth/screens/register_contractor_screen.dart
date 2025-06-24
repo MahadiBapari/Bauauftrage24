@@ -102,7 +102,7 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: $e'),
+          content: Text('Fehler: $e'),
           backgroundColor: const Color.fromARGB(160, 244, 67, 54),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -250,7 +250,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               ),
               const SizedBox(height: 20),
               const Text(
-                'Create Contractor Account',
+                'Konto als Unternehmer erstellen',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -258,7 +258,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               TextFormField(
                 controller: _firmController,
                 decoration: InputDecoration(
-                  labelText: 'Company Name*',
+                  labelText: 'Firmenname*',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -267,13 +267,13 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   ),
                 ),
                 validator: (value) =>
-                    value!.isEmpty ? 'Company name is required' : null,
+                    value!.isEmpty ? 'Firmenname ist erforderlich' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _uidController,
                 decoration: InputDecoration(
-                  labelText: 'UID Number*',
+                  labelText: 'UID-Nummer*',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -282,14 +282,14 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   ),
                 ),
                 validator: (value) =>
-                    value!.isEmpty ? 'UID number is required' : null,
+                    value!.isEmpty ? 'UID-Nummer ist erforderlich' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email Address*',
+                  labelText: 'E-Mail-Adresse*',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -299,10 +299,10 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Email is required';
+                    return 'E-Mail ist erforderlich';
                   }
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                    return 'Please enter a valid email address';
+                    return 'Bitte geben Sie eine gültige E-Mail-Adresse ein';
                   }
                   return null;
                 },
@@ -311,7 +311,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               TextFormField(
                 controller: _firstNameController,
                 decoration: InputDecoration(
-                  labelText: 'First Name',
+                  labelText: 'Vorname',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -324,7 +324,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               TextFormField(
                 controller: _lastNameController,
                 decoration: InputDecoration(
-                  labelText: 'Last Name',
+                  labelText: 'Nachname',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -338,7 +338,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Phone Number*',
+                  labelText: 'Telefonnummer*',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -347,14 +347,14 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   ),
                 ),
                 validator: (value) =>
-                    value!.isEmpty ? 'Phone number is required' : null,
+                    value!.isEmpty ? 'Telefonnummer ist erforderlich' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Password*',
+                  labelText: 'Passwort*',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -363,14 +363,14 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   ),
                 ),
                 validator: (value) =>
-                    (value?.length ?? 0) < 6 ? 'Password must be at least 6 characters' : null,
+                    (value?.length ?? 0) < 6 ? 'Das Passwort muss mindestens 6 Zeichen lang sein' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Confirm Password*',
+                  labelText: 'Passwort bestätigen*',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -379,7 +379,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   ),
                 ),
                 validator: (value) => value != _passwordController.text
-                    ? 'Passwords do not match'
+                    ? 'Passwörter stimmen nicht überein'
                     : null,
               ),
               const SizedBox(height: 16),
@@ -518,11 +518,11 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               CheckboxListTile(
                 title: Row(
                   children: [
-                    const Text('I agree to the '),
+                    const Text('Ich akzeptiere die '),
                     GestureDetector(
                       onTap: _showTermsDialog,
                       child: const Text(
-                        'Terms and Conditions',
+                        'Allgemeinen Geschäftsbedingungen',
                         style: TextStyle(color: Color.fromARGB(255, 201, 45, 45)),
                       ),
                     ),
@@ -551,7 +551,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                         ),
                       ),
                       child: const Text(
-                        'Register',
+                        'Registrieren',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -563,11 +563,11 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Already have an account?"),
+                  const Text("Sie haben bereits ein Konto?"),
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, '/login'),
                     child: Text(
-                      'Log In',
+                      'Anmelden',
                       style: TextStyle(
                         color: Colors.red.shade800,
                         fontWeight: FontWeight.bold,

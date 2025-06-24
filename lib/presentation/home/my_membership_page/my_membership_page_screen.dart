@@ -51,7 +51,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _errorMessage = 'Authentication token not found. Please log in again.';
+            _errorMessage = 'Authentifizierungstoken nicht gefunden. Bitte melden Sie sich erneut an.';
             _isActiveMembership = false; 
           });
         }
@@ -104,7 +104,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
         }
       } else {
         // API returned an error status code
-        _errorMessage = 'Failed to load membership: ${response.statusCode} - ${response.body}';
+        _errorMessage = 'Mitgliedschaft konnte nicht geladen werden: ${response.statusCode} - ${response.body}';
         debugPrint(_errorMessage);
         if (mounted) {
           setState(() {
@@ -114,7 +114,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
       }
     } catch (e) {
       
-      _errorMessage = 'Error fetching membership details: $e';
+      _errorMessage = 'Fehler beim Laden der Mitgliedschaft: $e';
       debugPrint(_errorMessage);
       if (mounted) {
         setState(() {
@@ -144,10 +144,10 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
       if (!mounted) return; 
 
       if (response.statusCode == 200 && data['success'] == true) {
-        debugPrint('Membership cancelled: ${data['message']}');
+        debugPrint('Mitgliedschaft gekündigt: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Membership cancelled: ${data['message']}'),
+            content: Text('Mitgliedschaft gekündigt: ${data['message']}'),
             backgroundColor: const Color.fromARGB(129, 0, 0, 0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -159,10 +159,10 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
       
         _fetchMembershipDetails();
       } else {
-        debugPrint('Failed to cancel membership: ${data['message']}');
+        debugPrint('Kündigung der Mitgliedschaft fehlgeschlagen: ${data['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to cancel membership: ${data['message']}'),
+            content: Text('Kündigung der Mitgliedschaft fehlgeschlagen: ${data['message']}'),
             backgroundColor: const Color.fromARGB(160, 244, 67, 54),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -173,11 +173,11 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
         );
       }
     } catch (e) {
-      debugPrint('Error cancelling membership: $e');
+      debugPrint('Fehler beim Kündigen der Mitgliedschaft: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error cancelling membership: $e'),
+            content: Text('Fehler beim Kündigen der Mitgliedschaft: $e'),
             backgroundColor: const Color.fromARGB(160, 244, 67, 54),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -206,12 +206,12 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
           Icon(Icons.cancel, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
           const SizedBox(height: 16),
           const Text(
-            'Cancel Membership',
+            'Mitgliedschaft kündigen',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           const Text(
-            'Are you sure you want to cancel your membership? This action cannot be undone.',
+            'Sind Sie sicher, dass Sie Ihre Mitgliedschaft kündigen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
@@ -227,7 +227,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
               ),
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text(
-            'No',
+            'Nein',
             style: TextStyle(
               fontSize: 16,
               color: Color.fromARGB(255, 185, 7, 7),
@@ -245,7 +245,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text(
-            'Yes, Cancel',
+            'Ja, kündigen',
             style: TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
@@ -268,7 +268,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('No authentication token found. Please log in.'),
+              content: const Text('Kein Authentifizierungstoken gefunden. Bitte melden Sie sich an.'),
               backgroundColor: const Color.fromARGB(160, 244, 67, 54),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -304,7 +304,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _fetchMembershipDetails, // Retry button
-                          child: const Text('Retry'),
+                          child: const Text('Erneut versuchen'),
                         ),
                       ],
                     ),
@@ -454,7 +454,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                       ),
                       const SizedBox(width: 6),
                       const Text(
-                        'Active',
+                        'Aktive Mitgliedschaft',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.normal,
@@ -473,7 +473,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Starts',
+                        'Beginnt',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -494,7 +494,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Expires',
+                        'Läuft ab',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -538,7 +538,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                         padding: EdgeInsets.zero,
                       ),
                       child: const Text(
-                        'Renew',
+                        'Erneuern',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -559,7 +559,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                         padding: EdgeInsets.zero,
                       ),
                       child: const Text(
-                        'Cancel Membership',
+                        'Mitgliedschaft kündigen',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -596,7 +596,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'No active membership found.',
+              'Keine aktive Mitgliedschaft gefunden.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
@@ -606,7 +606,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'It looks like your membership has expired or you do not have one yet. Get a membership to unlock full features!',
+              'Es sieht so aus, als wäre Ihre Mitgliedschaft abgelaufen oder Sie haben noch keine. Erwerben Sie eine Mitgliedschaft, um alle Funktionen freizuschalten!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -640,7 +640,7 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
                   foregroundColor: Colors.white,
                 ),
                 child: const Text(
-                  'Get Membership',
+                  'Mitgliedschaft erwerben',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

@@ -75,7 +75,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      appBar: AppBar(title: const Text('Partners')),
+      appBar: AppBar(title: const Text('Partner')),
       body: FutureBuilder<List<Partner>>(
         future: _partnersFuture,
         builder: (context, snapshot) {
@@ -94,13 +94,13 @@ class _PartnerScreenState extends State<PartnerScreen> {
                         _partnersFuture = fetchPartners(); 
                       });
                     },
-                    child: const Text('Retry'),
+                    child: const Text('Erneut versuchen'),
                   ),
                 ],
               ),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No partners found.'));
+            return const Center(child: Text('Keine Partner gefunden.'));
           }
 
           final partners = snapshot.data!;

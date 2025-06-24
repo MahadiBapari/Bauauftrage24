@@ -21,28 +21,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPageModel> onboardingPages = [
     OnboardingPageModel(
-      title: "Welcome to Bauaufträge24!",
-      description: "Find and manage construction projects easily — anytime, anywhere.",
+      title: "Willkommen bei Bauaufträge24!",
+      description: "Die Plattform für Bauaufträge und Handwerker in der Schweiz. Finden Sie schnell und einfach passende Aufträge oder qualifizierte Handwerker.",
       imageAsset: "assets/images/welcome.png",
     ),
     OnboardingPageModel(
-      title: "Find Projects & Professionals",
-      description: "From finding the perfect contractor to discovering new job opportunities, we've got you covered.",
+      title: "Finden Sie Projekte & Fachleute",
+      description: "Durchsuchen Sie aktuelle Bauprojekte oder bieten Sie Ihre Dienstleistungen als Handwerker an.",
       imageAsset: "assets/images/client_contractor.png",
     ),
     OnboardingPageModel(
-      title: "Find Trusted Professionals",
-      description: "Post your building project and get offers from verified contractors in just a few clicks.",
+      title: "Finden Sie vertrauenswürdige Fachkräfte",
+      description: "Alle Handwerker werden sorgfältig geprüft und verifiziert, damit Sie sich auf Qualität verlassen können.",
       imageAsset: "assets/images/client.png",
     ),
     OnboardingPageModel(
-      title: "Get New Contracts Faster",
-      description: "Browse job offers, submit quotes, and grow your business with less hassle.",
+      title: "Erhalten Sie schneller neue Aufträge",
+      description: "Erstellen Sie Ihr Profil, erhalten Sie Benachrichtigungen und sichern Sie sich neue Bauaufträge in Ihrer Region.",
       imageAsset: "assets/images/contractor.png",
     ),
     OnboardingPageModel(
-      title: "Let's Get Started",
-      description: "Let's get into it together!",
+      title: "Los geht's!",
+      description: "Registrieren Sie sich jetzt kostenlos und entdecken Sie die Vorteile von Bauaufträge24.",
       imageAsset: "assets/images/get_started.png",
     ),
   ];
@@ -256,7 +256,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Register', style: TextStyle(color: Colors.white)),
+                        child: const Text('Registrieren', style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ] else if (_currentIndex != onboardingPages.length - 1) ...[

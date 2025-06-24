@@ -42,7 +42,7 @@ class _MembershipFormPageScreenState
       userEmail = prefs.getString('user_email');
       if (token == null) {
         setState(() {
-          errorMessage = 'Not authenticated.';
+          errorMessage = 'Nicht authentifiziert.';
           isLoading = false;
         });
         return;
@@ -64,19 +64,19 @@ class _MembershipFormPageScreenState
           });
         } else {
           setState(() {
-            errorMessage = 'Failed to load membership info.';
+            errorMessage = 'Mitgliedschaftsinformationen konnten nicht geladen werden.';
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = 'Failed to load membership info.';
+          errorMessage = 'Mitgliedschaftsinformationen konnten nicht geladen werden.';
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'Error: $e';
+        errorMessage = 'Fehler: $e';
         isLoading = false;
       });
     }
@@ -95,7 +95,7 @@ class _MembershipFormPageScreenState
     if (_card == null || !_card!.complete) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please fill in the card details completely.'),
+          content: const Text('Bitte füllen Sie die Kartendaten vollständig aus.'),
           backgroundColor: const Color.fromARGB(160, 244, 67, 54),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -118,12 +118,12 @@ class _MembershipFormPageScreenState
       final token = prefs.getString('auth_token');
 
       if (userIdString == null || token == null) {
-        throw Exception('User not authenticated. Please log in again.');
+        throw Exception('Benutzer nicht authentifiziert. Bitte melden Sie sich erneut an.');
       }
       
       final userId = int.tryParse(userIdString);
       if (userId == null) {
-        throw Exception('Invalid user ID format.');
+        throw Exception('Ungültiges Benutzer-ID-Format.');
       }
 
       final paymentMethod = await Stripe.instance.createPaymentMethod(
@@ -154,7 +154,7 @@ class _MembershipFormPageScreenState
       if (response.statusCode == 200 && data['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Membership active until: ${data['expires_on']}'),
+            content: Text('Mitgliedschaft aktiv bis: ${data['expires_on']}'),
             backgroundColor: const Color.fromARGB(129, 0, 0, 0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -171,7 +171,7 @@ class _MembershipFormPageScreenState
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ Error: $e'),
+          content: Text('❌ Fehler: $e'),
           backgroundColor: const Color.fromARGB(160, 244, 67, 54),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -271,7 +271,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child:
-                        const Text('Schließen', style: TextStyle(fontSize: 16)),
+                        const Text('Schliessen', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ],
@@ -409,7 +409,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                   children: [
                                                                     const Text(
-                                                                      'Add your payment information',
+                                                                        'Füg dini Zahlungsinformation zue',
                                                                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color.fromARGB(255, 0, 0, 0)),
                                                                     ),
                                                                     IconButton(
@@ -451,15 +451,15 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                       spacing: 2,
                                                                       runSpacing: isSmallScreen ? 4 : 0,
                                                                       children: [
-                                                                        Text('Ich stimme dem zu ', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0))),
+                                                                        Text('Ich stimme den ', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0))),
                                                                         GestureDetector(
                                                                         onTap: _showTermsDialog,
                                                                         child: Text(
-                                                                          'Allgemeine Geschäftsbedingungen',
+                                                                          'Allgemeinen Geschäftsbedingungen',
                                                                           style: TextStyle(color: const Color.fromARGB(255, 201, 45, 45)),
                                                                         ),
                                                                         ),
-                                                                        Text(' *', style: TextStyle(color: lighterText)),
+                                                                        //Text(' *', style: TextStyle(color: lighterText)),
                                                                       ],
                                                                       ),
                                                                     ),
@@ -491,7 +491,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                                                             width: 24,
                                                                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
                                                                           )
-                                                                        : Text('Pay ' + (initialPayment != null ? _formatPrice(initialPayment) : '')),
+                                                                        : Text('Bezahlen ' + (initialPayment != null ? _formatPrice(initialPayment) : '')),
                                                                   ),
                                                                 ),
                                                               ],
@@ -510,7 +510,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                                             textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                             elevation: 2,
                                           ),
-                                          child: const Text('Buy Now'),
+                                          child: const Text('Jetzt kaufen'),
                                         ),
                                       ),
                                     ],

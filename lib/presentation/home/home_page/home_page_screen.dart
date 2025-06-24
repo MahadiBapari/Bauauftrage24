@@ -622,7 +622,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome',
+                              'Willkommen',
                               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 4),
@@ -716,7 +716,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           ),
                         ) // Horizontal shimmer for newest orders
                       : _filteredNewArrivalsOrders.isEmpty
-                          ? const Text("No new orders in this category.")
+                          ? const Text("Keine neuen Aufträge in dieser Kategorie.")
                           : SizedBox(
                               height: 220,
                               child: ListView.separated(
@@ -733,11 +733,11 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
                   _buildCouponCard(
                     imageUrl: 'assets/images/kpsa_logo.png',
-                    discountText: '20% discount',
-                    descriptionText: '20% discount on workwear for construction contracts24 craftsmen! Order your work clothes directly at www.kpsa.ch. Log into our website account or register to receive your exclusive discount code.\n\nAfter logging in you will find the code in your profile.',
+                    discountText: '20% Rabatt',
+                    descriptionText: '20% Rabatt auf Arbeitskleidung für Bauaufträge24-Handwerker! Bestellen Sie Ihre Arbeitskleidung direkt auf www.kpsa.ch. Melden Sie sich in Ihrem Website-Konto an oder registrieren Sie sich, um Ihren exklusiven Rabattcode zu erhalten.\n\nNach dem Login finden Sie den Code in Ihrem Profil.',
                     onShowDiscountCode: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Discount code will be shown here!')),
+                        const SnackBar(content: Text('Rabattcode wird hier angezeigt!')),
                       );
                     },
                   ),
@@ -828,7 +828,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Newest Orders", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const Text("Neueste Aufträge", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         isLoadingCategories
             ? Shimmer.fromColors(
@@ -852,7 +852,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 ),
               )
             : _categories.isEmpty
-                ? const Text("No categories available.")
+                ? const Text("Keine Kategorien verfügbar.")
                 : SizedBox(
                     height: 40,
                     child: ListView.separated(
@@ -884,9 +884,17 @@ class _HomePageScreenState extends State<HomePageScreen> {
   }
 
   Widget _buildGetMembershipCard(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double horizontalPadding = screenWidth < 350 ? 12.0 : 24.0;
+    final double iconSize = screenWidth < 350 ? 32 : 42;
+    final double titleFontSize = screenWidth < 350 ? 14 : 20;
+    final double descFontSize = screenWidth < 350 ? 12 : 14;
+    final double buttonFontSize = screenWidth < 350 ? 12 : 14;
+    final double cardMargin = screenWidth < 350 ? 12.0 : 24.0;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 24.0),
-      padding: const EdgeInsets.all(24.0),
+      margin: EdgeInsets.only(bottom: cardMargin),
+      padding: EdgeInsets.all(horizontalPadding),
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 85, 21, 1),
         borderRadius: BorderRadius.circular(16),
@@ -911,38 +919,39 @@ class _HomePageScreenState extends State<HomePageScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-            Row(
+          Row(
             children: [
-              const Icon(
-              Icons.workspace_premium,
-              color: Colors.amberAccent,
-              size: 42,
+              Icon(
+                Icons.workspace_premium,
+                color: Colors.amberAccent,
+                size: iconSize,
               ),
-              const SizedBox(width: 16),
-              const Text(
-              'Unlock Premium Features!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  'Schalt Premium-Funktione frei!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
-            ),
-            const SizedBox(height: 16),
-          const SizedBox(height: 8),
-            Center(
+          ),
+          const SizedBox(height: 16),
+          Center(
             child: Text(
-              _membershipStatusMessage.isEmpty
-                ? 'Your current membership is not active. Get a membership to access exclusive benefits and advanced tools.'
-                : _membershipStatusMessage,
+                'Du bisch aktuell kei Mitglied. Jetzt Mitglied werde für meh Vorteili!',
               textAlign: TextAlign.center,
               style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+                fontSize: descFontSize,
               ),
             ),
-            ),
+          ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -958,16 +967,16 @@ class _HomePageScreenState extends State<HomePageScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color.fromARGB(255, 85, 21, 1),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: screenWidth < 350 ? 8 : 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 5,
               ),
-              child: const Text(
-                'Get Membership Now',
+              child: Text(
+                'Jetzt Mitglied werde',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: buttonFontSize,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1079,7 +1088,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                   ),
                                   const SizedBox(height: 20),
                                   const Text(
-                                    'KPSA bietet hochwertige Berufs- und Schutzkleidung für Handwerker und Bauprofis.\n\nGebt im Notizfeld bei eurer Bestellung auf',
+                                    'KPSA bietet hochwertige Berufs- und Schutzkleidung für Handwerker und Bauprofis.\n\nGeben Sie bei Ihrer Bestellung auf',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
                                   ),
@@ -1129,7 +1138,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           context: context,
                           builder: (context) => MembershipRequiredDialog(
                             context: context,
-                            message: 'A membership is required to view the discount code.',
+                            message: 'Für die Anzeige des Rabattcodes ist eine Mitgliedschaft erforderlich.',
                           ),
                         );
                       }
@@ -1144,7 +1153,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                       elevation: 3,
                     ),
                     child: const Text(
-                      'Show discount code',
+                        'Rabattcode azeige',
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
@@ -1165,7 +1174,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text("Our Partners", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const Text("Unsere Partner", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             TextButton(
               onPressed: () {
                 Navigator.push(
@@ -1174,7 +1183,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 );
               },
               child: const Text(
-                'See all',
+                'Alle anzeigen',
                 style: TextStyle(
                   fontSize: 14,
                   color: Color.fromARGB(255, 179, 21, 21),
@@ -1194,7 +1203,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 itemWidth: 150,
               )
             : _partners.isEmpty
-                ? const Text("No partners available at the moment.")
+                ? const Text("Zurzeit sind keine Partner verfügbar.")
                 : SizedBox(
                     height: 180,
                     child: ListView.separated(
@@ -1330,7 +1339,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
             context: context,
             builder: (context) => MembershipRequiredDialog(
               context: context,
-              message: 'A membership is required to view order details. Get a membership to access all order information.',
+              message: 'Mitgliedschaft erforderlich, um Auftragsdetails zu sehen. Erwerben Sie eine Mitgliedschaft, um alle Auftragsinformationen zu erhalten.',
             ),
           );
         }

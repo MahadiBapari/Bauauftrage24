@@ -96,11 +96,11 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
         debugPrint('SingleMyOrderPageScreen: Failed to fetch latest order data: ${orderResponse.statusCode} ${orderResponse.body}');
         // If the order no longer exists (e.g., was deleted by another user), pop back
         if (orderResponse.statusCode == 404) {
-          _showInfoDialog('Order Not Found', 'This order might have been deleted. Returning to orders list.');
+          _showInfoDialog('Auftrag nicht gefunden', 'Dieser Auftrag wurde möglicherweise gelöscht. Rückkehr zur Auftragsliste.');
           Navigator.of(context).pop(true); // Pop back and refresh list
           return;
         }
-        _showErrorDialog('Error', 'Failed to load latest order details. Status: ${orderResponse.statusCode}');
+        _showErrorDialog('Fehler', 'Fehler beim Laden der aktuellen Auftragsdetails. Status: ${orderResponse.statusCode}');
         if (mounted) setState(() => _isLoading = false);
         return;
       }
@@ -212,13 +212,13 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
           _isLoading = false;
         });
       }
-      _showErrorDialog('Error', 'Failed to load order details. Please check your internet connection.');
+      _showErrorDialog('Fehler', 'Fehler beim Laden der Auftragsdetails. Bitte überprüfen Sie Ihre Internetverbindung.');
     }
   }
 
   void _editOrder(BuildContext context) async {
     if (_authToken == null) {
-      _showErrorDialog('Authentication Required', 'Please log in to edit orders.');
+      _showErrorDialog('Authentifizierung erforderlich', 'Bitte melden Sie sich an, um Aufträge zu bearbeiten.');
       return;
     }
 
@@ -297,7 +297,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
 
     if (confirmDelete == true) {
       if (_authToken == null || _userId == null) {
-        _showErrorDialog('Authentication Error', 'You are not authenticated to delete orders.');
+        _showErrorDialog('Authentifizierungsfehler', 'Sie sind nicht berechtigt, Aufträge zu löschen.');
         return;
       }
 
@@ -337,7 +337,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
           Navigator.of(context).pop(true);
         } else {
           debugPrint('SingleMyOrderPageScreen: Failed to delete order $orderId: ${response.statusCode} ${response.body}');
-          _showErrorDialog('Deletion Failed', 'Failed to delete order. Status: ${response.statusCode} - ${response.body}');
+          _showErrorDialog('Fehler', 'Löschen fehlgeschlagen. Status: ${response.statusCode} - ${response.body}');
         }
       } catch (e) {
         debugPrint('SingleMyOrderPageScreen: Error deleting order $orderId: $e');
@@ -346,7 +346,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
             _isLoading = false;
           });
         }
-        _showErrorDialog('Error', 'An error occurred during deletion: $e');
+        _showErrorDialog('Fehler', 'Fehler beim Löschen ist ein Fehler aufgetreten: $e');
       }
     }
   }

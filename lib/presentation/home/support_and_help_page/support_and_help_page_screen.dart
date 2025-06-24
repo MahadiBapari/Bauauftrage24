@@ -3,18 +3,17 @@ import 'package:flutter/material.dart';
 class SupportAndHelpPageScreen extends StatelessWidget {
   const SupportAndHelpPageScreen({super.key});
 
-  
   Widget _buildSectionHeader(String title) {
     return Column(
       children: [
-        const SizedBox(height: 24), 
+        const SizedBox(height: 24),
         Row(
           children: [
-            Expanded(child: Divider(color: Colors.grey[400])), 
+            Expanded(child: Divider(color: Colors.grey[400])),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                title.toUpperCase(), 
+                title.toUpperCase(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -22,22 +21,21 @@ class SupportAndHelpPageScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(child: Divider(color: Colors.grey[400])), 
+            Expanded(child: Divider(color: Colors.grey[400])),
           ],
         ),
-        const SizedBox(height: 16), 
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  // Helper widget to build a simple horizontal divider between items
   Widget _buildSimpleDivider() {
     return Divider(
       color: Colors.grey[200],
       height: 1,
       thickness: 1,
-      indent: 16, 
-      endIndent: 16, 
+      indent: 16,
+      endIndent: 16,
     );
   }
 
@@ -45,25 +43,25 @@ class SupportAndHelpPageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final faqList = [
       {
-        'question': 'Welche Art von Aufträgen kann ich auf Bauaufträge24.ch einstellen?',
-        'answer': '''Auf Bauaufträge24.ch können Sie eine Vielzahl von Bau- und Handwerksaufträgen einstellen. Egal, ob es sich um kleine Reparaturen, Renovierungen, Neubauten oder spezifische Handwerksleistungen handelt – unsere Plattform verbindet Sie mit qualifizierten, zertifizierten Handwerkern für jedes Projekt.
-Von klassischen Handwerksleistungen wie Malerarbeiten, Elektrik, Sanitärinstallationen bis hin zu komplexeren Bauprojekten wie Fassadenrenovierungen, Innenausbau oder Gartenarbeiten – auf Bauaufträge24.ch finden Sie den richtigen Handwerker für Ihre Bedürfnisse.
-Stellen Sie einfach Ihr Projekt ein, und lassen Sie sich von unseren professionellen Handwerkern Angebote unterbreiten!'''
+        'question': 'Was für Ufträgi cha ich uf Bauaufträge24.ch iistelle?',
+        'answer': '''Uf Bauaufträge24.ch chasch viu verschideni Bau- und Handwerksufträgi iistelle. Egal ob chlii Reparature, Renovatione, Neubau oder spezifischi Handwerksarbeit – mir verbinde di mit qualifizierte, zertifizierte Handwerker für jedes Projekt.
+Vo klassische Handwerksarbeit wie Malerarbeit, Elektrik, Sanitär bis zu komplexere Sache wie Fassade, Innenausbau oder Gartenarbeit – uf Bauaufträge24.ch findsch de richtige Handwerker für dini Bedürfnis.
+Stell dis Projekt eifach i und lah der vo unsere Profis e Offert mache!'''
       },
       {
-        'question': 'Wie hoch sind die Kosten für die Handwerker auf Bauaufträge24.ch?',
-        'answer': '''Für Handwerker gibt es eine einmalige Jahresgebühr von 1290 CHF. Diese Gebühr ermöglicht es Ihnen, das gesamte Jahr über auf Bauaufträge zuzugreifen und von unseren Kunden kontaktiert zu werden – ohne versteckte Zusatzkosten oder Provisionen.
-Mit dieser Gebühr erhalten Sie einen vollen Zugang zu einer Vielzahl von Aufträgen und profitieren von einer exklusiven Sichtbarkeit auf der Plattform. So können Sie sich auf das konzentrieren, was wirklich zählt: Ihre Arbeit – ohne sich um zusätzliche Gebühren kümmern zu müssen.'''
+        'question': 'Was kostet es für Handwerker uf Bauaufträge24.ch?',
+        'answer': '''Für Handwerker git es eimalig e Jahresgebühr vo 1290 CHF. Mit dere Gebühr hesch s’ganze Jahr Zuegriff uf alli Bauufträgi und chasch vo Kunde kontaktiert werde – kei versteckte Zusatzkoste oder Provision.
+Mit dere Gebühr hesch volle Zuegriff uf viu Ufträgi und profitierst vo exklusiver Sichtbarkeit uf de Plattform. So chasch di uf dini Arbeit konzentriere – ohni di um meh Koste sorge z’müesse.'''
       },
       {
-        'question': 'Wie kann ich sicherstellen, dass der Handwerker zuverlässig und qualifiziert ist?',
-        'answer': '''Ja, alle Handwerker auf Bauaufträge24.ch sind zertifiziert und verifiziert. Wir legen großen Wert darauf, nur qualifizierte und vertrauenswürdige Handwerker auf unserer Plattform zuzulassen. Jeder Handwerker wird sorgfältig überprüft, einschließlich einer Überprüfung seiner Qualifikationen, seiner Registrierung im Handelsregister und seiner Berufserfahrung.
-Um sicherzustellen, dass Sie auf Experten zählen können, führen wir auch regelmäßige Telefonate und persönliche Besuche durch. So garantieren wir, dass unsere Handwerker zuverlässig sind und den höchsten Standards entsprechen.'''
+        'question': 'Wie weiss ich, dass de Handwerker zuverlässig und qualifiziert isch?',
+        'answer': '''Ja, alli Handwerker uf Bauaufträge24.ch sind zertifiziert und verifiziert. Mir lueged druf, dass nur qualifizierte und vertrauenswürdigi Handwerker uf de Plattform sind. Jede Handwerker wird genau überprüeft, inklusiv Qualifikationen, Handelsregister und Berufserfahrung.
+Zum sicherstelle, dass du uf Profis zelle chasch, mache mir au regelmässig Telefonate und persönlechi Bsuech. So chöi mir garantierä, dass üsi Handwerker zuverlässig sind und höchste Standards erfülle.'''
       },
       {
-        'question': 'Kann ich den Handwerker direkt kontaktieren, um Details zu besprechen?',
-        'answer': '''Ja, Sie können die Handwerker direkt kontaktieren, um alle Details Ihres Projekts zu besprechen. Sobald Sie einen Handwerker ausgewählt haben, haben Sie die Möglichkeit, mit ihm in Kontakt zu treten und die Einzelheiten zu klären.
-Darüber hinaus haben auch die Handwerker die Möglichkeit, auf Ihre Anfrage zu reagieren und Ihnen ein Angebot zu unterbreiten. So können Sie sicherstellen, dass alle Fragen geklärt sind, bevor der Auftrag beginnt, und den Handwerker auswählen, der am besten zu Ihrem Projekt passt.'''
+        'question': 'Cha ich de Handwerker direkt kontaktiere, zum Detail z’bspräche?',
+        'answer': '''Ja, du chasch d’Handwerker direkt kontaktiere, zum alli Detail zu dim Projekt z’bspräche. Sobald du en Handwerker usgwehlt hesch, chasch mit ihm Kontakt ufneh und d’Einzelheitä kläre.
+Au d’Handwerker chöi uf dini Aafrog reagiere und der e Offert mache. So chasch sicherstelle, dass alles klar isch, bevor s’Projekt startet, und de Handwerker ussuächä, wo am beschte zu dim Projekt passt.'''
       },
     ];
 
@@ -74,59 +72,57 @@ Darüber hinaus haben auch die Handwerker die Möglichkeit, auf Ihre Anfrage zu 
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Support & Help'),
+        title: const Text('Support & Hilf'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0), 
+        padding: const EdgeInsets.all(16.0),
         children: [
-
-
           // --- Our Office Hours Section ---
-          _buildSectionHeader('Our Office Hours'),
+          _buildSectionHeader('Üsi Öffnigsziite'),
           Card(
-            margin: EdgeInsets.zero, 
+            margin: EdgeInsets.zero,
             color: Colors.white,
-            elevation: 0, 
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)), 
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
             child: const ListTile(
               leading: Icon(Icons.access_time, color: Colors.brown),
               title: Text(
-                'Mon - Fri: 9:00 AM - 5:00 PM',
+                'Mo - Fr: 9:00 - 17:00 Uhr',
                 style: TextStyle(color: Colors.black87, fontWeight: FontWeight.normal),
               ),
               subtitle: Text(
-                'Closed on weekends and public holidays',
+                'Am Wucheend und an Feiertäg gschlosse',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
           ),
-          _buildSimpleDivider(), 
+          _buildSimpleDivider(),
 
           // --- Get in Touch Section ---
-          _buildSectionHeader('Get in Touch'),
+          _buildSectionHeader('Kontakt ufneh'),
           Card(
-            margin: EdgeInsets.zero, 
+            margin: EdgeInsets.zero,
             color: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
             child: const ListTile(
               leading: Icon(Icons.email_outlined, color: Colors.brown),
               title: Text(
-                'support@yourcompany.com',
+                'info@bauaufellen24.ch',
                 style: TextStyle(color: Colors.black87, fontWeight: FontWeight.normal),
               ),
               subtitle: Text(
-                'Email us your queries',
+                'Schrieb üs dini Froge per Mail',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
           ),
-          _buildSimpleDivider(), 
+          _buildSimpleDivider(),
           Card(
-            margin: EdgeInsets.zero, 
+            margin: EdgeInsets.zero,
             color: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
@@ -137,14 +133,14 @@ Darüber hinaus haben auch die Handwerker die Möglichkeit, auf Ihre Anfrage zu 
                 style: TextStyle(color: Colors.black87, fontWeight: FontWeight.normal),
               ),
               subtitle: Text(
-                'Call during office hours',
+                'Ruf a während de Öffnigsziite',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
           ),
-          _buildSimpleDivider(), 
+          _buildSimpleDivider(),
           const SizedBox(height: 24),
-          
+
           // --- Frequently Asked Questions Section ---
           _buildSectionHeader('FAQ'),
           ...faqList.map((faq) => Column(
@@ -167,9 +163,9 @@ Darüber hinaus haben auch die Handwerker die Möglichkeit, auf Ihre Anfrage zu 
                   ),
                 ],
               ),
-              _buildSimpleDivider(), 
+              _buildSimpleDivider(),
             ],
-          )), 
+          )),
         ],
       ),
     );

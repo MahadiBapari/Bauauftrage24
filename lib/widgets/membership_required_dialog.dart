@@ -8,7 +8,7 @@ class MembershipRequiredDialog extends StatelessWidget {
   const MembershipRequiredDialog({
     super.key,
     required this.context,
-    this.message = 'A membership is required to access this feature.',
+    this.message = 'Für den Zugriff auf diese Funktion ist eine Mitgliedschaft erforderlich.',
   });
 
   @override
@@ -19,19 +19,12 @@ class MembershipRequiredDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       title: Row(
-        children: [
-          const Icon(
-            Icons.workspace_premium,
-            color: Color.fromARGB(255, 179, 21, 21),
-            size: 28,
-          ),
-          const SizedBox(width: 12),
-          const Text(
-            'Membership Required',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+        children: const [
+          Icon(Icons.workspace_premium, color: Colors.amber, size: 28),
+          SizedBox(width: 8),
+          Text(
+            'Mitgliedschaft erforderlich',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ],
       ),
@@ -43,7 +36,7 @@ class MembershipRequiredDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text(
-            'Cancel',
+            'Abbrechen',
             style: TextStyle(
               color: Color.fromARGB(255, 121, 121, 121),
               fontSize: 16,
@@ -68,7 +61,7 @@ class MembershipRequiredDialog extends StatelessWidget {
             ),
           ),
           child: const Text(
-            'Get Membership',
+            'Mitgliedschaft erwerben',
             style: TextStyle(fontSize: 16),
           ),
         ),

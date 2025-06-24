@@ -25,70 +25,69 @@ class AppDrawer extends StatelessWidget {
     await prefs.remove('user_email');
     await prefs.remove('displayName');
 
-
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.logout, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
-          const SizedBox(height: 16),
-          const Text(
-          'Logout',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-          'Are you sure you want to logout?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          const SizedBox(height: 24),
-          Row(
-          children: [
-            Expanded(
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              side: BorderSide(color: Colors.grey.shade300),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.logout, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
+              const SizedBox(height: 16),
+              const Text(
+                'Abmelden',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color.fromARGB(255, 185, 7, 7),
-                ),
+              const SizedBox(height: 10),
+              const Text(
+                'Sind Sie sicher, dass Sie sich abmelden möchten?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
-            ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 185, 7, 7),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Abbrechen',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 185, 7, 7),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 185, 7, 7),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      child: const Text('Abmelden', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
-              },
-              child: const Text('Logout', style: TextStyle(fontSize: 16, color: Colors.white)),
-            ),
-            ),
-          ],
+            ],
           ),
-        ],
         ),
-      ),
       ),
     );
   }
@@ -98,11 +97,11 @@ class AppDrawer extends StatelessWidget {
     if (role == 'um_client') {
       return [
         _buildTile(Icons.home, 'Feed', 0, context),
-        _buildTile(Icons.person, 'Profile', 1, context),
-        _buildTile(Icons.add_shopping_cart, 'Add new order', 2, context),
+        _buildTile(Icons.person, 'Profil', 1, context),
+        _buildTile(Icons.add_shopping_cart, 'Neuen Auftrag hinzufügen', 2, context),
         ListTile(
           leading: const Icon(Icons.shopping_cart),
-          title: const Text('My Orders'),
+          title: const Text('Meine Aufträge'),
           onTap: () {
             Navigator.pop(context); // Close drawer
             Navigator.push(
@@ -115,9 +114,9 @@ class AppDrawer extends StatelessWidget {
     } else if (role == 'um_contractor') {
       return [
         _buildTile(Icons.home, 'Feed', 0, context),
-        _buildTile(Icons.person, 'Profile', 1, context),
-        _buildTile(Icons.card_membership, 'My Membership', 2, context),
-        _buildTile(Icons.shopping_bag, 'All Orders', 3, context),
+        _buildTile(Icons.person, 'Profil', 1, context),
+        _buildTile(Icons.card_membership, 'Meine Mitgliedschaft', 2, context),
+        _buildTile(Icons.shopping_bag, 'Alle Aufträge', 3, context),
       ];
     } else {
       return []; // default/fallback
@@ -129,7 +128,7 @@ class AppDrawer extends StatelessWidget {
     return [
       ListTile(
         leading: const Icon(Icons.group),
-        title: const Text('Partners'),
+        title: const Text('Partner'),
         onTap: () {
           Navigator.pop(context);
           Navigator.pushNamed(context, '/partners');
@@ -137,7 +136,7 @@ class AppDrawer extends StatelessWidget {
       ),
       ListTile(
         leading: const Icon(Icons.help),
-        title: const Text('Support and help'),
+        title: const Text('Support & Hilfe'),
         onTap: () {
           Navigator.pop(context);
           onNavigateToSupport?.call();
@@ -145,7 +144,7 @@ class AppDrawer extends StatelessWidget {
       ),
       ListTile(
         leading: const Icon(Icons.logout),
-        title: const Text('Logout'),
+        title: const Text('Abmelden'),
         onTap: () => _handleLogout(context),
       ),
     ];

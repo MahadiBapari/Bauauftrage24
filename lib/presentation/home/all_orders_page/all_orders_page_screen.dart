@@ -105,7 +105,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
 
       // 2. Ensure 'All Categories' is present and at the top
       processedCategories.removeWhere((cat) => cat['id'] == null);
-      processedCategories.insert(0, {'id': null, 'name': 'All Categories'});
+      processedCategories.insert(0, {'id': null, 'name': 'Alle Kategorien'});
 
       _categories = processedCategories;
       setState(() => _isLoadingCategories = false);
@@ -560,7 +560,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                     ),
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Search by title...',
+                        hintText: 'Nach Titel suchen...',
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
                         suffixIcon: _searchText.isNotEmpty
@@ -624,7 +624,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                             ),
                           )
                         : _categories.isEmpty
-                            ? const Text("No categories available.")
+                            ? const Text("Keine Kategorien verfügbar.")
                             : SizedBox(
                                 height: 40,
                                 child: ListView.separated(
@@ -695,8 +695,8 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                       : _filteredOrders.isEmpty
                           ? Center(child: Text(
                               _isActiveMembership ?
-                              "No orders found matching your criteria." :
-                              "No orders found matching your criteria."
+                              "Keine Aufträge gefunden, die Ihren Kriterien entsprechen." :
+                              "Keine Aufträge gefunden, die Ihren Kriterien entsprechen."
                             ))
                           : ListView.builder(
                               controller: _scrollController,
@@ -707,7 +707,7 @@ class _AllOrdersPageScreenState extends State<AllOrdersPageScreen> {
                                   return _isFetchingMore
                                       ? const CustomLoadingIndicator(
                                               size: 30.0,
-                                              message: 'Loading more...',
+                                              message: 'Mehr wird geladen...',
                                             )
                                           : const SizedBox.shrink();
                                 }

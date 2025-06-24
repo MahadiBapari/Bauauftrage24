@@ -19,13 +19,13 @@ class EmailVerificationScreen extends StatelessWidget {
                 height: 200, 
               ),
               const Text(
-                'Please verify your email address',
+                'Bitte bestätigen Sie Ihre E-Mail-Adresse',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               const Text(
-                'We have sent you an email. Please click on the verification button.',
+                'Wir haben Ihnen eine E-Mail gesendet. Bitte klicken Sie auf den Bestätigungslink.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -42,7 +42,7 @@ class EmailVerificationScreen extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Login',
+                  'Anmelden',
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),

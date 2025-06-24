@@ -23,7 +23,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_newPasswordController.text != _confirmPasswordController.text) {
       setState(() {
-        _message = 'Passwords do not match.';
+        _message = 'Die Passwörter stimmen nicht überein.';
         _isSuccess = false;
       });
       return;
@@ -54,19 +54,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       setState(() {
         _isLoading = false;
         if (response.statusCode == 200) {
-          _message = responseData['message'] ?? 'Password reset successful.';
+          _message = responseData['message'] ?? 'Passwort erfolgreich zurückgesetzt.';
           _isSuccess = true;
           _newPasswordController.clear();
           _confirmPasswordController.clear();
         } else {
-          _message = responseData['message'] ?? 'Password reset failed.';
+          _message = responseData['message'] ?? 'Passwort zurücksetzen fehlgeschlagen.';
           _isSuccess = false;
         }
       });
     } catch (e) {
        setState(() {
         _isLoading = false;
-        _message = 'An error occurred: $e';
+        _message = 'Ein Fehler ist aufgetreten: $e';
         _isSuccess = false;
       });
     }
@@ -77,7 +77,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 250, 250, 250),
       appBar: AppBar(
-        title: const Text('Reset Password'),
+        title: const Text('Passwort zurücksetzen'),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
@@ -109,13 +109,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   const Icon(Icons.lock_reset, size: 48, color: Color.fromARGB(255, 185, 7, 7)),
                   const SizedBox(height: 16),
                   const Text(
-                    'Set a New Password',
+                    'Neues Passwort festlegen',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Create a new password. Ensure it is strong and secure.',
+                    'Erstellen Sie ein neues Passwort. Stellen Sie sicher, dass es sicher und stark ist.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
@@ -124,26 +124,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     controller: _newPasswordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'New Password',
-                      hintText: 'Enter new password',
+                      labelText: 'Neues Passwort',
+                      hintText: 'Neues Passwort eingeben',
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     validator: (val) =>
-                        val == null || val.isEmpty || val.length < 6 ? 'Password must be at least 6 characters' : null,
+                        val == null || val.isEmpty || val.length < 6 ? 'Das Passwort muss mindestens 6 Zeichen lang sein' : null,
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      hintText: 'Confirm your new password',
+                      labelText: 'Passwort bestätigen',
+                      hintText: 'Neues Passwort bestätigen',
                       prefixIcon: const Icon(Icons.lock_person_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     validator: (val) =>
-                        val == null || val.isEmpty ? 'Confirm your password' : null,
+                        val == null || val.isEmpty ? 'Bitte bestätigen Sie Ihr Passwort' : null,
                   ),
                   const SizedBox(height: 30),
                   _isLoading
@@ -155,7 +155,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                           onPressed: _resetPassword, 
-                          child: const Text('Reset Password', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w600)),
+                          child: const Text('Passwort zurücksetzen', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w600)),
                         ),
                   const SizedBox(height: 20),
                   if (_message.isNotEmpty)

@@ -7,7 +7,7 @@ class MyFavouritePageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text(
-        'favourite page',
+        'Favoriten-Seite',
         style: TextStyle(fontSize: 20),
       ),
     );

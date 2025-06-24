@@ -80,7 +80,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'Your App Name',
+      title: 'Bauaufträge24',
       theme: ThemeData(
         //primarySwatch: Colors.blue,
         // fontFamily: 'Poppins',

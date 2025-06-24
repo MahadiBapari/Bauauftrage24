@@ -31,7 +31,7 @@ class CustomLoadingIndicator extends StatelessWidget {
             _buildShimmer(),
             const SizedBox(height: 16),
             Text(
-              message!,
+              message ?? 'Laden ...',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,

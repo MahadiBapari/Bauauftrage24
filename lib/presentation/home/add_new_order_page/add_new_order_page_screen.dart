@@ -78,12 +78,12 @@ Future<void> _pickImages() async {
       children: [
         ListTile(
           leading: const Icon(Icons.photo),
-          title: const Text("Gallery"),
+          title: const Text("Galerie"),
           onTap: () => Navigator.pop(context, ImageSource.gallery),
         ),
         ListTile(
           leading: const Icon(Icons.camera),
-          title: const Text("Camera"),
+          title: const Text("Kamera"),
           onTap: () => Navigator.pop(context, ImageSource.camera),
         ),
       ],
@@ -161,7 +161,7 @@ Future<void> _submitForm() async {
   if (!_formKey.currentState!.validate()) return;
 
   if (_authToken == null) {
-    _showError("Authentication required. Please log in.");
+    _showError("Authentifizierung erforderlich. Bitte melden Sie sich an.");
     return;
   }
 
@@ -177,7 +177,7 @@ try {
     uploadedImageIds = await uploadImages(_selectedImages);
   }
 } catch (e) {
-  print('Error uploading images: $e');
+  print('Fehler beim Hochladen der Bilder. Bitte versuchen Sie es erneut.');
   // Handle the error appropriately, e.g., show a user-friendly message
   // _showError("Failed to upload images. Please try again.");
   return; // Stop execution if image upload fails
@@ -219,7 +219,7 @@ final Map<String, dynamic> postData = {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Order submitted and published successfully!'),
+            content: const Text('Auftrag erfolgreich übermittelt und veröffentlicht!'),
             backgroundColor: const Color.fromARGB(129, 0, 0, 0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -246,10 +246,10 @@ final Map<String, dynamic> postData = {
     // Navigator.of(context).pop(); // Example: go back to the previous screen
   } else {
       final data = jsonDecode(response.body);
-      _showError(data['message'] ?? 'Submission failed. Status Code: ${response.statusCode}');
+      _showError(data['message'] ?? 'Übermittlung fehlgeschlagen. Status Code: ${response.statusCode}');
     }
   } catch (e) {
-    _showError('Error: $e');
+    _showError('Fehler: $e');
   } finally {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
@@ -294,7 +294,7 @@ Widget build(BuildContext context) {
             key: _formKey,
             child: Column(
               children: [
-                _buildTextField(_titleController, 'Order Title *', true, icon: Icons.title),
+                _buildTextField(_titleController, 'Auftragstitel *', true, icon: Icons.title),
                 const SizedBox(height: 20),
 
                 FutureBuilder<List<Map<String, dynamic>>>(
@@ -303,21 +303,21 @@ Widget build(BuildContext context) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const CircularProgressIndicator();
                     } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
+                      return Text('Fehler: ${snapshot.error}');
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No categories found');
+                      return const Text('Keine Kategorien gefunden');
                     } else {
                       final categories = snapshot.data!;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Select Categories", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                          const Text("Kategorie uswahlä", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           MultiSelectDialogField(
                             backgroundColor: Colors.white,
                             items: categories.map((category) => MultiSelectItem(
                                 category['id'].toString(), category['name'])).toList(),
-                            title: const Text("Categories"),
+                            title: const Text("Kategorie"),
                             selectedColor: const Color.fromARGB(255, 185, 33, 33),
                             cancelText: const Text("", style: TextStyle(fontSize: 0)), 
                             confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
@@ -325,13 +325,13 @@ Widget build(BuildContext context) {
                               border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            buttonText: const Text("Select Categories"),
+                            buttonText: const Text("Kategorie uswahlä"),
                             onConfirm: (values) {
                               setState(() => _selectedCategories = values.cast<String>());
                             },
                             chipDisplay: MultiSelectChipDisplay.none(),
                             validator: (value) =>
-                                value == null || value.isEmpty ? 'Please select at least one category' : null,
+                                value == null || value.isEmpty ? 'Bitte wähl mindestens eini Kategorie' : null,
                           ),
                         ],
                       );
@@ -346,13 +346,13 @@ Widget build(BuildContext context) {
                 _buildImagePicker(),
 
                 const SizedBox(height: 20),
-                _buildTextField(_streetController, 'Street & House Number', true, icon: Icons.location_on),
+                _buildTextField(_streetController, 'Strass & Husnummer', true, icon: Icons.location_on),
                 const SizedBox(height: 20),
-                _buildTextField(_postalCodeController, 'Postal Code', true, icon: Icons.local_post_office),
+                _buildTextField(_postalCodeController, 'PLZ', true, icon: Icons.local_post_office),
                 const SizedBox(height: 20),
-                _buildTextField(_cityController, 'City', true, icon: Icons.location_city),
+                _buildTextField(_cityController, 'Ort', true, icon: Icons.location_city),
                 const SizedBox(height: 20),
-                _buildTextField(_descriptionController, 'Order Description *', true, maxLines: 5, icon: Icons.description),
+                _buildTextField(_descriptionController, 'Auftragsbeschreibung *', true, maxLines: 5, icon: Icons.description),
 
                 const SizedBox(height: 30),
                 SizedBox(
@@ -362,7 +362,7 @@ Widget build(BuildContext context) {
                     onPressed: _isSubmitting ? null : _submitForm,
                     label: _isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Submit Order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        : const Text('Abschicke', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -390,7 +390,7 @@ Widget build(BuildContext context) {
         prefixIcon: icon != null ? Icon(icon) : null,
       ),
       validator: (value) =>
-          required && (value == null || value.trim().isEmpty) ? 'Required field' : null,
+          required && (value == null || value.trim().isEmpty) ? 'Pflichtfeld' : null,
     );
   }
 
@@ -407,12 +407,12 @@ Widget build(BuildContext context) {
             future: categoryName,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Chip(label: Text('Loading...'));
+                return const Chip(label: Text('Am Lade ...'));
               } else if (snapshot.hasError) {
-                return Chip(label: Text('Error'));
+                return Chip(label: Text('Fähler'));
               } else {
                 return Chip(
-                  label: Text(snapshot.data ?? "NA"),
+                  label: Text(snapshot.data ?? "N/A"),
                   onDeleted: () {
                     setState(() => _selectedCategories.remove(categoryId));
                   },
@@ -431,7 +431,7 @@ Widget build(BuildContext context) {
           children: [
             ElevatedButton(
               onPressed: _pickImages,
-              child: const Text('Choose Images', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('Bilder auswählen', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 180, 16, 16), // Maroon color
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -441,8 +441,8 @@ Widget build(BuildContext context) {
             Expanded(
               child: Text(
                 _selectedImages.isEmpty
-                    ? 'No images chosen'
-                    : '${_selectedImages.length} image(s) selected',
+                    ? 'Kei Bilder usgwählt'
+                    : '${_selectedImages.length} Bild(er) usgwählt',
                 overflow: TextOverflow.ellipsis,
               ),
             ),

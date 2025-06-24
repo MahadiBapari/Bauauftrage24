@@ -10,7 +10,7 @@ class OnboardingSkipButton extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       child: const Text(
-        'Skip',
+        'Überspringen',
         style: TextStyle(color: Colors.grey, fontSize: 16),
       ),
     );

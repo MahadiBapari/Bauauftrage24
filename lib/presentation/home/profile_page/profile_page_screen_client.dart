@@ -274,7 +274,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Error'),
+        title: const Text('Fähler'),
         content: Text(message),
         actions: [
           TextButton(
@@ -303,12 +303,12 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
               Icon(Icons.lock_reset, size: 48, color: Color.fromARGB(255, 185, 7, 7)),
               const SizedBox(height: 16),
               const Text(
-                'Reset Password',
+                'Passwort zruggsetze',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Enter your new password below.',
+                'Gib dis neus Passwort i.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
@@ -317,7 +317,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                 controller: newController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'New Password',
+                  labelText: 'Neus Passwort',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -327,7 +327,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                 controller: confirmController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Confirm New Password',
+                  labelText: 'Neus Passwort bestätige',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -344,7 +344,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                       ),
                       onPressed: () => Navigator.of(ctx).pop(),
                       child: const Text(
-                        'Cancel',
+                        'Abbreche',
                         style: TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 185, 7, 7),
@@ -398,7 +398,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                           _showError('Error: $e');
                         }
                       },
-                      child: const Text('Reset', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      child: const Text('Zruggsetze', style: TextStyle(fontSize: 16, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -417,7 +417,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
       body: _isLoading && _userData == null
           ? _buildProfileShimmer()
           : _userData == null
-              ? const Center(child: Text('No user data available'))
+              ? const Center(child: Text('Kei Benutzerdaten verfügbar'))
               : SafeArea(
                   child: SizedBox(
                     height: MediaQuery.of(context).size.height - 200, // Account for app bar and bottom navigation
@@ -478,7 +478,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
                           const SizedBox(height: 30),
                           _buildSectionTitle(
-                            'Personal Information',
+                            'Persönlichi Informatione',
                             onEditTap: () {
                               showDialog(
                                 context: context,
@@ -491,32 +491,32 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                           ),
                           _buildInfoRow(
                             context,
-                            'Email',
-                            _userData!['user_email'] ?? 'No email',
+                            'E-Mail',
+                            _userData!['user_email'] ?? 'Kei E-Mail',
                             Icons.email,
                           ),
                           _buildInfoRow(
                             context,
-                            'Phone',
+                            'Telefon',
                             _userData!['meta_data']?['user_phone_']?[0] ??
-                                'No phone number',
+                                'Kei Telefonnummer',
                             Icons.phone,
                           ),
                           const SizedBox(height: 30),
-                          _buildSectionTitle('Utilities'),
+                          _buildSectionTitle('Hilfsmittel'),
                           _buildProfileOption(
                             context,
-                            'Help & Support',
+                            'Support & Hilf',
                             Icons.question_mark,
                           ),
                           _buildProfileOption(
                             context,
-                            'Reset Password',
+                            'Passwort zruggsetze',
                             Icons.lock_reset,
                           ),
                           _buildProfileOption(
                             context,
-                            'Logout',
+                            'Abmelden',
                             Icons.logout,
                           ),
                           
@@ -663,16 +663,16 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
   ) {
     return GestureDetector(
       onTap: () {
-        if (title == 'Logout') {
+        if (title == 'Abmelden') {
           _handleLogout(context);
-        } else if (title == 'Help & Support') {
+        } else if (title == 'Support & Hilf') {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const SupportAndHelpPageScreen(),
             ),
           );
-        } else if (title == 'Reset Password') {
+        } else if (title == 'Passwort zruggsetze') {
           _showResetPasswordDialog(context);
         }
       },
@@ -724,12 +724,12 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
           Icon(Icons.logout, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
           const SizedBox(height: 16),
           const Text(
-          'Logout',
+          'Abmelden',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           const Text(
-          'Are you sure you want to logout?',
+          'Sind Sie sicher, dass Sie sich abmelden möchten?',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
@@ -745,7 +745,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
               ),
               onPressed: () => Navigator.pop(context),
               child: const Text(
-                'Cancel',
+                'Abbrechen',
                 style: TextStyle(
                   fontSize: 16,
                   color: Color.fromARGB(255, 185, 7, 7),
@@ -765,7 +765,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
               Navigator.pop(context);
               Navigator.pushReplacementNamed(context, '/login');
               },
-              child: const Text('Logout', style: TextStyle(fontSize: 16, color: Colors.white)),
+              child: const Text('Abmelden', style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
             ),
           ],

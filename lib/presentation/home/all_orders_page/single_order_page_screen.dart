@@ -259,7 +259,7 @@ return Scaffold(
                         )
                       : Container(
                           color: Colors.grey[300],
-                          child: const Center(child: Text('No images available')),
+                          child: const Center(child: Text('Keine Bilder verfügbar')),
                         ),
                 ),
 
@@ -346,7 +346,7 @@ return Scaffold(
                                                           const Icon(Icons.location_on, color: Color.fromARGB(255, 185, 7, 7), size: 28),
                                                           const SizedBox(width: 10),
                                                           const Text(
-                                                            'Address',
+                                                            'Adresse',
                                                             style: TextStyle(
                                                               fontSize: 20,
                                                               fontWeight: FontWeight.bold,

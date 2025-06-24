@@ -292,7 +292,7 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Order', style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
+        title: const Text('Auftrag bearbeiten', style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
         backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         iconTheme: const IconThemeData(color: Color.fromARGB(255, 0, 0, 0)),
       ),
@@ -319,7 +319,7 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  _buildTextField(_titleController, 'Order Title *', true, icon: Icons.title),
+                  _buildTextField(_titleController, 'Auftragstitel *', true, icon: Icons.title),
                   const SizedBox(height: 20),
 
                   FutureBuilder<List<Map<String, dynamic>>>(
@@ -330,33 +330,33 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
                       } else if (snapshot.hasError) {
                         return Text('Error: ${snapshot.error}');
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Text('No categories found');
+                        return const Text('Keine Kategorien gefunden');
                       } else {
                         final categories = snapshot.data!;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Select Categories", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                            const Text("Kategorien auswählen", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                             const SizedBox(height: 8),
                             MultiSelectDialogField(
                               items: categories.map((category) => MultiSelectItem(
                                   category['id'].toString(), category['name']!)).toList(),
-                              title: const Text("Categories"),
+                              title: const Text("Kategorien"),
                               selectedColor: Theme.of(context).primaryColor,
-                              cancelText: const Text("Cancel"),
-                              confirmText: const Text("OK"),
+                              cancelText: const Text("Abbrechen"),
+                              confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey.shade300),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              buttonText: const Text("Select Categories"),
+                              buttonText: const Text("Kategorien auswählen"),
                               initialValue: _selectedCategoryIds, // Pre-fill selected categories
                               onConfirm: (values) {
                                 setState(() => _selectedCategoryIds = values.cast<String>());
                               },
                               chipDisplay: MultiSelectChipDisplay.none(),
                               validator: (value) =>
-                                  value == null || value.isEmpty ? 'Please select at least one category' : null,
+                                  value == null || value.isEmpty ? 'Bitte wählen Sie mindestens eine Kategorie' : null,
                             ),
                           ],
                         );
@@ -387,7 +387,7 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
                       onPressed: _isSubmitting ? null : _submitForm,
                       label: _isSubmitting
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Update Order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                          : const Text('Auftrag aktualisieren', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -429,7 +429,7 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
         fillColor: Colors.grey[50],
       ),
       validator: (value) =>
-          required && (value == null || value.trim().isEmpty) ? 'Required field' : null,
+          required && (value == null || value.trim().isEmpty) ? 'Pflichtfeld' : null,
     );
   }
 
@@ -458,7 +458,7 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
           children: [
             ElevatedButton(
               onPressed: _pickImages,
-              child: const Text('Add Images', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('Bilder hinzufügen', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 180, 16, 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -467,7 +467,7 @@ class _EditOrderPageScreenState extends State<EditOrderPageScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '${_currentGalleryImages.length + _newlySelectedImages.length} image(s) total',
+                '${_currentGalleryImages.length + _newlySelectedImages.length} Bild(er) insgesamt',
                 overflow: TextOverflow.ellipsis,
               ),
             ),

@@ -389,7 +389,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("My Orders",
+        title: const Text("Meine Aufträge",
           style: TextStyle(
             fontSize: 20,
             color: Color.fromARGB(255, 0, 0, 0),
@@ -423,7 +423,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
                     ),
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Search by title...',
+                        hintText: 'Nach Titel suchen...',
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
                         suffixIcon: _searchText.isNotEmpty
@@ -478,8 +478,8 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
                       : _filteredOrders.isEmpty
                           ? Center(
                               child: _userId == null 
-                                  ? const Text("Please log in to view your orders.")
-                                  : const Text("No orders found matching your criteria."),
+                                  ? const Text("Bitte melden Sie sich an, um Ihre Aufträge zu sehen.")
+                                  : const Text("Keine Aufträge gefunden, die Ihren Kriterien entsprechen."),
                             )
                           : ListView.builder(
                               controller: _scrollController,
@@ -490,7 +490,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
                                   return _isFetchingMore
                                       ? const CustomLoadingIndicator(
                                           size: 30.0,
-                                          message: 'Loading more...',
+                                          message: 'Mehr wird geladen...',
                                         )
                                       : const SizedBox.shrink();
                                 }

@@ -623,7 +623,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome',
+                              'Willkomme',
                               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 4),
@@ -637,7 +637,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
 
                   // Categories Section
                   const Text(
-                    'Categories',
+                    'Kategorie',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -647,7 +647,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                   _isLoadingCategories
                       ? _buildCategoryShimmer()
                       : _categories.isEmpty
-                          ? const Center(child: Text('No categories available or failed to load.'))
+                          ? const Center(child: Text('Kei Kategorie verfügbar oder Ladefehler.'))
                           : SizedBox(
                               height: 120,
                               child: ListView.separated(
@@ -667,7 +667,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Our Partners',
+                        'Üsi Partner',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w500,
@@ -682,7 +682,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                           );
                         },
                         child: const Text(
-                          'See all',
+                          'Alli azeige',
                           style: TextStyle(
                             fontSize: 14,
                             color: Color.fromARGB(255, 179, 21, 21),
@@ -695,7 +695,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                   _isLoadingPartners
                       ? _buildPartnerShimmer()
                       : _partners.isEmpty
-                          ? const Center(child: Text('No partners available'))
+                          ? const Center(child: Text('Kei Partner verfügbar'))
                           : SizedBox(
                               height: 180,
                               child: ListView.separated(
@@ -712,7 +712,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
 
                   // My Orders Section
                   const Text(
-                    'My Orders',
+                    'Mini Aufträgi',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -722,7 +722,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                   _isLoadingOrders
                       ? _buildOrderShimmer()
                       : _orders.isEmpty
-                          ? const Center(child: Text('No orders available'))
+                          ? const Center(child: Text('Kei Aufträgi verfügbar'))
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),

@@ -324,7 +324,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Error'),
+        title: const Text('Fehler'),
         content: Text(message),
         actions: [
           TextButton(
@@ -353,12 +353,12 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
               Icon(Icons.lock_reset, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
               const SizedBox(height: 16),
               const Text(
-                'Reset Password',
+                'Passwort zurücksetzen',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Enter your new password below.',
+                'Geben Sie unten Ihr neues Passwort ein.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
@@ -367,7 +367,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                 controller: newController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'New Password',
+                  labelText: 'Neues Passwort',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -377,7 +377,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                 controller: confirmController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Confirm New Password',
+                  labelText: 'Neues Passwort bestätigen',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -394,7 +394,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                       ),
                       onPressed: () => Navigator.of(ctx).pop(),
                       child: const Text(
-                        'Cancel',
+                        'Abbrechen',
                         style: TextStyle(
                           fontSize: 16,
                           color: Color.fromARGB(255, 185, 7, 7),
@@ -415,7 +415,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                         final confirm = confirmController.text.trim();
                         if (newPass != confirm) {
                           Navigator.of(ctx).pop();
-                          _showError('Passwords do not match.');
+                          _showError('Passwörter stimmen nicht überein.');
                           return;
                         }
                         final prefs = await SharedPreferences.getInstance();
@@ -423,7 +423,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                         final userId = prefs.getString('user_id');
                         if (token == null || userId == null) {
                           Navigator.of(ctx).pop();
-                          _showError('Not authenticated.');
+                          _showError('Nicht authentifiziert.');
                           return;
                         }
                         final url = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user/$userId/update-password';
@@ -438,16 +438,16 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           }));
                           Navigator.of(ctx).pop();
                           if (response.statusCode == 200) {
-                            _showError('Password changed successfully.');
+                            _showError('Passwort erfolgreich geändert.');
                           } else {
-                            _showError('Failed to change password: \n${response.body}');
+                            _showError('Fehler beim Ändern des Passworts: \n${response.body}');
                           }
                         } catch (e) {
                           Navigator.of(ctx).pop();
-                          _showError('Error: $e');
+                          _showError('Fehler: $e');
                         }
                       },
-                      child: const Text('Reset', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      child: const Text('Zurücksetzen', style: TextStyle(fontSize: 16, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -466,7 +466,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
       body: _isLoading && _userData == null
           ? _buildProfileShimmer()
           : _userData == null
-              ? const Center(child: Text('No user data available'))
+              ? const Center(child: Text('Kei Benutzerdaten verfügbar'))
               : SafeArea(
                   child: SizedBox(
                     height: MediaQuery.of(context).size.height - 200, // Account for app bar and bottom navigation
@@ -528,7 +528,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
                           const SizedBox(height: 30),
                           _buildSectionTitle(
-                            'Personal Information',
+                            'Persönlichi Informatione',
                             onEditTap: () {
                               showDialog(
                                 context: context,
@@ -541,59 +541,59 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           ),
                           _buildInfoRow(
                             context,
-                            'Email',
-                            _userData!['user_email'] ?? 'No email',
+                            'E-Mail',
+                            _userData!['user_email'] ?? 'Kei E-Mail',
                             Icons.email,
                           ),
                           _buildInfoRow(
                             context,
-                            'Phone',
+                            'Telefon',
                             _userData!['meta_data']?['user_phone']?[0] ??
-                                'No phone number',
+                                'Kei Telefonnummer',
                             Icons.phone,
                           ),
                           _buildInfoRow(
                             context,
-                            'Firm Name',
+                            'Firmenname',
                             _userData!['meta_data']?['firmenname']?[0] ??
-                                'No firm name',
+                                'Kei Firmenname',
                             Icons.business,
                           ),
                           _buildInfoRow(
                             context,
-                            'UID Number',
+                            'UID-Nummer',
                             _userData!['meta_data']?['uid_nummer']?[0] ??
-                                'No UID number',
+                                'Kei UID-Nummer',
                             Icons.badge,
                           ),
                           _buildInfoRow(
                             context,
-                            'Service Categories',
+                            'Dienstleistigskategorie',
                             _getCategoryNames(),
                             Icons.category,
                           ),
                           _buildInfoRow(
                             context,
-                            'Available Time',
+                            'Verfügbari Zyt',
                             _userData!['meta_data']?['available_time']?[0] ??
-                                'No Available time',
+                                'Kei verfügbari Zyt',
                             Icons.access_time,
                           ),
                           const SizedBox(height: 30),
-                          _buildSectionTitle('Utilities'),
+                          _buildSectionTitle('Hilfsmittel'),
                           _buildProfileOption(
                             context,
-                            'Support & Help',
+                            'Support & Hilf',
                             Icons.question_mark,
                           ),
                           _buildProfileOption(
                             context,
-                            'Reset Password',
+                            'Passwort zruggsetze',
                             Icons.lock_reset,
                           ),
                           _buildProfileOption(
                             context,
-                            'Logout',
+                            'Abmelde',
                             Icons.logout,
                           ),
                           
@@ -685,7 +685,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                   const Icon(Icons.edit, size: 18, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    'Edit',
+                    'Bearbeite',
                     style: TextStyle(color: Theme.of(context).primaryColor),
                   ),
                 ],
@@ -740,16 +740,16 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
   ) {
     return GestureDetector(
       onTap: () {
-        if (title == 'Logout') {
+        if (title == 'Abmelde') {
           _handleLogout(context);
-        } else if (title == 'Help & Support') {
+        } else if (title == 'Support & Hilf') {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const SupportAndHelpPageScreen(),
             ),
           );
-        } else if (title == 'Reset Password') {
+        } else if (title == 'Passwort zruggsetze') {
           _showResetPasswordDialog(context);
         }
       },
@@ -801,12 +801,12 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
           Icon(Icons.logout, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
           const SizedBox(height: 16),
           const Text(
-          'Logout',
+          'Abmelden',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           const Text(
-          'Are you sure you want to logout?',
+          'Sind Sie sicher, dass Sie sich abmelden möchten?',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
@@ -822,7 +822,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
               ),
               onPressed: () => Navigator.pop(context),
               child: const Text(
-                'Cancel',
+                'Abbrechen',
                 style: TextStyle(
                   fontSize: 16,
                   color: Color.fromARGB(255, 185, 7, 7),
@@ -842,7 +842,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
               Navigator.pop(context);
               Navigator.pushReplacementNamed(context, '/login');
               },
-              child: const Text('Logout', style: TextStyle(fontSize: 16, color: Colors.white)),
+              child: const Text('Abmelden', style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
             ),
           ],
@@ -856,17 +856,17 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
   String _getCategoryNames() {
     if (_userData == null || _allServiceCategories.isEmpty) {
-      return 'Loading categories...';
+      return 'Kategorie werde glade...';
     }
 
     final metaData = _userData!['meta_data'];
     if (metaData == null || metaData['_service_category_'] == null) {
-      return 'No categories selected';
+      return 'Kei Kategorie usgwählt';
     }
 
     final rawCategories = metaData['_service_category_'];
     if (rawCategories is! List || rawCategories.isEmpty) {
-      return 'No categories selected';
+      return 'Kei Kategorie usgwählt';
     }
 
     final selectedIds = rawCategories
@@ -875,7 +875,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         .toSet();
 
     if (selectedIds.isEmpty) {
-      return 'No categories selected';
+      return 'Kei Kategorie usgwählt';
     }
 
     final selectedNames = _allServiceCategories
@@ -883,6 +883,6 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
         .map((category) => category['name'] as String)
         .toList();
 
-    return selectedNames.isNotEmpty ? selectedNames.join(', ') : 'Loading categories...';
+    return selectedNames.isNotEmpty ? selectedNames.join(', ') : 'Kategorie werde glade...';
   }
 }
