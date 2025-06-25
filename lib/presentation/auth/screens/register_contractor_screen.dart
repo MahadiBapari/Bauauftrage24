@@ -79,7 +79,7 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                const EmailVerificationScreen(), // Removed userId
+                const EmailVerificationScreen(), // No params for normal registration
           ),
         );
       } else {
@@ -245,7 +245,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Image.asset(
-                'assets/images/logo.png',
+                'assets/images/logolight.png',
                 height: 60,
               ),
               const SizedBox(height: 20),
@@ -386,7 +386,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 DropdownButtonFormField<String>(
                   value: _selectedCategory,
                   decoration: InputDecoration(
-                    labelText: 'Select Available Time*',
+                    labelText: 'Verfügbari Zyt*',
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -400,132 +400,133 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                       child: Text(category),
                     );
                   }).toList(),
-                  onChanged: (String? newValue) {
+                    onChanged: (String? newValue) {
                     setState(() {
                       _selectedCategory = newValue;
                     });
-                  },
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Category is required' : null,
-                ),
-              const SizedBox(height: 16),
-              FutureBuilder<List<Map<String, dynamic>>>(
-                future: _serviceCategoriesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    // Show a modern shimmer or placeholder card instead of CircularProgressIndicator
+                    },
+                    validator: (value) =>
+                      value == null || value.isEmpty ? 'Kategorie isch nötig' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _serviceCategoriesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    // Zeig en moderner Platzhalter statt CircularProgressIndicator
                     return Container(
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 120,
-                            height: 16,
-                            color: Colors.grey[300],
-                          ),
-                        ],
+                      children: [
+                        Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                        width: 120,
+                        height: 16,
+                        color: Colors.grey[300],
+                        ),
+                      ],
                       ),
                     );
-                  } else if (snapshot.hasError) {
+                    } else if (snapshot.hasError) {
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(12),
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('Error loading categories', style: TextStyle(color: Colors.red[800]))),
-                        ],
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('Fehler bim Lade vo de Kategorie', style: TextStyle(color: Colors.red[800]))),
+                      ],
                       ),
                     );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.yellow[50],
-                        borderRadius: BorderRadius.circular(12),
+                      color: Colors.yellow[50],
+                      borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
-                        children: [
-                          const Icon(Icons.info_outline, color: Colors.orange, size: 20),
-                          const SizedBox(width: 8),
-                          const Expanded(child: Text('No categories found', style: TextStyle(color: Colors.orange))),
-                        ],
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(child: Text('Kei Kategorie gfunde', style: TextStyle(color: Colors.orange))),
+                      ],
                       ),
                     );
-                  } else {
+                    } else {
                     final categories = snapshot.data!;
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color.fromARGB(255, 255, 255, 255)!),
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color.fromARGB(255, 255, 255, 255)!),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
                       child: MultiSelectDialogField(
-                        backgroundColor: Colors.white,
-                        items: categories
-                            .map((category) => MultiSelectItem(
-                                category['id'].toString(), category['name']))
-                            .toList(),
-                        title: const Text("Service Categories"),
-                        selectedColor: const Color.fromARGB(255, 185, 33, 33),
-                        cancelText: const Text("", style: TextStyle(fontSize: 0)), 
-                        confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
-                        dialogWidth: 400,
-                        dialogHeight: 500,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.transparent),
-                        ),
-                        buttonIcon: const Icon(Icons.category, color: Color.fromARGB(255, 185, 33, 33)),
-                        buttonText: const Text(
-                          "Select Service Categories*",
-                          style: TextStyle(fontSize: 16, color: Colors.black87),
-                        ),
-                        onConfirm: (values) {
-                          setState(() => _selectedServiceCategories = values.cast<String>());
-                        },
-                        chipDisplay: MultiSelectChipDisplay.none(),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Please select at least one category'
-                            : null,
+                      backgroundColor: Colors.white,
+                      items: categories
+                        .map((category) => MultiSelectItem(
+                          category['id'].toString(), category['name']))
+                        .toList(),
+                      title: const Text("Service Kategorie"),
+                      selectedColor: const Color.fromARGB(255, 185, 33, 33),
+                      cancelText: const Text("", style: TextStyle(fontSize: 0)), 
+                      confirmText: const Text("OK", style: TextStyle(color: Color.fromARGB(255, 185, 33, 33), fontWeight: FontWeight.bold)),
+                      dialogWidth: 400,
+                      dialogHeight: 500,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.transparent),
+                      ),
+                      buttonIcon: const Icon(Icons.category, color: Color.fromARGB(255, 185, 33, 33)),
+                      buttonText: const Text(
+                        "Service Kategorie ussuewähle*",
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      onConfirm: (values) {
+                        setState(() => _selectedServiceCategories = values.cast<String>());
+                      },
+                      chipDisplay: MultiSelectChipDisplay.none(),
+                      validator: (value) => value == null || value.isEmpty
+                        ? 'Bitte wähl mindestens eini Kategorie us'
+                        : null,
                       ),
                     );
-                  }
+                    }
                 },
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
-                title: Row(
+                title: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Text('Ich akzeptiere die '),
-                    GestureDetector(
-                      onTap: _showTermsDialog,
-                      child: const Text(
-                        'Allgemeinen Geschäftsbedingungen',
-                        style: TextStyle(color: Color.fromARGB(255, 201, 45, 45)),
-                      ),
+                  const Text('Ich akzeptiere die '),
+                  GestureDetector(
+                    onTap: _showTermsDialog,
+                    child: const Text(
+                    'Allgemeinen Geschäftsbedingungen',
+                    style: TextStyle(color: Color.fromARGB(255, 201, 45, 45)),
                     ),
+                  ),
                   ],
                 ),
                 value: _agreeToTerms,

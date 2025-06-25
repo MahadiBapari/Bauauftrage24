@@ -56,7 +56,7 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                const EmailVerificationScreen(), // Removed userId
+                const EmailVerificationScreen(), // No params for normal registration
           ),
         );
       } else {
@@ -212,7 +212,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Image.asset(
-                'assets/images/logo.png',
+                'assets/images/logolight.png',
                 height: 60,
               ),
               const SizedBox(height: 20),
@@ -325,17 +325,21 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                     : null,
               ),
               const SizedBox(height: 16),
-              CheckboxListTile(
-                title: Row(
+                CheckboxListTile(
+                title: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Text('Ich akzeptiere die '),
-                    GestureDetector(
-                      onTap: _showTermsDialog,
-                      child: const Text(
-                        'Allgemeinen Geschäftsbedingungen',
-                        style: TextStyle(color: Color.fromARGB(255, 201, 45, 45)),
-                      ),
+                  const Text('Ich akzeptiere die '),
+                  GestureDetector(
+                    onTap: _showTermsDialog,
+                    child: const Text(
+                    'Allgemeinen Geschäftsbedingungen',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 201, 45, 45),
+                      decoration: TextDecoration.underline,
                     ),
+                    ),
+                  ),
                   ],
                 ),
                 value: _agreeToTerms,

@@ -99,7 +99,7 @@ class _MyAppState extends State<MyApp> {
       
       debugShowCheckedModeBanner: false,
       initialRoute: AppRoutes.splash,
-      routes: appRoutes,
+      onGenerateRoute: onGenerateRoute,
     );
   }
 }

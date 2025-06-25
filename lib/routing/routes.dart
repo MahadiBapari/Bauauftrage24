@@ -10,6 +10,7 @@ import '../presentation/home/my_favourite_page/my_favourite_page_screen.dart';
 import '../presentation/home/my_membership_page/my_membership_page_screen.dart';
 import '../presentation/home/partners_page/partners_page_screen.dart'; 
 import '../presentation/auth/screens/reset_password_screen.dart';
+import '../presentation/auth/screens/email_verification_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -46,3 +47,25 @@ final Map<String, WidgetBuilder> appRoutes = {
     return ResetPasswordScreen(token: token);
   },
 };
+
+Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+  Uri uri = Uri.parse(settings.name ?? '');
+  if (uri.path == '/verify-deep-link') {
+    final token = uri.queryParameters['token'];
+    final key = uri.queryParameters['key'];
+    return MaterialPageRoute(
+      builder: (_) => EmailVerificationScreen(token: token, keyParam: key),
+    );
+  }
+  // Fallback to named routes if not a deep link
+  final builder = appRoutes[settings.name];
+  if (builder != null) {
+    return MaterialPageRoute(builder: builder, settings: settings);
+  }
+  // Unknown route
+  return MaterialPageRoute(
+    builder: (_) => Scaffold(
+      body: Center(child: Text('404 - Seite nicht gefunden')),
+    ),
+  );
+}
