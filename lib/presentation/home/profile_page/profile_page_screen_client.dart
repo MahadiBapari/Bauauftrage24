@@ -235,10 +235,10 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
     final meta = _userData!['meta_data'] ?? {};
     final body = {
       'user_id': _userId,
-      'email': _userData!['user_email'] ?? '',
+      'email': _userData!['user_login'] ?? '',
       'first_name': meta['first_name']?[0] ?? '',
       'last_name': meta['last_name']?[0] ?? '',
-      'user_phone_': meta['user_phone_']?[0] ?? '',
+      'user_phone': meta['user_phone']?[0] ?? '',
       'profile-picture': mediaId.toString(),
     };
 
@@ -492,13 +492,13 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                           _buildInfoRow(
                             context,
                             'E-Mail',
-                            _userData!['user_email'] ?? 'Kei E-Mail',
+                            _userData!['user_login'] ?? 'Kei E-Mail',
                             Icons.email,
                           ),
                           _buildInfoRow(
                             context,
                             'Telefon',
-                            _userData!['meta_data']?['user_phone_']?[0] ??
+                            _userData!['meta_data']?['user_phone']?[0] ??
                                 'Kei Telefonnummer',
                             Icons.phone,
                           ),

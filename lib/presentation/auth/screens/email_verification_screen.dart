@@ -56,60 +56,48 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   Widget _buildStatusContent() {
     if (status == "Verifying...") {
-      return Container(
-        color: Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/email_verification.png', height: 120),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            const Text("Mir prüefed dini E-Mail...", style: TextStyle(fontSize: 18)),
-          ],
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/email_verification.png', height: 80),
+          const SizedBox(height: 24),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          const Text("Mir prüefed dini E-Mail...", style: TextStyle(fontSize: 18)),
+        ],
       );
     } else if (status == "Email Verified" || status.contains("verified")) {
-      return Container(
-        color: Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/success.png', height: 120),
-            const SizedBox(height: 24),
-            const Text("Dini E-Mail isch erfolgrich bestätigt worde!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
-            const SizedBox(height: 12),
-            const Text("Du wirsch gli zum Login witergleitet.", textAlign: TextAlign.center),
-          ],
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/success.png', height: 80),
+          const SizedBox(height: 24),
+          const Text("Dini E-Mail isch erfolgrich bestätigt worde!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
+          const SizedBox(height: 12),
+          const Text("Du wirsch gli zum Login witergleitet.", textAlign: TextAlign.center),
+        ],
       );
     } else if (status == "Invalid verification link.") {
-      return Container(
-        color: Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/invalid.png', height: 120),
-            const SizedBox(height: 24),
-            const Text("Ungültige Verifizierigslink.", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
-            const SizedBox(height: 12),
-            const Text("Bitte prüef de Link oder fordere neui E-Mail aa.", textAlign: TextAlign.center),
-          ],
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/invalid.png', height: 80),
+          const SizedBox(height: 24),
+          const Text("Ungültige Verifizierigslink.", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
+          const SizedBox(height: 12),
+          const Text("Bitte prüef de Link oder fordere neui E-Mail aa.", textAlign: TextAlign.center),
+        ],
       );
     } else {
-      return Container(
-        color: Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/error.png', height: 120),
-            const SizedBox(height: 24),
-            const Text("Fähler", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
-            const SizedBox(height: 12),
-            Text(status, textAlign: TextAlign.center),
-          ],
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/error.png', height: 80),
+          const SizedBox(height: 24),
+          const Text("Fähler", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
+          const SizedBox(height: 12),
+          Text(status, textAlign: TextAlign.center),
+        ],
       );
     }
   }
@@ -119,6 +107,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     if (_hasVerificationParams) {
       return Scaffold(
         appBar: AppBar(title: const Text("Email Verification")),
+        backgroundColor: Colors.white,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -150,22 +139,22 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade800,
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: const Text(
-                    'Anmelden',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
+                // ElevatedButton(
+                //   onPressed: () {
+                //     Navigator.pushReplacementNamed(context, '/login');
+                //   },
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Colors.red.shade800,
+                //     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(8.0),
+                //     ),
+                //   ),
+                //   child: const Text(
+                //     'Anmelden',
+                //     style: TextStyle(fontSize: 18, color: Colors.white),
+                //   ),
+                // ),
               ],
             ),
           ),

@@ -281,10 +281,10 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
 
     final body = {
       'user_id': _userId,
-      'email': _userData!['user_email'] ?? '',
+      'user_login': _userData!['user_login'] ?? '',
       'first_name': meta['first_name']?[0] ?? '',
       'last_name': meta['last_name']?[0] ?? '',
-      'user_phone_': meta['user_phone']?[0] ?? '', 
+      'user_phone': meta['user_phone']?[0] ?? '',
       'firmenname_': meta['firmenname']?[0] ?? '',
       'uid_nummer': meta['uid_nummer']?[0] ?? '',
       'available_time': meta['available_time']?[0] ?? '',
@@ -542,7 +542,7 @@ class _ProfilePageState extends State<ProfilePageScreenContractor> {
                           _buildInfoRow(
                             context,
                             'E-Mail',
-                            _userData!['user_email'] ?? 'Kei E-Mail',
+                            _userData!['user_login'] ?? 'Kei E-Mail',
                             Icons.email,
                           ),
                           _buildInfoRow(

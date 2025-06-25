@@ -24,17 +24,16 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
   final _phoneController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-
-  // No need for _emailController as it's readOnly and initialValue is used.
-  // The email will be passed directly from widget.userData.
+  final _emailController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
 
-    _phoneController.text = widget.userData['meta_data']?['user_phone_']?[0] ?? '';
+    _phoneController.text = widget.userData['meta_data']?['user_phone']?[0] ?? '';
     _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
     _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
+    _emailController.text = widget.userData['user_login'] ?? '';
   }
 
   @override
@@ -42,6 +41,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     _phoneController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -51,9 +51,8 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
         'user_id': widget.userData['ID'].toString(),
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
-        'user_phone_': _phoneController.text,
-        // *** FIX: Include the email from userData here ***
-        'user_email': widget.userData['user_email'] ?? '',
+        'user_phone': _phoneController.text,
+        'user_login': _emailController.text,
       };
 
       const apiKey = '1234567890abcdef';
@@ -175,7 +174,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
 
                       // Email (readonly)
                       TextFormField(
-                        initialValue: widget.userData['user_email'] ?? '',
+                        controller: _emailController,
                         readOnly: true,
                         decoration: const InputDecoration(
                           labelText: 'E-Mail (nicht bearbeitbar)',

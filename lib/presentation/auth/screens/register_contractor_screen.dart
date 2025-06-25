@@ -60,11 +60,10 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
       }, body: jsonEncode({
         'firmenname_': _firmController.text.trim(),
         'uid_nummer': _uidController.text.trim(),
-        'username': _emailController.text.trim(),
-        'email': _emailController.text.trim(),
+        'user_login': _emailController.text.trim(),
         'first_name': _firstNameController.text.trim(),
         'last_name': _lastNameController.text.trim(),
-        'user_phone_': _phoneController.text.trim(),
+        'user_phone': _phoneController.text.trim(),
         'password': _passwordController.text,
         'available_time': _selectedCategory,
         'role': 'um_contractor',
@@ -288,8 +287,9 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                readOnly: true,
                 decoration: InputDecoration(
-                  labelText: 'E-Mail-Adresse*',
+                  labelText: 'E-Mail (nicht bearbeitbar)',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
