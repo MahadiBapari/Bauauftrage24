@@ -139,22 +139,22 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                // ElevatedButton(
-                //   onPressed: () {
-                //     Navigator.pushReplacementNamed(context, '/login');
-                //   },
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: Colors.red.shade800,
-                //     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
-                //     shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(8.0),
-                //     ),
-                //   ),
-                //   child: const Text(
-                //     'Anmelden',
-                //     style: TextStyle(fontSize: 18, color: Colors.white),
-                //   ),
-                // ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/login');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade800,
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: const Text(
+                    'Anmelden',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
               ],
             ),
           ),

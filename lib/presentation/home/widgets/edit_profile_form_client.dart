@@ -30,10 +30,10 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
   void initState() {
     super.initState();
 
-    _phoneController.text = widget.userData['meta_data']?['user_phone']?[0] ?? '';
+    _phoneController.text = widget.userData['meta_data']?['user_phone_']?[0] ?? '';
     _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
     _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
-    _emailController.text = widget.userData['user_login'] ?? '';
+    _emailController.text = widget.userData['user_email'] ?? '';
   }
 
   @override
@@ -51,8 +51,8 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
         'user_id': widget.userData['ID'].toString(),
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
-        'user_phone': _phoneController.text,
-        'user_login': _emailController.text,
+        'user_phone_': _phoneController.text,
+        'user_email': _emailController.text,
       };
 
       const apiKey = '1234567890abcdef';

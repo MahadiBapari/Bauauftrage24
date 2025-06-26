@@ -256,7 +256,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'E-Mail-Adresse*',
+                  labelText: 'E-Mail-Adresse',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -279,7 +279,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Telefonnummer*',
+                  labelText: 'Telefonnummer',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -295,7 +295,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Passwort*',
+                  labelText: 'Passwort',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -312,7 +312,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 controller: _confirmPasswordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Passwort bestätigen*',
+                  labelText: 'Passwort bestätigen',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -336,7 +336,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                     'Allgemeinen Geschäftsbedingungen',
                     style: TextStyle(
                       color: Color.fromARGB(255, 201, 45, 45),
-                      decoration: TextDecoration.underline,
+                      
                     ),
                     ),
                   ),

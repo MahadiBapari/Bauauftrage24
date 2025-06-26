@@ -43,19 +43,13 @@ class _EditProfileFormContractorState
   void initState() {
     super.initState();
     // Initialize controllers with existing user data
-    _emailController.text = widget.userData['user_email'] ?? ''; // Read-only, but good to set
-    _phoneController.text =
-        widget.userData['meta_data']?['user_phone']?[0] ?? '';
-    _firmNameController.text =
-        widget.userData['meta_data']?['firmenname']?[0] ?? '';
-    _uidNumberController.text =
-        widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
-    _availableTimeController.text =
-        widget.userData['meta_data']?['available_time']?[0] ?? '';
-    _firstNameController.text =
-        widget.userData['meta_data']?['first_name']?[0] ?? '';
-    _lastNameController.text =
-        widget.userData['meta_data']?['last_name']?[0] ?? '';
+    _emailController.text = widget.userData['user_email'] ?? ''; 
+    _phoneController.text = widget.userData['meta_data']?['user_phone']?[0] ?? '';
+    _firmNameController.text = widget.userData['meta_data']?['firmenname']?[0] ?? '';
+    _uidNumberController.text = widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
+    _availableTimeController.text = widget.userData['meta_data']?['available_time']?[0] ?? '';
+    _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
+    _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
 
     // Initialize selected categories from user data
     final serviceCategories = widget.userData['meta_data']?['_service_category_'];
