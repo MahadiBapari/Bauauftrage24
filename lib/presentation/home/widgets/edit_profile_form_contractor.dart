@@ -23,16 +23,14 @@ class _EditProfileFormContractorState
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
-  // Email controller is not strictly needed if it's read-only and initialValue is used.
-  // Keeping it for consistency if it might become editable in the future,
-  // but initialValue on TextFormField is often enough for read-only fields.
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _firmNameController = TextEditingController();
   final _uidNumberController = TextEditingController();
   final _availableTimeController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+
+  late String _email; // Store email locally
 
   // New state for service categories
   List<Map<String, dynamic>> _allServiceCategories = [];
@@ -43,13 +41,14 @@ class _EditProfileFormContractorState
   void initState() {
     super.initState();
     // Initialize controllers with existing user data
-    _emailController.text = widget.userData['user_email'] ?? ''; 
     _phoneController.text = widget.userData['meta_data']?['user_phone']?[0] ?? '';
     _firmNameController.text = widget.userData['meta_data']?['firmenname']?[0] ?? '';
     _uidNumberController.text = widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
     _availableTimeController.text = widget.userData['meta_data']?['available_time']?[0] ?? '';
     _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
     _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
+
+    _email = widget.userData['user_email'] ?? '';
 
     // Initialize selected categories from user data
     final serviceCategories = widget.userData['meta_data']?['_service_category_'];
@@ -95,7 +94,6 @@ class _EditProfileFormContractorState
   @override
   void dispose() {
     // Dispose all TextEditingControllers to prevent memory leaks
-    _emailController.dispose();
     _phoneController.dispose();
     _firmNameController.dispose();
     _uidNumberController.dispose();
@@ -109,7 +107,7 @@ class _EditProfileFormContractorState
     if (_formKey.currentState!.validate()) {
       final updatedData = {
         'user_id': widget.userData['ID'].toString(),
-        'email': widget.userData['user_email'] ?? '',
+        'email': _email,
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
         'user_phone_': _phoneController.text,
@@ -245,7 +243,7 @@ class _EditProfileFormContractorState
 
                       // Email (readonly)
                       TextFormField(
-                        initialValue: widget.userData['user_email'] ?? '', // Use initialValue for readOnly
+                        initialValue: _email, // Use local variable for readOnly
                         readOnly: true,
                         decoration: const InputDecoration(
                           labelText: 'E-Mail (nicht bearbeitbar)',

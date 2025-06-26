@@ -24,7 +24,11 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
   final _phoneController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
+
+  late String _email; // Store email locally
+
+  // No need for _emailController as it's readOnly and initialValue is used.
+  // The email will be passed directly from widget.userData.
 
   @override
   void initState() {
@@ -33,7 +37,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     _phoneController.text = widget.userData['meta_data']?['user_phone_']?[0] ?? '';
     _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';
     _lastNameController.text = widget.userData['meta_data']?['last_name']?[0] ?? '';
-    _emailController.text = widget.userData['user_email'] ?? '';
+    _email = widget.userData['user_email'] ?? '';
   }
 
   @override
@@ -41,7 +45,6 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     _phoneController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -52,7 +55,8 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,
         'user_phone_': _phoneController.text,
-        'user_email': _emailController.text,
+        // Use the correct key for the API
+        'email': _email,
       };
 
       const apiKey = '1234567890abcdef';
@@ -71,15 +75,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
 
         if (response.statusCode == 200 && responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Profil erfolgreich aktualisiert!'),
-              backgroundColor: const Color.fromARGB(129, 0, 0, 0),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              margin: const EdgeInsets.all(10),
-            ),
+            const SnackBar(content: Text('Profile updated successfully!')),
           );
           widget.onProfileUpdated(); // Callback to refresh parent data
           Navigator.of(context).pop(); // Close the dialog
@@ -96,15 +92,17 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
     // Ensure widget is still mounted before accessing context
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Error'),
         content: Text(message),
-        backgroundColor: const Color.fromARGB(160, 244, 67, 54),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: const EdgeInsets.all(10),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -129,7 +127,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                 ),
                 const Spacer(),
                 const Text(
-                  'Profil bearbeiten',
+                  'Edit Profile',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
@@ -154,7 +152,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                       TextFormField(
                         controller: _firstNameController,
                         decoration: const InputDecoration(
-                          labelText: 'Vorname',
+                          labelText: 'First Name',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -165,7 +163,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                       TextFormField(
                         controller: _lastNameController,
                         decoration: const InputDecoration(
-                          labelText: 'Nachname',
+                          labelText: 'Last Name',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -174,10 +172,10 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
 
                       // Email (readonly)
                       TextFormField(
-                        controller: _emailController,
+                        initialValue: _email,
                         readOnly: true,
                         decoration: const InputDecoration(
-                          labelText: 'E-Mail (nicht bearbeitbar)',
+                          labelText: 'Email (not editable)',
                           prefixIcon: Icon(Icons.email_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -189,7 +187,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
-                          labelText: 'Telefon',
+                          labelText: 'Phone',
                           prefixIcon: Icon(Icons.phone_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -210,7 +208,7 @@ class _EditProfileFormClientState extends State<EditProfileFormClient> {
               child: ElevatedButton.icon(
                 onPressed: _updateProfile,
                 icon: const Icon(Icons.save),
-                label: const Text('Änderungen speichern'),
+                label: const Text('Save Changes'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: const Color.fromARGB(255, 185, 7, 7),
