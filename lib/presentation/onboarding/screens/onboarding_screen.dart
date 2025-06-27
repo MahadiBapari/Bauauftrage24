@@ -159,14 +159,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             const SizedBox(height: 30),
                             Text(
                               page.title,
-                              style: const TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               page.description,
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 15, color: Colors.grey.shade700),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 40),
@@ -195,30 +194,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     SizedBox(
                       width: 150,
                       height: 50,
-                      child: ElevatedButton(
+                        child: ElevatedButton(
                         onPressed: () => _handleRoleSelection('client'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade800,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Client', style: TextStyle(color: Colors.white)),
+                        child: const Text('Auftraggeber', style: TextStyle(color: Colors.white)),
                       ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
                       width: 150,
                       height: 50,
-                      child: ElevatedButton(
+                        child: ElevatedButton(
                         onPressed: () => _handleRoleSelection('contractor'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade800,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Contractor', style: TextStyle(color: Colors.white)),
+                        child: const Text('Firma', style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ] else if (_currentIndex == 4) ...[
@@ -261,7 +260,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ] else if (_currentIndex != onboardingPages.length - 1) ...[
                     OnboardingButton(
-                      text: 'Next',
+                        text: 'Wiiter',
                       onPressed: _nextPage,
                     ),
                     OnboardingSkipButton(onPressed: _skip),

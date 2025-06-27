@@ -257,7 +257,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               TextFormField(
                 controller: _firmController,
                 decoration: InputDecoration(
-                  labelText: 'Firmenname*',
+                  labelText: 'Firmenname',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -272,7 +272,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
               TextFormField(
                 controller: _uidController,
                 decoration: InputDecoration(
-                  labelText: 'UID-Nummer*',
+                  labelText: 'UID-Nummer',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -337,7 +337,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Telefonnummer*',
+                  labelText: 'Telefonnummer',
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -385,7 +385,7 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                 DropdownButtonFormField<String>(
                   value: _selectedCategory,
                   decoration: InputDecoration(
-                    labelText: 'Verfügbari Zyt*',
+                    labelText: 'Verfügbari Zyt',
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(

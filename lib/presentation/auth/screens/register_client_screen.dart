@@ -390,6 +390,23 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                   ),
                 ],
               ),
+            
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     const Text("Als Auftragnehmer registrieren? "),
+              //     TextButton(
+              //       onPressed: () => Navigator.pushNamed(context, '/register_contractor'),
+              //       child: Text(
+              //         'Als Firma Eintragen',
+              //         style: TextStyle(
+              //           color: Colors.red.shade800,
+              //           fontWeight: FontWeight.bold,
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),
