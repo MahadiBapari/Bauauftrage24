@@ -127,6 +127,12 @@ class _MainScreenState extends State<MainScreen> {
         HomePageScreenClient(
           key: const ValueKey('home_page'),
           onCategorySelected: _navigateToAddNewOrder,
+          onAddOrderRequested: () {
+            setState(() {
+              _selectedIndex = 2; // Switch to the AddNewOrderPage
+              _initialCategoryIdForAddOrder = null; // Fresh form
+            });
+          },
         ),
         const ProfilePageScreenClient(key: ValueKey('profile_page')),
         AddNewOrderPageScreen(

@@ -332,6 +332,7 @@ Widget build(BuildContext context) {
                             chipDisplay: MultiSelectChipDisplay.none(),
                             validator: (value) =>
                                 value == null || value.isEmpty ? 'Bitte wähl mindestens eini Kategorie' : null,
+                            initialValue: _selectedCategories,
                           ),
                         ],
                       );

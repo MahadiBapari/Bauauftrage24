@@ -14,7 +14,8 @@ import '../partners_page/partners_page_screen.dart';
 
 class HomePageScreenClient extends StatefulWidget {
   final void Function(String categoryId)? onCategorySelected;
-  const HomePageScreenClient({Key? key, this.onCategorySelected}) : super(key: key);
+  final VoidCallback? onAddOrderRequested;
+  const HomePageScreenClient({Key? key, this.onCategorySelected, this.onAddOrderRequested}) : super(key: key);
 
   @override
   State<HomePageScreenClient> createState() => _HomePageScreenClientState();
@@ -722,7 +723,33 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                   _isLoadingOrders
                       ? _buildOrderShimmer()
                       : _orders.isEmpty
-                          ? const Center(child: Text('Kei Aufträgi verfügbar'))
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('Kei Aufträgi verfügbar'),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.add),
+                                    label: const Text('Auftrag erfasse'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color.fromARGB(255, 179, 21, 21),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      if (widget.onAddOrderRequested != null) {
+                                        widget.onAddOrderRequested!();
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            )
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -913,16 +940,20 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
 
   Widget _buildOrderCard(Order order) {
     return InkWell(
-      onTap: () {
+      onTap: () async {
         debugPrint('Order card tapped. fullOrder: \\${order.fullOrder}');
         if (order.fullOrder != null) {
           debugPrint('Navigating to SingleMyOrderPageScreen with order: \\${order.fullOrder}');
-          Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => SingleMyOrderPageScreen(order: order.fullOrder!),
             ),
           );
+          if (result == true) {
+            // Order was deleted, refresh orders
+            await _refreshAllData(); // or await _loadOrders();
+          }
         } else {
           debugPrint('Order fullOrder is null, not navigating.');
         }
