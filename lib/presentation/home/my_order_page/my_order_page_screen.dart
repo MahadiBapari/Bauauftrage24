@@ -184,6 +184,7 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
       }
       headers['X-API-Key'] = apiKey;
 
+      debugPrint('Fetching orders for userId: $userId');
       final url = Uri.parse('$ordersEndpoint?author=$userId&page=$page&per_page=$perPage');
       debugPrint('MyOrdersPageScreen: Fetching orders from URL: $url');
       debugPrint('MyOrdersPageScreen: Fetching orders with headers: $headers');
@@ -204,9 +205,9 @@ class _MyOrdersPageScreenState extends State<MyOrdersPageScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        debugPrint('MyOrdersPageScreen: Raw data length: ${data.length}');
-
+        debugPrint('MyOrdersPageScreen: Raw data length: [32m${data.length}[0m');
         for (var order in data) {
+          debugPrint('Fetched order with id: [36m${order['id']}[0m, author: [33m${order['author']}[0m');
           String imageUrl = '';
           final dynamic galleryDynamic = order['meta']?['order_gallery'];
           List<dynamic> galleryList = [];

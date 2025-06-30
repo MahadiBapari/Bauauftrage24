@@ -58,6 +58,7 @@ class _RegisterContractorPageState extends State<RegisterContractorPage> {
         'Content-Type': 'application/json',
         'X-API-KEY': apiKey,
       }, body: jsonEncode({
+        'username': _emailController.text.trim(),
         'firmenname_': _firmController.text.trim(),
         'uid_nummer': _uidController.text.trim(),
         'email': _emailController.text.trim(),
@@ -497,14 +498,24 @@ Die Nutzung der Plattform kann, insbesondere aus technischen Gründen, zeitweili
                         border: Border.all(color: Colors.transparent),
                       ),
                       buttonIcon: const Icon(Icons.category, color: Color.fromARGB(255, 185, 33, 33)),
-                      buttonText: const Text(
-                        "Service Kategorie ussuewähle*",
+                      buttonText: Text(
+                        _selectedServiceCategories.isEmpty
+                          ? "Service Kategorie ussuewähle*"
+                          : "${_selectedServiceCategories.length} Kategorie(n) ausgewählt",
                         style: TextStyle(fontSize: 16, color: Colors.black87),
                       ),
                       onConfirm: (values) {
                         setState(() => _selectedServiceCategories = values.cast<String>());
                       },
-                      chipDisplay: MultiSelectChipDisplay.none(),
+                      chipDisplay: MultiSelectChipDisplay(
+                        chipColor: Colors.red.shade50,
+                        textStyle: TextStyle(color: Colors.red.shade800),
+                        onTap: (value) {
+                          setState(() {
+                            _selectedServiceCategories.remove(value);
+                          });
+                        },
+                      ),
                       validator: (value) => value == null || value.isEmpty
                         ? 'Bitte wähl mindestens eini Kategorie us'
                         : null,
