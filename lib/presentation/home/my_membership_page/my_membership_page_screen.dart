@@ -6,9 +6,7 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:bauauftrage/core/network/safe_http.dart';
 import 'package:bauauftrage/common/utils/auth_utils.dart';
 import 'package:shimmer/shimmer.dart';
-
-// Assuming you will create this file for the membership form
-import 'membership_form_page_screen.dart'; // <--- NEW IMPORT for the form page
+import 'membership_form_page_screen.dart'; 
 
 class MyMembershipPageScreen extends StatefulWidget {
   const MyMembershipPageScreen({super.key});
@@ -26,8 +24,8 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
   String _errorMessage = '';
 
   final String _membershipEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/user-membership';
-  final String _cancelMembershipEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/cancel-membership'; // New endpoint
-  final String _apiKey = '1234567890abcdef'; // Assuming you have this defined
+  final String _cancelMembershipEndpoint = 'https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/cancel-membership'; 
+  final String _apiKey = '1234567890abcdef'; 
 
   @override
   void initState() {
