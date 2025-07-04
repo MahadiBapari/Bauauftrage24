@@ -152,9 +152,10 @@ class _MembershipFormPageScreenState
       if (!mounted) return;
 
       if (response.statusCode == 200 && data['success'] == true) {
+        final expires = data['expires'];
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Mitgliedschaft aktiv. (Abo-ID: ${data['subscription_id']})'),
+            content: Text('Mitgliedschaft aktiv bis $expires. '),
             backgroundColor: const Color.fromARGB(129, 0, 0, 0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

@@ -71,7 +71,6 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
         if (data['success'] == true && data['active'] == true) {
           final level = data['level'];
           final int? startDateTimestamp = int.tryParse(level['startdate'].toString());
-          final int? endDateTimestamp = int.tryParse(level['enddate'].toString());
 
           String formattedStartDate = 'N/A';
           if (startDateTimestamp != null) {
@@ -79,10 +78,20 @@ class _MyMembershipPageScreenState extends State<MyMembershipPageScreen> {
             formattedStartDate = DateFormat('MMMM d, yyyy').format(startDateTime);
           }
 
+          // Prefer the new 'expires' field if present
           String formattedExpiryDate = 'N/A';
-          if (endDateTimestamp != null) {
-            final DateTime expiryDateTime = DateTime.fromMillisecondsSinceEpoch(endDateTimestamp * 1000);
-            formattedExpiryDate = DateFormat('MMMM d, yyyy').format(expiryDateTime);
+          if (data['expires'] != null && data['expires'].toString().isNotEmpty) {
+            try {
+              formattedExpiryDate = DateFormat('MMMM d, yyyy').format(DateTime.parse(data['expires']));
+            } catch (e) {
+              formattedExpiryDate = data['expires'].toString();
+            }
+          } else if (level['enddate'] != null) {
+            final int? endDateTimestamp = int.tryParse(level['enddate'].toString());
+            if (endDateTimestamp != null) {
+              final DateTime expiryDateTime = DateTime.fromMillisecondsSinceEpoch(endDateTimestamp * 1000);
+              formattedExpiryDate = DateFormat('MMMM d, yyyy').format(expiryDateTime);
+            }
           }
 
           setState(() {
