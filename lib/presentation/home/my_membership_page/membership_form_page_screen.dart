@@ -113,17 +113,15 @@ class _MembershipFormPageScreenState
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      // NOTE: Make sure 'user_id' is stored in SharedPreferences after login.
-      final userIdString = prefs.getString('user_id');
       final token = prefs.getString('auth_token');
+      final userEmail = prefs.getString('user_email');
+      final userName = prefs.getString('displayName'); // full name
 
-      if (userIdString == null || token == null) {
-        throw Exception('Benutzer nicht authentifiziert. Bitte melden Sie sich erneut an.');
+      if (userEmail == null || userName == null) {
+        throw Exception('Benutzerdaten fehlen. Bitte melden Sie sich erneut an.');
       }
-      
-      final userId = int.tryParse(userIdString);
-      if (userId == null) {
-        throw Exception('Ungültiges Benutzer-ID-Format.');
+      if (token == null) {
+        throw Exception('Benutzer nicht authentifiziert. Bitte melden Sie sich erneut an.');
       }
 
       final paymentMethod = await Stripe.instance.createPaymentMethod(
@@ -135,26 +133,28 @@ class _MembershipFormPageScreenState
       );
 
       final response = await http.post(
-        Uri.parse(
-            'https://xn--bauauftrge24-ncb.ch/wp-json/custom/v1/buy-membership/'),
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/bongdevs/v1/pmpro-subscribe'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'user_id': userId,
-          'stripe_token': paymentMethod.id,
+          'email': userEmail,
+          'name': userName, // full name
+          'level_id': 1, // or the correct level if dynamic
+          'payment_method_id': paymentMethod.id,
         }),
       );
 
       final data = jsonDecode(response.body);
+
+      print('API response: \\n${response.body}');
 
       if (!mounted) return;
 
       if (response.statusCode == 200 && data['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Mitgliedschaft aktiv bis: ${data['expires_on']}'),
+            content: Text('Mitgliedschaft aktiv. (Abo-ID: ${data['subscription_id']})'),
             backgroundColor: const Color.fromARGB(129, 0, 0, 0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -163,7 +163,6 @@ class _MembershipFormPageScreenState
             margin: const EdgeInsets.all(10),
           ),
         );
-        // Pop screen and return true to signal success
         Navigator.of(context).pop(true);
       } else {
         throw Exception(data['error'] ?? 'Failed to purchase membership.');

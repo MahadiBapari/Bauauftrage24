@@ -41,8 +41,8 @@ class _EditProfileFormContractorState
   void initState() {
     super.initState();
     // Initialize controllers with existing user data
-    _phoneController.text = widget.userData['meta_data']?['user_phone']?[0] ?? '';
-    _firmNameController.text = widget.userData['meta_data']?['firmenname']?[0] ?? '';
+    _phoneController.text = widget.userData['meta_data']?['user_phone_']?[0] ?? '';
+    _firmNameController.text = widget.userData['meta_data']?['firmenname_']?[0] ?? '';
     _uidNumberController.text = widget.userData['meta_data']?['uid_nummer']?[0] ?? '';
     _availableTimeController.text = widget.userData['meta_data']?['available_time']?[0] ?? '';
     _firstNameController.text = widget.userData['meta_data']?['first_name']?[0] ?? '';

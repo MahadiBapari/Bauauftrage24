@@ -24,7 +24,7 @@ class HomePageScreen extends StatefulWidget {
 }
 
 class _HomePageScreenState extends State<HomePageScreen> {
-  String displayName = "User";
+  String displayName = "USER";
   bool isLoadingUser = true; // Still needed for user name specifically
   bool isLoadingPromos = true;
 
@@ -220,21 +220,31 @@ class _HomePageScreenState extends State<HomePageScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
-      if (token == null) return;
+      final userId = prefs.getString('user_id');
+      if (token == null || userId == null) return;
 
       final response = await SafeHttp.safeGet(
         context,
-        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/users/me'),
+        Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId'),
         headers: {
           'Authorization': 'Bearer $token',
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
         },
       );
 
       if (response.statusCode == 200) {
         final userData = json.decode(response.body);
+        String? firmenname;
+        if (userData['meta_data'] != null &&
+            userData['meta_data']['firmenname_'] != null &&
+            userData['meta_data']['firmenname_'] is List &&
+            userData['meta_data']['firmenname_'].isNotEmpty) {
+          firmenname = userData['meta_data']['firmenname_'][0];
+        }
         if (mounted) {
           setState(() {
-            displayName = userData['name'] ?? "User";
+            displayName = firmenname ?? "User";
             isLoadingUser = false;
           });
         }

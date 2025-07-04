@@ -8,8 +8,11 @@ import 'routing/routes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  //testkey = pk_test_51R4IES4PgABMuYZqF1Hpx9wWxaBAEh5zVxM6SlHAlt65I0ek0ww3vrPV9EYSatNor7wfXKLMjbKEwPMfyLakPt9800OiKUhmut
+  //livekey = pk_live_51R4IEKGByhgsCrrfWagwRb319gQEyYPq8Rjny4TAB0kzXr1F9UsXYiIsxCdS6negbScfR6PYKpctD9NHyP1ClC1a00sxj2EKv5
+
   // Set Stripe publishable key
-  Stripe.publishableKey = 'pk_live_51R4IEKGByhgsCrrfWagwRb319gQEyYPq8Rjny4TAB0kzXr1F9UsXYiIsxCdS6negbScfR6PYKpctD9NHyP1ClC1a00sxj2EKv5';
+  Stripe.publishableKey = 'pk_test_51R4IES4PgABMuYZqF1Hpx9wWxaBAEh5zVxM6SlHAlt65I0ek0ww3vrPV9EYSatNor7wfXKLMjbKEwPMfyLakPt9800OiKUhmut';
   
   // For Apple Pay (and to ensure initialization is awaited)
   Stripe.merchantIdentifier = 'merchant.flutter.stripe.test';
