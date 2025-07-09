@@ -127,7 +127,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
     await Future.wait([
       _loadCategories(isRefresh: true),
       _loadPartners(),
-      _loadOrders(),
+      _loadOrders(forceRefresh: true),
     ]);
     if (mounted) setState(() => _isLoading = false);
   }
@@ -150,13 +150,12 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
     await Future.wait([
       _loadCategories(isRefresh: true),
       _loadPartners(),
-      _loadOrders(),
+      _loadOrders(forceRefresh: true),
     ]);
     if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _onRefresh() async {
-    // We are not using cache for categories anymore, so no need to clear it.
     await _refreshAllData();
   }
 
@@ -463,32 +462,34 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
     }
   }
 
-  Future<void> _loadOrders() async {
+  Future<void> _loadOrders({bool forceRefresh = false}) async {
     if (!mounted) return;
     if (!await isUserAuthenticated()) return;
     setState(() => _isLoadingOrders = true);
 
     try {
-      // Try to load from cache first
-      final cachedOrders = await _cacheManager.loadFromCache('orders');
-      if (cachedOrders != null && cachedOrders is List && cachedOrders.isNotEmpty) {
-        final orders = cachedOrders.map((o) => Order.fromJson(o)).where((order) {
-          // Filter by current user
-          if (order.fullOrder != null && currentUserId != null) {
-            return order.fullOrder!['author'] == currentUserId;
+      if (!forceRefresh) {
+        // Try to load from cache first
+        final cachedOrders = await _cacheManager.loadFromCache('orders');
+        if (cachedOrders != null && cachedOrders is List && cachedOrders.isNotEmpty) {
+          final orders = cachedOrders.map((o) => Order.fromJson(o)).where((order) {
+            // Filter by current user
+            if (order.fullOrder != null && currentUserId != null) {
+              return order.fullOrder!['author'] == currentUserId;
+            }
+            return false;
+          }).toList();
+          if (mounted) {
+            setState(() {
+              _orders = orders;
+              _isLoadingOrders = false;
+            });
           }
-          return false;
-        }).toList();
-        if (mounted) {
-          setState(() {
-            _orders = orders;
-            _isLoadingOrders = false;
-          });
+          return;
         }
-        return;
       }
 
-      // If no cache, fetch fresh data
+      // Always fetch fresh data if forceRefresh is true or cache is empty
       final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/client-order?_embed'));
 
       if (!mounted) return;
@@ -507,33 +508,19 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
           // Get the first image from the order gallery
           if (item['meta']?['order_gallery'] != null) {
             final gallery = item['meta']?['order_gallery'];
-            debugPrint('Order "$title" order_gallery: $gallery');
             if (gallery is List && gallery.isNotEmpty) {
               final firstImage = gallery[0];
-              debugPrint('Order "$title" firstImage: $firstImage');
               if (firstImage is Map && firstImage['id'] != null) {
                 final imageId = firstImage['id'];
-                debugPrint('Order "$title" imageId: $imageId');
                 try {
                   final mediaResponse = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$imageId'), headers: {'X-API-KEY': apiKey});
                   if (mediaResponse.statusCode == 200) {
                     final mediaData = json.decode(mediaResponse.body);
                     imageUrl = mediaData['source_url'];
-                    debugPrint('Order "$title" fetched imageUrl: $imageUrl');
-                  } else {
-                    debugPrint('Order "$title" failed to fetch media for ID $imageId: ${mediaResponse.statusCode}');
                   }
-                } catch (e) {
-                  debugPrint('Order "$title" error fetching media for ID $imageId: $e');
-                }
-              } else {
-                debugPrint('Order "$title" firstImage is not a Map or has no id');
+                } catch (e) {}
               }
-            } else {
-              debugPrint('Order "$title" gallery is not a List or is empty');
             }
-          } else {
-            debugPrint('Order "$title" has no order_gallery');
           }
 
           fetchedOrders.add(Order(
@@ -553,8 +540,6 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
           }
           return false;
         }).toList();
-        debugPrint('Created ${userOrders.length} user order objects');
-        debugPrint('Orders with images: ${userOrders.where((o) => o.imageUrl != null && o.imageUrl!.isNotEmpty).length}');
 
         if (mounted) {
           setState(() {
@@ -566,13 +551,11 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
         // Save to cache
         await _cacheManager.saveToCache('orders', fetchedOrders.map((o) => o.toJson()).toList());
       } else {
-        debugPrint('Failed to load orders: ${response.statusCode}');
         if (mounted) {
           setState(() => _isLoadingOrders = false);
         }
       }
     } catch (e) {
-      debugPrint('Error loading orders: $e');
       if (mounted) {
         setState(() => _isLoadingOrders = false);
       }

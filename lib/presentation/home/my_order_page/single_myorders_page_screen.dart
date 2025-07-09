@@ -252,12 +252,12 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
               Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 48),
               const SizedBox(height: 16),
               const Text(
-                'Confirm Deletion',
+                'Lösche bestätige',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Are you sure you want to delete this order? This action cannot be undone.',
+                'Bisch sicher, dass de die Bshtellig wotsch lösche? Das cha nöd rückgängig gmacht werde.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16),
               ),
@@ -272,7 +272,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      child: const Text('Cancel'),
+                      child: const Text('Abbräche'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -284,7 +284,7 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('Delete'),
+                      child: const Text('Lösche'),
                     ),
                   ),
                 ],
@@ -323,12 +323,12 @@ class _SingleMyOrderPageScreenState extends State<SingleMyOrderPageScreen> {
           await showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Success'),
-              content: const Text('Order has been deleted successfully.'),
+              title: const Text('Erfolg'),
+              content: const Text('D Bshtellig isch erfolgriich glöscht worde.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('OK'),
+                  child: const Text('Guet'),
                 ),
               ],
             ),
