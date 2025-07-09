@@ -49,14 +49,14 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
   }
 
   Future<void> _loadFromCacheThenBackground() async {
-    // Load all sections from cache first (no loading spinner)
+    // Use cache for instant display
     await Future.wait([
       _loadUserFromCache(),
       _loadCategoriesFromCache(),
       _loadPartnersFromCache(),
       _loadOrdersFromCache(),
     ]);
-    // Then fetch fresh data in background (will update UI if new data)
+    // Then fetch fresh data in background (update UI if new data)
     _refreshAllDataInBackground();
   }
 
@@ -106,28 +106,46 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
 
   Future<void> _loadOrdersFromCache() async {
     final cachedOrders = await _cacheManager.loadFromCache('orders');
+    final prefs = await SharedPreferences.getInstance();
+    if (currentUserId == null) {
+      final userIdString = prefs.getString('user_id');
+      if (userIdString != null) {
+        currentUserId = int.tryParse(userIdString);
+        debugPrint('Loaded currentUserId from prefs: \\${currentUserId}');
+      } else {
+        debugPrint('No user_id found in prefs when loading orders from cache.');
+      }
+    }
+    debugPrint('currentUserId in _loadOrdersFromCache: \\${currentUserId}');
+    debugPrint('Cached orders loaded: \\${cachedOrders?.length ?? 0}');
     if (cachedOrders != null && cachedOrders is List && cachedOrders.isNotEmpty) {
+      debugPrint('Cached orders content: \\${cachedOrders}');
       final orders = cachedOrders.map((o) => Order.fromJson(o)).where((order) {
         if (order.fullOrder != null && currentUserId != null) {
-          return order.fullOrder!['author'] == currentUserId;
+          final author = order.fullOrder!['author'];
+          debugPrint('Order author: \\${author}, currentUserId: \\${currentUserId}');
+          return author == currentUserId;
         }
         return false;
       }).toList();
+      debugPrint('Filtered orders count: \\${orders.length}');
       if (mounted) {
         setState(() {
           _orders = orders;
           _isLoadingOrders = false;
         });
       }
+    } else {
+      debugPrint('No cached orders found or cache is empty.');
     }
   }
 
   Future<void> _refreshAllDataInBackground() async {
-    await _fetchUser();
+    await _fetchUser(forceRefresh: false); // Use cache if available
     await Future.wait([
-      _loadCategories(isRefresh: true),
-      _loadPartners(),
-      _loadOrders(forceRefresh: true),
+      _loadCategories(isRefresh: true, forceRefresh: false),
+      _loadPartners(forceRefresh: false),
+      _loadOrders(forceRefresh: false),
     ]);
     if (mounted) setState(() => _isLoading = false);
   }
@@ -146,10 +164,10 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
       _isLoadingPartners = true;
       _isLoadingOrders = true;
     });
-    await _fetchUser();
+    await _fetchUser(forceRefresh: true); // Always fetch fresh data
     await Future.wait([
-      _loadCategories(isRefresh: true),
-      _loadPartners(),
+      _loadCategories(isRefresh: true, forceRefresh: true),
+      _loadPartners(forceRefresh: true),
       _loadOrders(forceRefresh: true),
     ]);
     if (mounted) setState(() => _isLoading = false);
@@ -159,53 +177,55 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
     await _refreshAllData();
   }
 
-  Future<void> _fetchUser() async {
+  Future<void> _fetchUser({bool forceRefresh = false}) async {
     if (!mounted) return;
     if (!await isUserAuthenticated()) return;
     setState(() => isLoadingUser = true);
 
     try {
+      if (!forceRefresh) {
+        final cachedData = await _cacheManager.loadFromCache('user_data');
+        if (cachedData != null) {
+          if (mounted) {
+            setState(() {
+              displayName = cachedData as String;
+              isLoadingUser = false;
+            });
+          }
+          return;
+        }
+      }
       final prefs = await SharedPreferences.getInstance();
       final userIdString = prefs.getString('user_id');
-
       if (userIdString == null) {
         if (mounted) setState(() => isLoadingUser = false);
         return;
       }
-
       final int? userId = int.tryParse(userIdString);
       if (userId == null) {
         if (mounted) setState(() => isLoadingUser = false);
         return;
       }
-
       currentUserId = userId; // Store the user ID
       final url = Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/custom-api/v1/users/$userId');
       final response = await SafeHttp.safeGet(context, url, headers: {'X-API-Key': apiKey});
-
       if (!mounted) return;
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final metaData = data['meta_data'];
         final List<dynamic>? firstNameList = metaData?['first_name'];
         final List<dynamic>? lastNameList = metaData?['last_name'];
-
         final firstName = (firstNameList != null && firstNameList.isNotEmpty) ? firstNameList[0] : '';
         final lastName = (lastNameList != null && lastNameList.isNotEmpty) ? lastNameList[0] : '';
-
         final newDisplayName = '${firstName.trim()} ${lastName.trim()}'.trim().isEmpty
             ? 'User'
             : '${firstName.trim()} ${lastName.trim()}';
-
         if (mounted) {
           setState(() {
             displayName = newDisplayName;
           });
         }
         await _cacheManager.saveToCache('user_data', newDisplayName);
-      } else {
-        debugPrint('Failed to load user data: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       debugPrint('Error fetching user data: $e');
@@ -214,36 +234,40 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
     }
   }
 
-  Future<void> _loadCategories({bool isRefresh = false}) async {
+  Future<void> _loadCategories({bool isRefresh = false, bool forceRefresh = false}) async {
     if (!mounted) return;
     if (!await isUserAuthenticated()) return;
-    
-    if (isRefresh && _categories.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _isLoadingCategories = true;
-        });
+    if (!forceRefresh) {
+      final cachedCategories = await _cacheManager.loadFromCache('categories');
+      if (cachedCategories != null && cachedCategories is List && cachedCategories.isNotEmpty) {
+        final filtered = cachedCategories.where((c) {
+          final id = c['id'];
+          final valid = id != null && (id is int || int.tryParse('$id') != null);
+          return valid;
+        }).toList();
+        final categories = filtered.map((c) => Category.fromJson(c)).toList();
+        if (mounted) {
+          setState(() {
+            _categories = categories;
+            _isLoadingCategories = false;
+          });
+        }
+        return;
       }
     }
-
     try {
       final response = await SafeHttp.safeGet(
           context,
-          Uri.parse(
-              'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
+          Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/order-categories?per_page=100'),
           headers: {'X-API-Key': apiKey});
-
       if (!mounted) return;
-
       if (response.statusCode == 200) {
         List<dynamic> categoriesData = json.decode(response.body);
-
         List<_CategoryTemp> tempCategories = [];
         Set<int> mediaIds = {};
         for (var item in categoriesData) {
           if (item['id'] == null ||
               (item['id'] is! int && int.tryParse(item['id'].toString()) == null)) {
-            debugPrint('Skipping fetched category with invalid id: ${item['id']}');
             continue;
           }
           final id = item['id'] is int ? item['id'] : int.parse(item['id'].toString());
@@ -253,58 +277,41 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
           if (catImage != null && catImage is Map && catImage['id'] != null) {
             if (catImage['id'] is int) {
               imageMediaId = catImage['id'];
-            } else if (catImage['id'] is String &&
-                int.tryParse(catImage['id']) != null) {
+            } else if (catImage['id'] is String && int.tryParse(catImage['id']) != null) {
               imageMediaId = int.parse(catImage['id']);
             }
             if (imageMediaId != null) mediaIds.add(imageMediaId);
           }
-          tempCategories.add(
-              _CategoryTemp(id: id, name: name, imageMediaId: imageMediaId));
+          tempCategories.add(_CategoryTemp(id: id, name: name, imageMediaId: imageMediaId));
         }
-        
         Map<int, String> mediaUrlMap = {};
         await Future.wait(mediaIds.map((mediaId) async {
           try {
             final mediaResponse = await SafeHttp.safeGet(
                 context,
-                Uri.parse(
-                    'https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'),
+                Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/media/$mediaId'),
                 headers: {'X-API-Key': apiKey});
             if (mediaResponse.statusCode == 200) {
               final mediaData = json.decode(mediaResponse.body);
               if (mediaData['source_url'] != null) {
                 mediaUrlMap[mediaId] = mediaData['source_url'];
               }
-            } else {
-              debugPrint(
-                  'Failed to fetch media for category image id $mediaId: status ${mediaResponse.statusCode}');
             }
-          } catch (e) {
-            debugPrint(
-                'Error fetching media for category image id $mediaId: $e');
-          }
+          } catch (e) {}
         }));
-
         List<Category> fetchedCategories = tempCategories
             .map((c) => Category(
                   id: c.id,
                   name: c.name,
-                  imageUrl:
-                      c.imageMediaId != null ? mediaUrlMap[c.imageMediaId!] : null,
+                  imageUrl: c.imageMediaId != null ? mediaUrlMap[c.imageMediaId!] : null,
                 ))
             .toList();
-        
         if (mounted) {
           setState(() {
             _categories = fetchedCategories;
           });
         }
-        
         await _cacheManager.saveToCache('categories', _categories.map((c) => c.toJson()).toList());
-
-      } else {
-        debugPrint('Failed to load categories: ' + response.statusCode.toString());
       }
     } catch (e) {
       debugPrint('Error loading categories: $e');
@@ -317,13 +324,11 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
     }
   }
 
-  Future<void> _loadPartners() async {
+  Future<void> _loadPartners({bool forceRefresh = false}) async {
     if (!mounted) return;
     if (!await isUserAuthenticated()) return;
     setState(() => _isLoadingPartners = true);
-
-    try {
-      // Try to load from cache first
+    if (!forceRefresh) {
       final cachedPartners = await _cacheManager.loadFromCache('partners');
       if (cachedPartners != null && cachedPartners is List && cachedPartners.isNotEmpty) {
         final partners = cachedPartners.map((p) => Partner.fromJson(p)).toList();
@@ -333,91 +338,25 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
             _isLoadingPartners = false;
           });
         }
-        debugPrint('Loaded ${partners.length} partners from cache');
         return;
       }
-
-      // If no cache, fetch fresh data
+    }
+    try {
       final response = await SafeHttp.safeGet(context, Uri.parse('https://xn--bauauftrge24-ncb.ch/wp-json/wp/v2/partners'));
-
       if (!mounted) return;
-
-      debugPrint('Partners API response status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         List<dynamic> partnersData = json.decode(response.body);
-        debugPrint('Partners API returned ${partnersData.length} items');
-        
-        // Print the first partner's full structure for debugging
-        if (partnersData.isNotEmpty) {
-          debugPrint('First partner full structure: ${partnersData[0]}');
-        }
-        
         List<Partner> fetchedPartners = [];
-
         for (var item in partnersData) {
           final title = item['title']?['rendered'] as String? ?? '';
-          debugPrint('\n--- Processing partner: $title ---');
-          
-          // Check if meta exists
-          if (item['meta'] != null) {
-            debugPrint('Meta exists for $title');
-            final meta = item['meta'];
-            
-            // Check if logo exists in meta
-            if (meta['logo'] != null) {
-              debugPrint('Logo field exists in meta for $title');
-              debugPrint('Logo field type: ${meta['logo'].runtimeType}');
-              debugPrint('Logo field content: ${meta['logo']}');
-              
-              // Check if it's the expected structure
-              if (meta['logo'] is Map) {
-                final logoMap = meta['logo'] as Map;
-                debugPrint('Logo is a Map with keys: ${logoMap.keys.toList()}');
-                
-                if (logoMap['url'] != null) {
-                  debugPrint('URL found in logo: ${logoMap['url']}');
-                } else {
-                  debugPrint('No URL field in logo map');
-                }
-                
-                if (logoMap['id'] != null) {
-                  debugPrint('ID found in logo: ${logoMap['id']}');
-                } else {
-                  debugPrint('No ID field in logo map'); 
-                }
-              } else {
-                debugPrint('Logo is not a Map, it is: ${meta['logo']}');
-              }
-            } else {
-              debugPrint('No logo field in meta for $title');
-            }
-            
-            // Check address
-            final address = meta['adresse'] as String? ?? '';
-            debugPrint('Address for $title: $address');
-          } else {
-            debugPrint('No meta field for $title');
-          }
-
           final address = item['meta']?['adresse'] as String? ?? '';
           String? logoUrl;
-
-          // Extract logo URL using the exact structure shown
           if (item['meta'] != null && 
               item['meta']['logo'] != null && 
               item['meta']['logo'] is Map &&
               item['meta']['logo']['url'] != null) {
             logoUrl = item['meta']['logo']['url'] as String;
-            debugPrint('✓ Successfully extracted logo URL for $title: $logoUrl');
-          } else {
-            debugPrint('✗ Failed to extract logo URL for $title');
-            debugPrint('  Meta exists: ${item['meta'] != null}');
-            debugPrint('  Logo exists: ${item['meta']?['logo'] != null}');
-            debugPrint('  Logo is Map: ${item['meta']?['logo'] is Map}');
-            debugPrint('  URL exists: ${item['meta']?['logo']?['url'] != null}');
           }
-
           fetchedPartners.add(Partner(
             title: title,
             address: address,
@@ -425,37 +364,17 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
             logoUrl: logoUrl,
           ));
         }
-
-        debugPrint('\n=== SUMMARY ===');
-        debugPrint('Created ${fetchedPartners.length} partner objects');
-        debugPrint('Partners with logos: ${fetchedPartners.where((p) => p.logoUrl != null && p.logoUrl!.isNotEmpty).length}');
-        
-        // List all partners and their logo status
-        for (var partner in fetchedPartners) {
-          debugPrint('${partner.title}: ${partner.logoUrl != null ? "HAS LOGO" : "NO LOGO"}');
-          if (partner.logoUrl != null) {
-            debugPrint('  URL: ${partner.logoUrl}');
-          }
-        }
-
         if (mounted) {
           setState(() {
             _partners = fetchedPartners;
             _isLoadingPartners = false;
           });
         }
-
-        // Save to cache
         await _cacheManager.saveToCache('partners', fetchedPartners.map((p) => p.toJson()).toList());
-      } else {
-        debugPrint('Failed to load partners: ${response.statusCode}');
-        debugPrint('Response body: ${response.body}');
-        if (mounted) {
-          setState(() => _isLoadingPartners = false);
-        }
       }
     } catch (e) {
       debugPrint('Error loading partners: $e');
+    } finally {
       if (mounted) {
         setState(() => _isLoadingPartners = false);
       }
@@ -548,7 +467,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
           });
         }
 
-        // Save to cache
+        // Always update cache after fresh fetch
         await _cacheManager.saveToCache('orders', fetchedOrders.map((o) => o.toJson()).toList());
       } else {
         if (mounted) {
