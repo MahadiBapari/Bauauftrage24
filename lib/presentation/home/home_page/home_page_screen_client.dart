@@ -624,7 +624,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Willkomme',
+                              'Willkommen',
                               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 4),
@@ -638,7 +638,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
 
                   // Categories Section
                   const Text(
-                    'Kategorie',
+                    'Kategorien',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -668,7 +668,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Üsi Partner',
+                        'Unsere Partner',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w500,
@@ -683,7 +683,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
                           );
                         },
                         child: const Text(
-                          'Alli azeige',
+                          'Alle anzeigen',
                           style: TextStyle(
                             fontSize: 14,
                             color: Color.fromARGB(255, 179, 21, 21),
@@ -713,7 +713,7 @@ class _HomePageScreenClientState extends State<HomePageScreenClient> with Automa
 
                   // My Orders Section
                   const Text(
-                    'Mini Aufträgi',
+                    'Meine Aufträge',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,

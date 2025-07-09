@@ -478,7 +478,7 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
                           const SizedBox(height: 30),
                           _buildSectionTitle(
-                            'Persönlichi Informatione',
+                            'Persönliche Informationen',
                             onEditTap: () {
                               showDialog(
                                 context: context,
@@ -506,12 +506,12 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
                           _buildSectionTitle('Hilfsmittel'),
                           _buildProfileOption(
                             context,
-                            'Support & Hilf',
+                            'Support & Hilfe',
                             Icons.question_mark,
                           ),
                           _buildProfileOption(
                             context,
-                            'Passwort zruggsetze',
+                            'Passwort zurücksetzen',
                             Icons.lock_reset,
                           ),
                           _buildProfileOption(
@@ -605,11 +605,11 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  const Icon(Icons.edit, size: 18, color: Colors.grey),
+                  const Icon(Icons.edit, size: 18, color: Color.fromARGB(255, 182, 50, 50)),
                   const SizedBox(width: 4),
                   Text(
-                    'Edit',
-                    style: TextStyle(color: Theme.of(context).primaryColor),
+                    'Bearbeiten',
+                    style: TextStyle(color: const Color.fromARGB(255, 179, 50, 50)),
                   ),
                 ],
               ),
@@ -665,14 +665,14 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
       onTap: () {
         if (title == 'Abmelden') {
           _handleLogout(context);
-        } else if (title == 'Support & Hilf') {
+        } else if (title == 'Support & Hilfe') {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const SupportAndHelpPageScreen(),
             ),
           );
-        } else if (title == 'Passwort zruggsetze') {
+        } else if (title == 'Passwort zurücksetzen') {
           _showResetPasswordDialog(context);
         }
       },
@@ -710,70 +710,6 @@ class _ProfilePageState extends State<ProfilePageScreenClient> {
 
     if (!mounted) return;
 
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.logout, size: 48, color: const Color.fromARGB(255, 185, 7, 7)),
-          const SizedBox(height: 16),
-          const Text(
-          'Abmelden',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-          'Sind Sie sicher, dass Sie sich abmelden möchten?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          const SizedBox(height: 24),
-          Row(
-          children: [
-            Expanded(
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              side: BorderSide(color: Colors.grey.shade300),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Abbrechen',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color.fromARGB(255, 185, 7, 7),
-                ),
-              ),
-            ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 185, 7, 7),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
-              },
-              child: const Text('Abmelden', style: TextStyle(fontSize: 16, color: Colors.white)),
-            ),
-            ),
-          ],
-          ),
-        ],
-        ),
-      ),
-      ),
-    );
+    Navigator.pushReplacementNamed(context, '/login');
   }
 }

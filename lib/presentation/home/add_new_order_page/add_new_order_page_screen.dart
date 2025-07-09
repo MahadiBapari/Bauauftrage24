@@ -311,7 +311,7 @@ Widget build(BuildContext context) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Kategorie uswahlä", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                          const Text("Kategorie auswählen", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           MultiSelectDialogField(
                             backgroundColor: Colors.white,
@@ -325,7 +325,7 @@ Widget build(BuildContext context) {
                               border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            buttonText: const Text("Kategorie uswahlä"),
+                            buttonText: const Text("Kategorie auswählen"),
                             onConfirm: (values) {
                               setState(() => _selectedCategories = values.cast<String>());
                             },
@@ -347,7 +347,7 @@ Widget build(BuildContext context) {
                 _buildImagePicker(),
 
                 const SizedBox(height: 20),
-                _buildTextField(_streetController, 'Strass & Husnummer', true, icon: Icons.location_on),
+                _buildTextField(_streetController, 'Strasse & Hausnummer', true, icon: Icons.location_on),
                 const SizedBox(height: 20),
                 _buildTextField(_postalCodeController, 'PLZ', true, icon: Icons.local_post_office),
                 const SizedBox(height: 20),
@@ -363,7 +363,7 @@ Widget build(BuildContext context) {
                     onPressed: _isSubmitting ? null : _submitForm,
                     label: _isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Abschicke', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        : const Text('Auftrag veröffentlichen', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -442,7 +442,7 @@ Widget build(BuildContext context) {
             Expanded(
               child: Text(
                 _selectedImages.isEmpty
-                    ? 'Kei Bilder usgwählt'
+                    ? 'Keine Bilder ausgewählt?'
                     : '${_selectedImages.length} Bild(er) usgwählt',
                 overflow: TextOverflow.ellipsis,
               ),
